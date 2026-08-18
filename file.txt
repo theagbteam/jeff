@@ -1,0 +1,11 @@
+
+newguard
+newguard7584
+https://incidence.operationplugaction.com/admin/admin_ticket.php?track=7P5-R7H-D92U&Refresh=20654
+
+File upload limits
+»	Maximum number of attachments: 8
+»	Maximum size per attachment: 992097152 B
+»	You may upload files ending with:
+.gif, .jpg, .png, .zip, .rar, .csv, .doc, .docx, .xls, .xlsx, .txt, .pdf, .jpeg, .mp4
+

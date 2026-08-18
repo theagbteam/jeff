@@ -1,0 +1,30 @@
+[Monday, 17 August 2026, 07:11 PM] Action: Login failed, User ID does not exist | User: eewwr | Role: reporter | IP: 127.0.0.1
+[Monday, 17 August 2026, 07:11 PM] Action: Login failed, User ID does not exist | User: eewwr | Role: reporter | IP: 127.0.0.1
+[Monday, 17 August 2026, 07:11 PM] Action: Login failed, User ID does not exist | User: werwe | Role: reporter | IP: 127.0.0.1
+[Monday, 17 August 2026, 07:23 PM] Action: Login success | User: 38299 | Role: reporter | IP: 127.0.0.1
+[Monday, 17 August 2026, 07:27 PM] Action: Login failed, Incorrect password | User: 38299 | Role: reporter | IP: 127.0.0.1
+[Monday, 17 August 2026, 07:27 PM] Action: Login failed, Incorrect password | User: 38299 | Role: dev | IP: 127.0.0.1
+[Monday, 17 August 2026, 07:30 PM] Action: Login failed, Incorrect password | User: 38299 | Role: dev | IP: 127.0.0.1
+[Monday, 17 August 2026, 07:36 PM] Action: Login failed, Incorrect password | User: 38299 | Role: dev | IP: 127.0.0.1
+[Monday, 17 August 2026, 07:37 PM] Action: Login success | User: 38299 | Role: reporter | IP: 127.0.0.1
+[Monday, 17 August 2026, 07:38 PM] Action: Login success | User: 38299 | Role: reporter | IP: 127.0.0.1
+[Tuesday, 18 August 2026, 04:17 AM] Action: Login failed, User ID does not exist | User: str | Role: dev | IP: 127.0.0.1
+[Tuesday, 18 August 2026, 04:18 AM] Action: Login failed, User ID does not exist | User: dfs | Role: dev | IP: 127.0.0.1
+[Tuesday, 18 August 2026, 04:26 AM] Action: Login failed, User ID does not exist | User: dfs | Role: dev | IP: 127.0.0.1
+[Tuesday, 18 August 2026, 04:27 AM] Action: Login failed, User ID does not exist | User: sffsd | Role: dev | IP: 127.0.0.1
+[Tuesday, 18 August 2026, 04:30 AM] Action: Login success | User: 38299 | Role: dev | IP: 127.0.0.1
+[Tuesday, 18 August 2026, 04:36 AM] Action: Login success | User: 38299 | Role: reporter | IP: 127.0.0.1
+[Tuesday, 18 August 2026, 04:36 AM] Action: Login success | User: 38299 | Role: dev | IP: 127.0.0.1
+[Tuesday, 18 August 2026, 04:46 AM] Action: Login failed, User ID does not exist | User: fsf | Role: dev | IP: 127.0.0.1
+[Tuesday, 18 August 2026, 04:52 AM] Action: Login failed, User ID does not exist | User: hih | Role: dev | IP: 127.0.0.1
+[Tuesday, 18 August 2026, 04:53 AM] Action: Login failed, User ID does not exist | User: hih | Role: dev | IP: 127.0.0.1
+[Tuesday, 18 August 2026, 04:53 AM] Action: Login failed, User ID does not exist | User: hih | Role: dev | IP: 127.0.0.1
+[Tuesday, 18 August 2026, 04:54 AM] Action: Login failed, You do not have access as admin | User: 38299 | Role: admin | IP: 127.0.0.1
+[Tuesday, 18 August 2026, 04:54 AM] Action: Login failed, You do not have access as admin | User: 38299 | Role: admin | IP: 127.0.0.1
+[Tuesday, 18 August 2026, 04:54 AM] Action: Login failed, You do not have access as admin | User: 38299 | Role: admin | IP: 127.0.0.1
+[Tuesday, 18 August 2026, 04:55 AM] Action: Login failed, You do not have access as admin | User: 38299 | Role: admin | IP: 127.0.0.1
+[Tuesday, 18 August 2026, 04:55 AM] Action: Login success | User: 38299 | Role: reporter | IP: 127.0.0.1
+[Tuesday, 18 August 2026, 05:08 AM] Action: Login success | User: 38299 | Role: dev | IP: 127.0.0.1
+[Tuesday, 18 August 2026, 02:18 PM] Action: Login failed, User ID does not exist | User: gfgfg | Role: reporter | IP: 127.0.0.1
+[Tuesday, 18 August 2026, 02:18 PM] Action: Login success | User: 38299 | Role: reporter | IP: 127.0.0.1
+[Tuesday, 18 August 2026, 03:06 PM] Action: Login success | User: 38299 | Role: reporter | IP: 127.0.0.1
