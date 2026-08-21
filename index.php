@@ -1,79 +1,33 @@
  <?php
 session_start();
-// header('Content-Type: application/json');
-// define('ROOT_PATH', dirname(__DIR__));
 define('ROOT_PATH', 'C:\\xampp\\htdocs\\jeff');
-// require_once ROOT_PATH . '/core/database.php';
-require_once ROOT_PATH ."/controllers/UserController.php";
-require_once   ROOT_PATH ."/middleware/AuthMiddleware.php";
-
-$controller = new UserController();
- $SearchForMiddleware = new AuthMiddleware();
+// require_once ROOT_PATH . "/controllers/UserController.php";
+require_once ROOT_PATH . "/middleware/AuthMiddleware.php";
 $userid = $_SESSION['userid'] ?? null;
- $action = $_GET['action'] ?? 'login';
+$SearchForMiddleware = new AuthMiddleware();
+ $entryroles = $_SESSION['role'] ?? "guest";
+//  $action = $_GET['action'] ?? 'login';
 
 
-switch ($action) {
-      case 'login':
-        //    $SearchForMiddleware->IsLoginSessionActive() ;
-        $controller->login();
+switch ($entryroles) {
+      case 'guest':
+    require_once   ROOT_PATH ."/routers/guest.php";
         break;
 
- case 'dashboard':
+          case 'reporter':
+    require_once   ROOT_PATH ."/routers/reporter.php";
+        break;
 
-    //  $SearchForMiddleware->IsLoginSessionActive() ;
-        $controller->dashboard();
-      
-      
+          case 'admin':
+    require_once   ROOT_PATH ."/routers/admin.php";
+        break;
+
+          case 'dev':
+            //  $SearchForMiddleware->IsLoginSessionActive() ;
+    require_once   ROOT_PATH ."/routers/dev.php";
         break;
 
 
-    case 'getLGAs':
-
-       $controller->getLGAs();
-      
-      
-        break;
-    case 'update_password':
-
-   $controller->updatePassword();
-      
-      
-        break;
-    case 'update_photo':
-
-       $controller->updatePhoto();
-      
-      
-        break;
-
-    case 'staffdisposition':
-         $SearchForMiddleware->IsLoginSessionActive() ;
-       $controller->staffdisposition();
-      
-      
-        break;
-
-   
-    case 'monthlyreport_view':
-
-     $SearchForMiddleware->IsLoginSessionActive() ;
-        $controller->viewmonthlyreport();
-      
-        break;
-    
- case 'newpersonnel':
-     $SearchForMiddleware->IsLoginSessionActive() ;
-        $controller->newpersonnel();
-      
-        break;
- case 'norminalrole':
-     $SearchForMiddleware->IsLoginSessionActive() ;
-        $controller->norminalrole();
-      
-        break;
-
-  
     case 'logout':
         $controller->logout();
         break;

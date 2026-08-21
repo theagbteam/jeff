@@ -1,4 +1,22 @@
 RewriteEngine On
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteCond %{REQUEST_FILENAME}\.php -f
-RewriteRule ^(.*)$ $1.php [L]
+
+# --------------------------------------------------
+# 1. Hide .php extension
+# --------------------------------------------------
+
+# If /index is requested, serve /index.php
+RewriteCond %{REQUEST_FILENAME}.php -f
+RewriteRule ^(.+?)/?$ $1.php [L]
+
+
+# --------------------------------------------------
+# 2. Force all application requests through index.php
+# --------------------------------------------------
+
+# Don't rewrite existing files/directories
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Everything else goes to the front controller
+RewriteRule ^ index.php [L]

@@ -8,15 +8,11 @@
         name="viewport"
         content="width=device-width, initial-scale=1.0"
     >
-
-    <title>
-        <?= htmlspecialchars(
-            $web_settings['company_alias'] . "-" . $page_name,
-            ENT_QUOTES,
-            'UTF-8'
-        ); ?>
+ <title><?php echo $web_settings['company_alias'] . "  -  " . $page_name; ?></title>
     </title>
-
+ <script src="views/inc/sweetalert/sweetalert2@11.js"></script>
+ <script src="views/inc/sweetalert/jquery-3.6.4.min.js"></script>
+<link rel="stylesheet" href="views/inc/sweetalert/sweetalert2.min.css"> 
 
     <!-- Bootstrap CSS -->
     <link
@@ -31,16 +27,6 @@
         href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
     >
 
-
-    <!-- SweetAlert -->
-    <script src="views/inc/sweetalert/sweetalert2@11.js"></script>
-
-    <script src="views/inc/sweetalert/jquery-3.6.4.min.js"></script>
-
-    <link
-        rel="stylesheet"
-        href="views/inc/sweetalert/sweetalert2.min.css"
-    >
 
 
     <style>
@@ -1514,27 +1500,28 @@
 <body>
 
 
+
 <?php
 
-/* =========================================================
-   SESSION MESSAGE
-========================================================= */
+if (isset($_SESSION['success'])) {
+    $msgtext = $_SESSION['success'];
+    $url = "#";
+    $showAlert = true;
 
-$msgtext = '';
-
-$url = '#';
-
-$showAlert = false;
-
+    unset($_SESSION['success']);
+}
 
 if (isset($_SESSION['error'])) {
-
     $msgtext = $_SESSION['error'];
+    $url = "#";
+    $showAlert = false;
 
     unset($_SESSION['error']);
 }
 
 ?>
+
+
 
 
 <div class="page-container">
@@ -1763,7 +1750,8 @@ if (isset($_SESSION['error'])) {
 
 
                         <input
-                            type="text"
+                           maxlength="20"
+                            type="text" pattern="^[0-9]+$"
                             name="userid"
                             class="form-control-custom"
                             placeholder="Enter your user ID"
@@ -1786,7 +1774,8 @@ if (isset($_SESSION['error'])) {
                         <i class="bi bi-lock input-icon"></i>
 
 
-                        <input
+                        <input 
+                        maxlength="20"
                             type="password"
                             name="password"
                             class="form-control-custom"
@@ -1922,8 +1911,8 @@ if (isset($_SESSION['error'])) {
 
 
                 <form
-                    id="signupAccountForm"
-                    method="post"
+                    id="signupAccountForm" action="index?action=create_reporter"
+                    method="post" enctype="multipart/form-data"
                 >
 
 
@@ -1940,9 +1929,9 @@ if (isset($_SESSION['error'])) {
 
                         <input
                             type="text"
-                            name="fullname"
+                            name="fullname" maxlength="30"
                             class="form-control-custom"
-                            placeholder="Enter your full name"
+                            placeholder="Enter your name"
                             required
                         >
 
@@ -1965,7 +1954,8 @@ if (isset($_SESSION['error'])) {
 
 
                         <input
-                            type="tel"
+                            type="tel" maxlength="15"
+                             pattern="^\+?[0-9]+$" inputmode="numeric"
                             name="phone"
                             class="form-control-custom"
                             placeholder="Enter your phone number"
@@ -1991,7 +1981,7 @@ if (isset($_SESSION['error'])) {
 
 
                         <input
-                            type="email"
+                            type="email" maxlength="40"
                             name="email"
                             class="form-control-custom"
                             placeholder="Enter your email"
@@ -2016,7 +2006,7 @@ if (isset($_SESSION['error'])) {
                         ></i>
 
 
-                        <input
+                        <input maxlength="20"
                             type="password"
                             name="password"
                             class="form-control-custom"
@@ -2055,7 +2045,7 @@ if (isset($_SESSION['error'])) {
 
 
                         <input
-                            type="password"
+                            type="password" maxlength="20"
                             name="confirm_password"
                             class="form-control-custom"
                             id="confirmPassword"
@@ -2089,7 +2079,7 @@ if (isset($_SESSION['error'])) {
                         <input
                             type="checkbox"
                             id="termsCheckbox"
-                            name="terms_accepted"
+                            name="affirmation"
                             value="1"
                             required
                         >
@@ -2103,6 +2093,7 @@ if (isset($_SESSION['error'])) {
 
                             <button
                                 type="button"
+                                name="affirmation_button"
                                 class="terms-link"
                                 id="openTermsButton"
                             >
@@ -2126,7 +2117,7 @@ if (isset($_SESSION['error'])) {
                     <button
                         class="main-button"
                         type="submit"
-                        name="signup"
+                        name="signup_reporter"
                     >
 
                         <i
@@ -3382,7 +3373,7 @@ if (isset($_SESSION['error'])) {
                         "Passwords do not match",
 
                     text:
-                        "Please make sure both password fields contain the same password.",
+                        "Please check the password fields.",
 
                     icon:
                         "warning",
@@ -3538,73 +3529,9 @@ function googleTranslateElementInit() {
      PHP SESSION ALERT
 ============================================================= -->
 
-<?php if (!empty($msgtext)): ?>
-
-<script>
-
-document.addEventListener(
-    'DOMContentLoaded',
-    function() {
-
-        Swal.fire({
-
-            title:
-                'Notification',
-
-            text:
-                <?= json_encode(
-                    $msgtext,
-                    JSON_HEX_TAG |
-                    JSON_HEX_APOS |
-                    JSON_HEX_AMP |
-                    JSON_HEX_QUOT
-                ); ?>,
-
-            icon:
-                'info',
-
-            confirmButtonText:
-                'OK',
-
-            allowOutsideClick:
-                true,
-
-            allowEscapeKey:
-                true
-
-        }).then(
-            function(result) {
-
-                if (
-                    result.isConfirmed ||
-                    result.dismiss
-                ) {
-
-                    const redirectUrl =
-                        <?= json_encode($url); ?>;
 
 
-                    if (
-                        redirectUrl &&
-                        redirectUrl !== '#'
-                    ) {
 
-                        window.location.href =
-                            redirectUrl;
-
-                    }
-
-                }
-
-            }
-        );
-
-    }
-);
-
-</script>
-
-<?php endif; ?>
 
 
 
@@ -3616,6 +3543,36 @@ document.addEventListener(
 
 <script src="views/assets/js/dataTables.bootstrap5.min.js"></script>
 
-
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        <?php if ($showAlert): ?>
+            Swal.fire({
+                title: 'Successful!',
+                text: '<?php echo htmlspecialchars($msgtext, ENT_QUOTES, 'UTF-8'); ?>',
+                icon: 'info',
+                confirmButtonText: 'OK',
+                allowOutsideClick: true,
+                allowEscapeKey: true
+            }).then((result) => {
+                if (result.isConfirmed || result.dismiss) {
+                    window.location.href = '<?php echo htmlspecialchars($url, ENT_QUOTES, 'UTF-8'); ?>';
+                }
+            });
+        <?php else: ?>
+            Swal.fire({
+                title: 'Error',
+                text: '<?php echo htmlspecialchars($msgtext, ENT_QUOTES, 'UTF-8'); ?>',
+                icon: 'error',
+                confirmButtonText: 'OK',
+                allowOutsideClick: true,
+                allowEscapeKey: true
+            }).then((result) => {
+                if (result.isConfirmed || result.dismiss) {
+                    window.location.href = '<?php echo htmlspecialchars($url, ENT_QUOTES, 'UTF-8'); ?>';
+                }
+            });
+        <?php endif; ?>
+    });
+</script>
 </body>
 </html>

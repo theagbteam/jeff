@@ -3,6 +3,7 @@ require_once ROOT_PATH . '/models/User.php';
 require_once ROOT_PATH . '/models/StateModel.php';
 require_once ROOT_PATH . '/models/PhotoPassword_Update.php';
 require_once ROOT_PATH . '/middleware/AuthMiddleware.php';
+require_once ROOT_PATH . '/services/mailer.php';
 
 class UserController {
 
@@ -22,6 +23,7 @@ class UserController {
        LOGIN
     ========================== */
     public function login() {
+
         if (session_status() === PHP_SESSION_NONE) session_start();
 
         $GetTheModelClassCalledUser = new User();
@@ -49,12 +51,7 @@ class UserController {
                   if ($_SESSION['level']>=2 ) {
                     $_SESSION['success'] = "Welcome, you are logged in as Super " . $role;
                  }
-               
-
-                  // $_SESSION['state_code'] = $result['user']['state_code'];
-                // $_SESSION['stateoforigin'] = $result['user']['stateoforigin'];
-              
-
+             
                 $message = "Action: Login success | User: {$userid} | Role: {$role}";
                 $line = "[{$date}] {$message} | IP: {$ip}" . PHP_EOL;
                 file_put_contents($logFile, $line, FILE_APPEND | LOCK_EX);
@@ -68,6 +65,8 @@ class UserController {
                 file_put_contents($logFile, $line, FILE_APPEND | LOCK_EX);
                  $_SESSION['error'] = $error ;
                  }
+                  header("Location: index?action=login");
+                exit;
         }
 
         $page_name = "Login";
@@ -79,26 +78,149 @@ class UserController {
     }
 
     /* ==========================
-       DASHBOARD
+       Create Reporter
     ========================== */
-    public function dashboard() {
-        $page_name = "Dashboard";
-        $GetThisModel = new User();
-        
-        $userid = $_SESSION['userid'] ?? null;
+    public function create_reporter()
+{
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
 
-          $page_name = "Dashboard";
-        $web_settings = $GetThisModel->web_settings();
-       
-     if ($userid && isset($_SESSION['role']) && isset($_SESSION['level'])) {
-    require ROOT_PATH . "/views/users/" . $_SESSION['role'] . "/dashboard.php";
-} else {
-    exit;
-}
+    if (isset($_POST['signup_reporter'])) {
+        
+    $name        = trim($_POST['fullname'] ?? '');
+    $phone       = trim($_POST['phone'] ?? '');
+    $email       = trim($_POST['email'] ?? '');
+    $password    = $_POST['password'] ?? '';
+    $affirmation = isset($_POST['affirmation']) ? 1 : 0;
+
+
+    // =====================================================
+    // VALIDATE FULL NAME
+    // =====================================================
+
+    if ($name === '') {
+        $_SESSION['error'] = 'Full name is required.';
+        header("Location: index?action=login");
+        exit;
     }
 
 
+    // =====================================================
+    // VALIDATE PHONE
+    // =====================================================
+
+    if ($phone === '') {
+        $_SESSION['error'] = 'Phone number is required.';
+        header("Location: index?action=login");
+        exit;
+    }
+
+
+    // =====================================================
+    // VALIDATE EMAIL
+    // =====================================================
+
+    if ($email === '') {
+        $_SESSION['error'] = 'Email address is required.';
+        header("Location: index?action=login");
+        exit;
+    }
+
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $_SESSION['error'] = 'Please enter a valid email address.';
+        header("Location: index?action=login");
+        exit;
+    }
+
+
+    // =====================================================
+    // VALIDATE PASSWORD
+    // =====================================================
+
+    if ($password === '') {
+        $_SESSION['error'] = 'Password is required.';
+        header("Location: index?action=login");
+        exit;
+    }
+
+
+    // =====================================================
+    // VALIDATE AFFIRMATION
+    // =====================================================
+
+    if ($affirmation !== 1) {
+        $_SESSION['error'] = 'You must accept the declaration.';
+        header("Location: index?action=login");
+        exit;
+    }
+
+
+    // =====================================================
+    // CREATE REPORTER
+    // =====================================================
+
+    $userModel = new User();
+
+    $result = $userModel->create_reporter($name,$email,$password,$phone,$affirmation);
+
+
+    // =====================================================
+    // SUCCESS
+    // =====================================================
+
+    if (!empty($result['success'])) {
+
+        $_SESSION['success'] = "Request submitted. You will receive an email upon approval";
+
+        // Remove old errors
+        unset($_SESSION['errors']);
+    }
+
+
+    // =====================================================
+    // PHONE / EMAIL ALREADY EXISTS
+    // =====================================================
+
+    else {
+
+        // Remove old errors
+        unset($_SESSION['error']);
+
+        $_SESSION['errors'] = [];
+
+        // Phone already exists
+        if (!empty($result['phone_exists'])) {
+ $_SESSION['error']  = 'This phone number is already registered.';
+            // $_SESSION['errors']['phone'] ='This phone number is already registered.';
+        }
+
+        // Email already exists
+        if (!empty($result['email_exists'])) {
+ $_SESSION['error']  = 'This email address is already registered.';
+            // $_SESSION['errors']['email'] = 'This email address is already registered.';
+        }
+
+        // General database/system error
+        if (!empty($result['error'])) {
+         $_SESSION['error'] = "Unable to create your account. Please try again";
+            // $_SESSION['errors']['general'] = 'Unable to create your account. Please try again.';
+        }
+    }
+
+
+    // =====================================================
+    // REDIRECT
+    // =====================================================
+
+    header("Location: index?action=login");
+    exit;
     
+}else{
+    header("Location: index?action=login");
+        exit;
+}
+}
     /* ==========================
        NEW PERSONNEL PAGE
     ========================== */
@@ -106,9 +228,9 @@ class UserController {
 public function newpersonnel(){
 
     echo '
-    <script src="app/views/inc/sweetalert/jquery-3.6.4.min.js"></script>
-    <script src="app/views/inc/sweetalert/sweetalert2@11.js"></script>
-    <link rel="stylesheet" href="app/views/inc/sweetalert/sweetalert2.min.css">
+    <script src="views/inc/sweetalert/jquery-3.6.4.min.js"></script>
+    <script src="views/inc/sweetalert/sweetalert2@11.js"></script>
+    <link rel="stylesheet" href="views/inc/sweetalert/sweetalert2.min.css">
     ';
 
     $page_name = "personnel";
@@ -855,7 +977,7 @@ public function newpersonnel(){
     ========================== */
     public function pagenotfound() {
         $page_name = "404 Error";
-        require ROOT_PATH . "/app/views/pagenotfound.php";
+        require ROOT_PATH . "/views/pagenotfound.php";
     }
 
    
