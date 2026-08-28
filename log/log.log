@@ -63,3 +63,44 @@
 [Thursday, 20 August 2026, 07:49 PM] Action: Login success | User: 38299 | Role: reporter | IP: 127.0.0.1
 [Thursday, 20 August 2026, 07:50 PM] Action: Login success | User: 38299 | Role: dev | IP: 127.0.0.1
 [Thursday, 20 August 2026, 07:50 PM] Action: Login success | User: 38299 | Role: dev | IP: 127.0.0.1
+[Friday, 21 August 2026, 05:37 AM] Action: Login success | User: 38299 | Role: dev | IP: 127.0.0.1
+[Sunday, 23 August 2026, 08:35 AM] Action: Login success | User: 38299 | Role: dev | IP: 127.0.0.1
+[Sunday, 23 August 2026, 09:19 AM] Action: Login success | User: 38299 | Role: dev | IP: 127.0.0.1
+[Sunday, 23 August 2026, 09:54 AM] Action: Login success | User: 38299 | Role: dev | IP: ::1
+[Sunday, 23 August 2026, 10:22 AM] Action: Login success | User: 38299 | Role: dev | IP: 127.0.0.1
+[Sunday, 23 August 2026, 11:33 AM] Action: Login success | User: 38299 | Role: dev | IP: 127.0.0.1
+[Sunday, 23 August 2026, 11:41 AM] Action: Login success | User: 38299 | Role: dev | IP: 127.0.0.1
+[Sunday, 23 August 2026, 11:54 AM] Action: Login success | User: 38299 | Role: dev | IP: 127.0.0.1
+[Sunday, 23 August 2026, 01:04 PM] Action: Login success | User: 38299 | Role: dev | IP: ::1
+[Sunday, 23 August 2026, 03:13 PM] Action: Login success | User: 38299 | Role: dev | IP: 127.0.0.1
+[Sunday, 23 August 2026, 04:07 PM] Action: Login success | User: 38299 | Role: Developer | IP: 127.0.0.1
+[Sunday, 23 August 2026, 04:52 PM] Action: Login success | User: 38299 | Role: Developer | IP: 127.0.0.1
+[Sunday, 23 August 2026, 06:42 PM] Action: Login success | User: 38299 | Role: Reporter | IP: 127.0.0.1
+[Sunday, 23 August 2026, 06:43 PM] Action: Login success | User: 38299 | Role: Developer | IP: 127.0.0.1
+[Monday, 24 August 2026, 07:27 AM] Action: Login success | User: 38299 | Role: Developer | IP: 127.0.0.1
+[Monday, 24 August 2026, 08:48 AM] Action: Login success | User: 38299 | Role: Reporter | IP: 127.0.0.1
+[Monday, 24 August 2026, 08:49 AM] Action: Login success | User: 38299 | Role: Developer | IP: 127.0.0.1
+[Monday, 24 August 2026, 11:08 AM] Action: Login success | User: 38299 | Role: Developer | IP: 127.0.0.1
+[Monday, 24 August 2026, 01:12 PM] Action: Login success | User: 38299 | Role: Developer | IP: 127.0.0.1
+[Monday, 24 August 2026, 06:50 PM] Action: Login success | User: 38299 | Role: Developer | IP: 127.0.0.1
+[Tuesday, 25 August 2026, 06:08 PM] Action: Login success | User: 38299 | Role:  | IP: 127.0.0.1
+[Tuesday, 25 August 2026, 06:08 PM] Action: Login success | User: 38299 | Role:  | IP: 127.0.0.1
+[Tuesday, 25 August 2026, 06:10 PM] Action: Login success | User: 38299 | Role:  | IP: 127.0.0.1
+[Tuesday, 25 August 2026, 06:15 PM] Action: Login success | User: 38299 | Role:  | IP: 127.0.0.1
+[Tuesday, 25 August 2026, 06:16 PM] Action: Login success | User: 38299 | Role:  | IP: 127.0.0.1
+[Tuesday, 25 August 2026, 06:45 PM] Action: Login success | User: 38299 | Role: developer | IP: 127.0.0.1
+[Tuesday, 25 August 2026, 06:46 PM] Action: Login success | User: 38299 | Role: developer | IP: 127.0.0.1
+[Tuesday, 25 August 2026, 06:47 PM] Action: Login failed, User ID does not exist | User: 31124000329 | Role:  | IP: 127.0.0.1
+[Tuesday, 25 August 2026, 06:47 PM] Action: Login failed, Incorrect password | User: 38299 | Role:  | IP: 127.0.0.1
+[Tuesday, 25 August 2026, 06:50 PM] Action: Login success | User: 38299 | Role: developer | IP: 127.0.0.1
+[Tuesday, 25 August 2026, 06:54 PM] Action: Login success | User: 38299 | Role: developer | IP: 127.0.0.1
+[Tuesday, 25 August 2026, 07:11 PM] Action: Login success | User: 38299 | Role: developer | IP: 127.0.0.1
+[Tuesday, 25 August 2026, 07:13 PM] Action: Login success | User: 38299 | Role: developer | IP: 127.0.0.1
+[Tuesday, 25 August 2026, 07:48 PM] Action: Login success | User: 38299 | Role: developer | IP: 127.0.0.1
+[Tuesday, 25 August 2026, 08:12 PM] Action: Login success | User: 38299 | Role: developer | IP: 127.0.0.1
+[Wednesday, 26 August 2026, 06:16 AM] Action: Login success | User: 38299 | Role: developer | IP: 127.0.0.1
+[Wednesday, 26 August 2026, 06:21 AM] Action: Login success | User: 38299 | Role: developer | IP: 127.0.0.1
+[Wednesday, 26 August 2026, 08:58 AM] Action: Login success | User: 38299 | Role: developer | IP: 127.0.0.1
+[Wednesday, 26 August 2026, 09:04 AM] Action: Login success | User: 38299 | Role: developer | IP: 127.0.0.1
+[Thursday, 27 August 2026, 03:44 AM] Action: Login success | User: 38299 | Role: developer | IP: 127.0.0.1
+[Thursday, 27 August 2026, 05:19 PM] Action: Login success | User: 38299 | Role: developer | IP: 127.0.0.1

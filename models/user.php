@@ -4,6 +4,7 @@
 
 
 require_once ROOT_PATH . '/core/database.php';
+require_once ROOT_PATH . '/models/company.php';
 
 class User {
 
@@ -17,23 +18,7 @@ class User {
 
 
 
-
-// All site settings data
-public function web_settings() {
-$table_site_settings = "company";
-    $stmt = $this->conn->prepare(
-        "SELECT * FROM {$table_site_settings}"
-    );
-    $stmt->execute();
-
-    // return $stmt->fetch(PDO::FETCH_ASSOC);
-    $web_settings = $stmt->fetch(PDO::FETCH_ASSOC);
-    return $web_settings;
-}
-
-
-
-    public function login($userid, $password, $role) {
+    public function login($userid,$password) {
         $table_login = "login";
         $stmt = $this->conn->prepare(
             "SELECT * FROM {$table_login} WHERE userid = :userid LIMIT 1"
@@ -60,39 +45,98 @@ $table_site_settings = "company";
             ];
         }
 
-        // ❌ invalid role column
-        if (!array_key_exists($role, $user)) {
-            return [
-                'success' => false,
-                'error'   => 'Invalid role selected'
-            ];
-        }
-
-        // ❌ no access for selected role
-        if ((int)$user[$role] !== 1) {
-            return [
-                'success' => false,
-                'error'   => "You do not have access as {$role}"
-            ];
-        }
-
-        // ✅ login success
+              // ✅ login success
         return [
             'success' => true,
             'user'    => $user
         ];
     }
 
+   public function SelectOneUserAllData()
+{
+    if (!isset($_SESSION['userid'])) {
+        return [
+            'success' => false,
+            'error'   => 'User is not logged in'
+        ];
+    }
 
+    $userid = $_SESSION['userid'];
+
+    $stmt = $this->conn->prepare(
+        "SELECT * FROM users WHERE userid = :userid LIMIT 1"
+    );
+
+    $stmt->execute([
+        ':userid' => $userid
+    ]);
+
+    $userData = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$userData) {
+        return [
+            'success' => false,
+            'error'   => 'User ID does not exist'
+        ];
+    }
+
+    return [
+        'success' => true,
+        'user'    => $userData
+    ];
+}
+
+
+
+public function getRoleCounts()
+{
+    $sql = "SELECT
+                SUM(role = 'developer') AS developers,
+                SUM(role = 'reporter') AS reporters,
+                SUM(role = 'supervisor') AS supervisors,
+                SUM(role = 'administrator') AS administrators
+            FROM login";
+
+    $stmt = $this->conn->prepare($sql);
+    $stmt->execute();
+
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+}
+public function TicketCount()
+{
+    $sql = "SELECT
+                COUNT(*) AS total,
+                SUM(status = 0) AS status_0,
+                SUM(status = 1) AS status_1,
+                SUM(status = 2) AS status_2
+            FROM tickets";
+
+    $stmt = $this->conn->prepare($sql);
+    $stmt->execute();
+
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+}
+
+
+function getAParticularLoginUser($userid){
+    $sql = "SELECT * FROM login WHERE userid = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $userid);
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+
+    return $result->fetch_assoc();
+}
 
 
     
 public function create_reporter($name, $email, $password, $phone, $affirmation)
 {
     try {
-
+  $callCompanyModel = new CompanyModel() ;
         // Get website/company settings
-        $web_settings = $this->web_settings();
+        $web_settings = $callCompanyModel->web_settings();
          //Reporter
          $Login_acess=1;
 

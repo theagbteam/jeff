@@ -1,4 +1,5 @@
 <?php
+require_once ROOT_PATH . '/models/company.php';
 require_once ROOT_PATH . '/models/User.php';
 require_once ROOT_PATH . '/models/StateModel.php';
 require_once ROOT_PATH . '/models/PhotoPassword_Update.php';
@@ -13,11 +14,13 @@ class UserController {
     public string $deviceType = 'pc'; // default
     public $web_settings;
 
-    public function __construct() {
-        $this->userid= $_SESSION['userid'] ?? $_SESSION['userid'] ?? null;
-        $this->db = (new Database())->getConnection();
-        $this->photoPasswordModel = new PhotoPassword_Update($this->db);
-    }
+public function __construct() {
+    // $this->userid = $_SESSION['userid'] ?? null;
+    $this->db = (new Database())->getConnection();
+    $this->photoPasswordModel = new PhotoPassword_Update($this->db);
+}
+
+
     
  /* ==========================
        LOGIN
@@ -29,29 +32,35 @@ class UserController {
         $GetTheModelClassCalledUser = new User();
         $AuthMiddlewareModel = new AuthMiddleware();
         // $AuthMiddlewareModel->IsLoginSessionActive();
+  if (isset($_POST['forgot_password'])) {
+            $forgot_email = $_POST['forgot_email'];
+            $security_answer = $_POST['security_answer'];
 
-        if (isset($_POST['login'])) {
+  }
+
+
+
+
+
+
+
+
+
+            if (isset($_POST['login'])) {
             $userid = $_POST['userid'];
             $password = $_POST['password'];
-            $role     = $_POST['role'];
-
-            $logData = $AuthMiddlewareModel->writelog($userid, $role);
+           $result = $GetTheModelClassCalledUser->login($userid, $password);
+             $role = $result['user']['role'];
+              $logData = $AuthMiddlewareModel->writelog($userid, $role);
             $logFile = $logData['logFile'];
             $date    = $logData['date'];
             $ip      = $logData['ip'];
-
-            $result = $GetTheModelClassCalledUser->login($userid, $password, $role);
-
+                   
             if ($result['success'] === true) {
-                $_SESSION['success'] = "Welcome, you are logged in as " . $role;
-                //  $_SESSION['userid'] = $result['user']['userid'];
-                 $_SESSION['userid'] = $userid ;
+                $_SESSION['success'] = "Welcome, you are logged in as " . ucfirst($role);
+                $_SESSION['userid'] = $userid ;
                   $_SESSION['role'] = $role;
-                  $_SESSION['level'] = $result['user']['level'];
-                  if ($_SESSION['level']>=2 ) {
-                    $_SESSION['success'] = "Welcome, you are logged in as Super " . $role;
-                 }
-             
+                  $_SESSION['success'] = "Welcome, you are logged in as a " . ucfirst($role);
                 $message = "Action: Login success | User: {$userid} | Role: {$role}";
                 $line = "[{$date}] {$message} | IP: {$ip}" . PHP_EOL;
                 file_put_contents($logFile, $line, FILE_APPEND | LOCK_EX);
@@ -70,8 +79,16 @@ class UserController {
         }
 
         $page_name = "Login";
-       
-        $web_settings = $GetTheModelClassCalledUser->web_settings();
+          $callCompanyModel = new CompanyModel();
+           $company_settings = $callCompanyModel->web_settings();
+        $company_copyright  = $company_settings['company_copyright'] ?? '2025';
+       $company_poweredby  = $company_settings['company_poweredby'] ?? 'AgbTeam';
+       $company_copyrightlink  = $company_settings['company_copyrightlink'] ?? 'https://www.agbng.com';
+      $company_online = $company_settings['company_online'] ?? 0;
+      $company_Allow_signup = $company_settings['company_signup'] ?? 0;
+      $company_alias = $company_settings['company_alias'] ?? 'Page';
+      $company_logo = $company_settings['company_logo'] ?? '';
+
         // var_dump($web_setings);
         
         require ROOT_PATH . "/views/login.php";
@@ -977,6 +994,15 @@ public function newpersonnel(){
     ========================== */
     public function pagenotfound() {
         $page_name = "404 Error";
+           $callCompanyModel = new CompanyModel();
+           $company_settings = $callCompanyModel->web_settings();
+        $company_copyright  = $company_settings['company_copyright'] ?? '2025';
+       $company_poweredby  = $company_settings['company_poweredby'] ?? 'AgbTeam';
+       $company_copyrightlink  = $company_settings['company_copyrightlink'] ?? 'https://www.agbng.com';
+      $company_online = $company_settings['company_online'] ?? 0;
+      $company_Allow_signup = $company_settings['company_signup'] ?? 0;
+      $company_alias = $company_settings['company_alias'] ?? 'Page';
+      $company_logo = $company_settings['company_logo'] ?? '';
         require ROOT_PATH . "/views/pagenotfound.php";
     }
 

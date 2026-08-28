@@ -1,5 +1,7 @@
 <!DOCTYPE html>
+
 <html lang="en">
+
 <head>
 
     <meta charset="UTF-8">
@@ -8,13 +10,36 @@
         name="viewport"
         content="width=device-width, initial-scale=1.0"
     >
- <title><?php echo $web_settings['company_alias'] . "  -  " . $page_name; ?></title>
-    </title>
- <script src="views/inc/sweetalert/sweetalert2@11.js"></script>
- <script src="views/inc/sweetalert/jquery-3.6.4.min.js"></script>
-<link rel="stylesheet" href="views/inc/sweetalert/sweetalert2.min.css"> 
+
+    <meta
+        name="description"
+        content="Secure incident reporting and management system for $company_name. Report, track, review, and manage incidents efficiently."
+    >
+
+    <meta
+        name="application-name"
+        content="$company_name Incident Reporting System"
+    >
+
+    <meta
+        name="robots"
+        content="noindex, nofollow"
+    >
+
+    <title><?php echo $company_alias . "  -  " . $page_name; ?></title>
+
+
+    <script src="views/inc/sweetalert/sweetalert2@11.js"></script>
+    <script src="views/inc/sweetalert/jquery-3.6.4.min.js"></script>
+
+    <link
+        rel="stylesheet"
+        href="views/inc/sweetalert/sweetalert2.min.css"
+    >
+
 
     <!-- Bootstrap CSS -->
+
     <link
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
         rel="stylesheet"
@@ -22,1477 +47,2043 @@
 
 
     <!-- Bootstrap Icons -->
+
     <link
         rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
     >
 
 
+<style>
 
-    <style>
+/* =========================================================
+   ROOT VARIABLES
+========================================================= */
 
-        /* =========================================================
-           ROOT
-        ========================================================= */
+:root {
 
-        :root {
+    --primary: #082f63;
+    --primary-dark: #041c3d;
+    --primary-light: #0d4f9c;
 
-            --primary: #082f63;
-            --primary-dark: #041c3d;
-            --primary-light: #0d4f9c;
+    --background: #f4f7fb;
+    --card: #ffffff;
 
-            --background: #f4f7fb;
-            --card: #ffffff;
+    --text: #10233f;
+    --muted: #718096;
 
-            --text: #10233f;
-            --muted: #718096;
+    --border: #dce4ef;
+    --input-bg: #ffffff;
 
-            --border: #dce4ef;
+    --button: #083b78;
+    --button-hover: #062d5c;
 
-            --input-bg: #ffffff;
+    --shadow:
+        0 25px 70px rgba(4, 28, 61, .18);
+}
 
-            --button: #083b78;
-            --button-hover: #062d5c;
 
-            --shadow:
-                0 25px 70px rgba(4, 28, 61, .18);
-        }
+body.dark-mode {
 
+    --primary: #0d4385;
+    --primary-dark: #020c1c;
+    --primary-light: #1761b3;
 
-        body.dark-mode {
+    --background: #020b18;
+    --card: #07182d;
 
-            --primary: #0d4385;
-            --primary-dark: #020c1c;
-            --primary-light: #1761b3;
+    --text: #f5f8ff;
+    --muted: #aab7c9;
 
-            --background: #020b18;
-            --card: #07182d;
+    --border: #1b3554;
+    --input-bg: #091e36;
 
-            --text: #f5f8ff;
-            --muted: #aab7c9;
+    --button: #0d4d91;
+    --button-hover: #1260b2;
 
-            --border: #1b3554;
+    --shadow:
+        0 25px 70px rgba(0, 0, 0, .45);
+}
 
-            --input-bg: #091e36;
 
-            --button: #0d4d91;
-            --button-hover: #1260b2;
+/* =========================================================
+   GLOBAL
+========================================================= */
 
-            --shadow:
-                0 25px 70px rgba(0, 0, 0, .45);
-        }
+* {
+    box-sizing: border-box;
+}
 
 
+html,
+body {
 
-        /* =========================================================
-           GLOBAL
-        ========================================================= */
+    width: 100%;
+    height: 100%;
 
-        * {
-            box-sizing: border-box;
-        }
+    margin: 0;
+    padding: 0;
+}
 
 
-        html,
-        body {
+body {
 
-            width: 100%;
-            height: 100%;
+    min-height: 100vh;
 
-            margin: 0;
-            padding: 0;
-        }
+    font-family:
+        "Segoe UI",
+        Roboto,
+        Helvetica,
+        Arial,
+        sans-serif;
 
+    background: var(--background);
 
-        body {
+    color: var(--text);
 
-            min-height: 100vh;
+    overflow: hidden;
 
-            font-family:
-                "Segoe UI",
-                Roboto,
-                Helvetica,
-                Arial,
-                sans-serif;
+    transition:
+        background .3s ease,
+        color .3s ease;
+}
 
-            background: var(--background);
 
-            color: var(--text);
+/* =========================================================
+   PAGE
+========================================================= */
 
-            overflow: hidden;
+.page-container {
 
-            transition:
-                background .3s ease,
-                color .3s ease;
-        }
+    width: 100vw;
 
+    height: 100vh;
 
+    min-height: 100vh;
 
-        /* =========================================================
-           FULL PAGE
-        ========================================================= */
+    display: flex;
 
-        .page-container {
+    margin: 0;
 
-            width: 100vw;
-            height: 100vh;
+    padding: 0;
 
-            min-height: 100vh;
+    background: var(--background);
+}
 
-            display: flex;
 
-            margin: 0;
-            padding: 0;
+/* =========================================================
+   LEFT INCIDENT PANEL
+========================================================= */
 
-            background: var(--background);
-        }
+.incident-panel {
 
+    width: 50%;
 
+    height: 100vh;
 
-        /* =========================================================
-           LEFT INCIDENT PANEL
-        ========================================================= */
+    position: relative;
 
-        .incident-panel {
+    overflow: hidden;
 
-            width: 50%;
-            height: 100vh;
+    background: #031c3c;
 
-            position: relative;
+    display: flex;
 
-            overflow: hidden;
+    align-items: flex-end;
 
-            background:
+    color: white;
+}
 
-                linear-gradient(
-                    135deg,
-                    rgba(3, 28, 60, .86),
-                    rgba(4, 48, 98, .68)
-                ),
 
-                url("views/assets/img/loginbg.png");
+/* =========================================================
+   SLIDESHOW BACKGROUND LAYERS
+========================================================= */
 
-            background-size: cover;
+/*
+ * TWO permanent layers are used.
+ *
+ * Layer 1:
+ * .incident-background
+ *
+ * Layer 2:
+ * .incident-background-next
+ *
+ * One image is always visible while the other image
+ * fades over it.
+ *
+ * This prevents the blue/empty flash.
+ */
 
-            background-position: center;
+.incident-background,
+.incident-background-next {
 
-            display: flex;
+    position: absolute;
 
-            align-items: flex-end;
+    inset: 0;
 
-            color: white;
-        }
+    width: 100%;
+    height: 100%;
 
+    background-size: cover;
 
-        .incident-overlay {
+    background-position: center center;
 
-            position: absolute;
+    background-repeat: no-repeat;
 
-            inset: 0;
+    background-color: #031c3c;
 
-            background:
+    will-change: opacity;
 
-                linear-gradient(
-                    180deg,
-                    rgba(3, 24, 52, .10) 0%,
-                    rgba(2, 19, 42, .30) 45%,
-                    rgba(1, 13, 30, .92) 100%
-                );
-        }
+    transform: translateZ(0);
 
+    -webkit-transform: translateZ(0);
 
-        .incident-content {
+    transition:
+        opacity 5.5s ease-in-out;
+}
 
-            position: relative;
 
-            z-index: 2;
+/* =========================================================
+   FIRST IMAGE
+========================================================= */
 
-            width: 100%;
+.incident-background {
 
-            padding: 55px;
-        }
+    z-index: 0;
 
+    opacity: 1;
 
-        .brand {
+    background-image:
 
-            position: absolute;
+        linear-gradient(
+            135deg,
+            rgba(3, 28, 60, .65),
+            rgba(4, 48, 98, .50)
+        ),
 
-            top: 35px;
-            left: 45px;
+        url("views/assets/img/loginbg.png");
+}
 
-            display: flex;
 
-            align-items: center;
+/* =========================================================
+   SECOND IMAGE
+========================================================= */
 
-            gap: 10px;
+.incident-background-next {
 
-            font-size: 20px;
+    z-index: 0;
 
-            font-weight: 700;
+    opacity: 0;
 
-            letter-spacing: .3px;
+    background-image:
 
-            z-index: 5;
-        }
+        linear-gradient(
+            135deg,
+            rgba(3, 28, 60, .65),
+            rgba(4, 48, 98, .50)
+        ),
 
+        url("views/assets/img/loginbg2.png");
+}
 
-        .brand-icon {
 
-            width: 34px;
-            height: 34px;
+/*
+ * When .show is applied, the next layer becomes
+ * fully visible.
+ *
+ * It fades directly over the current image.
+ */
 
-            border-radius: 10px;
+.incident-background.show,
+.incident-background-next.show {
 
-            display: flex;
+    opacity: 1;
+}
 
-            align-items: center;
-            justify-content: center;
 
-            background: white;
+/* =========================================================
+   IMAGE OVERLAY
+========================================================= */
 
-            color: var(--primary);
-        }
+.incident-overlay {
 
+    position: absolute;
 
-        .brand-icon img {
+    inset: 0;
 
-            width: 50px;
-            height: 50px;
+    z-index: 1;
 
-            object-fit: contain;
-        }
+    background:
 
+        linear-gradient(
 
-        .incident-tag {
+            180deg,
 
-            display: inline-flex;
+            rgba(3, 24, 52, .10) 0%,
 
-            align-items: center;
+            rgba(2, 19, 42, .30) 45%,
 
-            gap: 8px;
+            rgba(1, 13, 30, .92) 100%
 
-            padding: 8px 14px;
+        );
+}
 
-            border-radius: 30px;
 
-            background: rgba(255,255,255,.13);
+/* =========================================================
+   BRAND
+========================================================= */
 
-            border:
-                1px solid rgba(255,255,255,.24);
+.brand {
 
-            backdrop-filter: blur(10px);
+    position: absolute;
 
-            font-size: 12px;
+    top: 35px;
 
-            margin-bottom: 18px;
-        }
+    left: 45px;
 
+    z-index: 5;
 
-        .incident-tag i {
+    display: flex;
 
-            color: #74b9ff;
-        }
+    align-items: center;
 
+    gap: 10px;
 
-        .incident-content h2 {
+    font-size: 20px;
 
-            font-size:
-                clamp(32px, 4vw, 56px);
+    font-weight: 700;
 
-            line-height: 1.05;
+    letter-spacing: .3px;
+}
 
-            font-weight: 750;
 
-            margin: 0 0 18px;
+.brand-icon {
 
-            letter-spacing: -1.5px;
-        }
+    width: 34px;
 
+    height: 34px;
 
-        .incident-content p {
+    border-radius: 10px;
 
-            max-width: 570px;
+    display: flex;
 
-            color:
-                rgba(255,255,255,.82);
+    align-items: center;
 
-            font-size: 16px;
+    justify-content: center;
 
-            line-height: 1.7;
+    background: white;
 
-            margin-bottom: 28px;
-        }
+    color: var(--primary);
+}
 
 
-        .incident-features {
+.brand-icon img {
 
-            display: flex;
+    width: 50px;
 
-            flex-wrap: wrap;
+    height: 50px;
 
-            gap: 10px;
-        }
+    object-fit: contain;
+}
 
 
-        .feature {
+/* =========================================================
+   INCIDENT CONTENT
+========================================================= */
 
-            display: flex;
+.incident-content {
 
-            align-items: center;
+    position: relative;
 
-            gap: 8px;
+    z-index: 2;
 
-            padding: 9px 13px;
+    width: 100%;
 
-            border-radius: 8px;
+    padding: 55px;
+}
 
-            background:
-                rgba(255,255,255,.09);
 
-            border:
-                1px solid rgba(255,255,255,.15);
+.incident-tag {
 
-            font-size: 12px;
+    display: inline-flex;
 
-            color:
-                rgba(255,255,255,.92);
-        }
+    align-items: center;
 
+    gap: 8px;
 
-        .feature i {
+    padding: 8px 14px;
 
-            color: #8fc8ff;
-        }
+    border-radius: 30px;
 
+    background:
+        rgba(255,255,255,.13);
 
+    border:
+        1px solid rgba(255,255,255,.24);
 
-        /* =========================================================
-           RIGHT AUTH PANEL
-        ========================================================= */
+    backdrop-filter:
+        blur(10px);
 
-        .auth-panel {
+    font-size: 12px;
 
-            width: 50%;
-            height: 100vh;
+    margin-bottom: 18px;
+}
 
-            min-height: 100vh;
 
-            background: var(--card);
+.incident-tag i {
 
-            position: relative;
+    color: #74b9ff;
+}
 
-            display: flex;
 
-            flex-direction: column;
+.incident-content h3 {
 
-            overflow-y: auto;
+    font-size:
+        clamp(32px, 4vw, 56px);
 
-            transition:
-                background .3s ease;
-        }
+    line-height: 1.05;
 
+    font-weight: 750;
 
+    margin: 0 0 18px;
 
-        /* =========================================================
-           TOP CONTROLS
-        ========================================================= */
+    letter-spacing: -1.5px;
+}
 
-        .top-controls {
 
-            width: 100%;
+.incident-content p {
 
-            display: flex;
+    max-width: 570px;
 
-            justify-content: flex-end;
+    color:
+        rgba(255,255,255,.82);
 
-            align-items: center;
+    font-size: 16px;
 
-            gap: 10px;
+    line-height: 1.7;
 
-            padding:
-                24px 35px 0;
+    margin-bottom: 28px;
+}
 
-            flex-shrink: 0;
-        }
 
+.incident-features {
 
-        .control-button {
+    display: flex;
 
-            width: 38px;
-            height: 38px;
+    flex-wrap: wrap;
 
-            border-radius: 10px;
+    gap: 10px;
+}
 
-            border:
-                1px solid var(--border);
 
-            background:
-                var(--input-bg);
+.feature {
 
-            color: var(--text);
+    display: flex;
 
-            display: flex;
+    align-items: center;
 
-            align-items: center;
-            justify-content: center;
+    gap: 8px;
 
-            cursor: pointer;
+    padding: 9px 13px;
 
-            transition: .25s;
-        }
+    border-radius: 8px;
 
+    background:
+        rgba(255,255,255,.09);
 
-        .control-button:hover {
+    border:
+        1px solid rgba(255,255,255,.15);
 
-            background: var(--primary);
+    font-size: 12px;
 
-            color: white;
+    color:
+        rgba(255,255,255,.92);
+}
 
-            border-color:
-                var(--primary);
-        }
 
+.feature i {
 
+    color: #8fc8ff;
+}
 
-        /* =========================================================
-           AUTH CONTENT
-        ========================================================= */
 
-        .auth-inner {
+/* =========================================================
+   RIGHT AUTH PANEL
+========================================================= */
 
-            width:
-                min(470px, calc(100% - 70px));
+.auth-panel {
 
-            margin: auto;
+    width: 50%;
 
-            padding:
-                25px 0 35px;
-        }
+    height: 100vh;
 
+    min-height: 100vh;
 
-        .welcome {
+    background: var(--card);
 
-            text-align: center;
+    position: relative;
 
-            margin-bottom: 30px;
-        }
+    display: flex;
 
+    flex-direction: column;
 
-        .welcome > img {
+    overflow-y: auto;
 
-            width: 55px;
-            height: 55px;
+    transition:
+        background .3s ease;
+}
 
-            object-fit: contain;
 
-            margin-bottom: 15px;
-        }
+/* =========================================================
+   TOP CONTROLS
+========================================================= */
 
+.top-controls {
 
-        .welcome h2 {
+    width: 100%;
 
-            margin: 0 0 8px;
+    display: flex;
 
-            font-size: 29px;
+    justify-content: flex-end;
 
-            font-weight: 750;
+    align-items: center;
 
-            letter-spacing: -.5px;
-        }
+    gap: 10px;
 
+    padding:
+        24px 35px 0;
 
-        .welcome p {
+    flex-shrink: 0;
+}
 
-            color: var(--muted);
 
-            margin: 0;
+.control-button {
 
-            font-size: 14px;
-        }
+    width: 38px;
 
+    height: 38px;
 
+    border-radius: 10px;
 
-        /* =========================================================
-           TABS
-        ========================================================= */
+    border:
+        1px solid var(--border);
 
-        .auth-tabs {
+    background:
+        var(--input-bg);
 
-            display: flex;
+    color: var(--text);
 
-            background:
-                var(--input-bg);
+    display: flex;
 
-            border:
-                1px solid var(--border);
+    align-items: center;
 
-            border-radius: 12px;
+    justify-content: center;
 
-            padding: 4px;
+    cursor: pointer;
 
-            margin-bottom: 25px;
-        }
+    transition: .25s;
+}
 
 
-        .auth-tab {
+.control-button:hover {
 
-            width: 50%;
+    background: var(--primary);
 
-            border: 0;
+    color: white;
 
-            background: transparent;
+    border-color:
+        var(--primary);
+}
 
-            color: var(--muted);
 
-            padding: 12px;
+/* =========================================================
+   AUTH CONTENT
+========================================================= */
 
-            border-radius: 9px;
+.auth-inner {
 
-            font-size: 13px;
+    width:
+        min(470px, calc(100% - 70px));
 
-            font-weight: 650;
+    margin: auto;
 
-            transition: .25s;
+    padding:
+        25px 0 35px;
+}
 
-            cursor: pointer;
-        }
 
+.welcome {
 
-        .auth-tab.active {
+    text-align: center;
 
-            background: var(--primary);
+    margin-bottom: 30px;
+}
 
-            color: white;
 
-            box-shadow:
-                0 5px 15px
-                rgba(8,59,120,.18);
-        }
+.welcome > img {
 
+    width: 55px;
 
+    height: 55px;
 
-        /* =========================================================
-           FORMS
-        ========================================================= */
+    object-fit: contain;
 
-        .form-section {
+    margin-bottom: 15px;
+}
 
-            display: none;
-        }
 
+.welcome h2 {
 
-        .form-section.active {
+    margin: 0 0 8px;
 
-            display: block;
-        }
+    font-size: 29px;
 
+    font-weight: 750;
 
-        .form-label {
+    letter-spacing: -.5px;
+}
 
-            font-size: 13px;
 
-            font-weight: 650;
+.welcome p {
 
-            color: var(--text);
+    color: var(--muted);
 
-            margin-bottom: 7px;
-        }
+    margin: 0;
 
+    font-size: 14px;
+}
 
-        .input-group-custom {
 
-            position: relative;
+/* =========================================================
+   TABS
+========================================================= */
 
-            margin-bottom: 18px;
-        }
+.auth-tabs {
 
+    display: flex;
 
-        .input-icon {
+    background:
+        var(--input-bg);
 
-            position: absolute;
+    border:
+        1px solid var(--border);
 
-            left: 14px;
+    border-radius: 12px;
 
-            top: 50%;
+    padding: 4px;
 
-            transform:
-                translateY(-50%);
+    margin-bottom: 25px;
+}
 
-            color: var(--muted);
 
-            z-index: 5;
-        }
+.auth-tab {
 
+    width: 50%;
 
-        .form-control-custom {
+    border: 0;
 
-            width: 100%;
+    background: transparent;
 
-            height: 48px;
+    color: var(--muted);
 
-            border:
-                1px solid var(--border);
+    padding: 12px;
 
-            border-radius: 9px;
+    border-radius: 9px;
 
-            background:
-                var(--input-bg);
+    font-size: 13px;
 
-            color: var(--text);
+    font-weight: 650;
 
-            padding:
-                0 43px 0 42px;
+    transition: .25s;
 
-            outline: none;
+    cursor: pointer;
+}
 
-            font-size: 13px;
 
-            transition: .25s;
-        }
+.auth-tab.active {
 
+    background: var(--primary);
 
-        .form-control-custom::placeholder {
+    color: white;
 
-            color: var(--muted);
+    box-shadow:
+        0 5px 15px
+        rgba(8,59,120,.18);
+}
 
-            opacity: .8;
-        }
 
+/* =========================================================
+   FORMS
+========================================================= */
 
-        .form-control-custom:focus {
+.form-section {
 
-            border-color:
-                var(--primary-light);
+    display: none;
+}
 
-            box-shadow:
-                0 0 0 3px
-                rgba(13,79,156,.10);
-        }
 
+.form-section.active {
 
-        .password-toggle {
+    display: block;
+}
 
-            position: absolute;
 
-            right: 14px;
+.form-label {
 
-            top: 50%;
+    font-size: 13px;
 
-            transform:
-                translateY(-50%);
+    font-weight: 650;
 
-            color: var(--muted);
+    color: var(--text);
 
-            cursor: pointer;
+    margin-bottom: 7px;
+}
 
-            z-index: 5;
-        }
 
+.input-group-custom {
 
+    position: relative;
 
-        /* =========================================================
-           FORM OPTIONS
-        ========================================================= */
+    margin-bottom: 18px;
+}
 
-        .form-options {
 
-            display: flex;
+.input-icon {
 
-            justify-content: space-between;
+    position: absolute;
 
-            align-items: center;
+    left: 14px;
 
-            gap: 8px;
+    top: 50%;
 
-            margin-bottom: 20px;
+    transform:
+        translateY(-50%);
 
-            font-size: 12px;
+    color: var(--muted);
 
-            flex-wrap: wrap;
-        }
+    z-index: 5;
+}
 
 
-        .remember {
+.form-control-custom {
 
-            display: flex;
+    width: 100%;
 
-            align-items: center;
+    height: 48px;
 
-            gap: 7px;
+    border:
+        1px solid var(--border);
 
-            color: var(--muted);
-        }
+    border-radius: 9px;
 
+    background:
+        var(--input-bg);
 
-        .remember input {
+    color: var(--text);
 
-            accent-color:
-                var(--primary);
+    padding:
+        0 43px 0 42px;
 
-            width: 14px;
-            height: 14px;
-        }
+    outline: none;
 
+    font-size: 13px;
 
-        .forgot {
+    transition: .25s;
+}
 
-            color:
-                var(--primary-light);
 
-            text-decoration: none;
+.form-control-custom::placeholder {
 
-            font-weight: 600;
-        }
+    color: var(--muted);
 
+    opacity: .8;
+}
 
-        .forgot:hover {
 
-            text-decoration: underline;
-        }
+.form-control-custom:focus {
 
+    border-color:
+        var(--primary-light);
 
+    box-shadow:
+        0 0 0 3px
+        rgba(13,79,156,.10);
+}
 
-        /* =========================================================
-           MAIN BUTTON
-        ========================================================= */
 
-        .main-button {
+.password-toggle {
 
-            width: 100%;
+    position: absolute;
 
-            height: 49px;
+    right: 14px;
 
-            border: 0;
+    top: 50%;
 
-            border-radius: 9px;
+    transform:
+        translateY(-50%);
 
-            background:
+    color: var(--muted);
 
-                linear-gradient(
-                    135deg,
-                    var(--button),
-                    var(--primary-light)
-                );
+    cursor: pointer;
 
-            color: white;
+    z-index: 5;
+}
 
-            font-size: 14px;
 
-            font-weight: 700;
+/* =========================================================
+   FORM OPTIONS
+========================================================= */
 
-            letter-spacing: .2px;
+.form-options {
 
-            transition: .25s;
+    display: flex;
 
-            box-shadow:
-                0 10px 22px
-                rgba(8,59,120,.18);
+    justify-content: space-between;
 
-            cursor: pointer;
-        }
+    align-items: center;
 
+    gap: 8px;
 
-        .main-button:hover {
+    margin-bottom: 20px;
 
-            background:
+    font-size: 12px;
 
-                linear-gradient(
-                    135deg,
-                    var(--button-hover),
-                    var(--primary)
-                );
+    flex-wrap: wrap;
+}
 
-            transform:
-                translateY(-1px);
-        }
 
+.remember {
 
+    display: flex;
 
-        /* =========================================================
-           FOOTER
-        ========================================================= */
+    align-items: center;
 
-        .auth-footer {
+    gap: 7px;
 
-            text-align: center;
+    color: var(--muted);
+}
 
-            margin-top: 24px;
 
-            font-size: 11px;
+.remember input {
 
-            color: var(--muted);
+    accent-color:
+        var(--primary);
 
-            line-height: 1.6;
-        }
+    width: 14px;
 
+    height: 14px;
+}
 
-        .auth-footer a {
 
-            color:
-                var(--primary-light);
+.forgot {
 
-            text-decoration: none;
+    color:
+        var(--primary-light);
 
-            font-weight: 600;
-        }
+    text-decoration: none;
 
+    font-weight: 600;
+}
 
 
-        /* =========================================================
-           TERMS AGREEMENT
-        ========================================================= */
+.forgot:hover {
 
-        .terms-agreement {
+    text-decoration: underline;
+}
 
-            display: flex;
 
-            align-items: flex-start;
+/* =========================================================
+   MAIN BUTTON
+========================================================= */
 
-            gap: 9px;
+.main-button {
 
-            color: var(--muted);
+    width: 100%;
 
-            font-size: 12px;
+    height: 49px;
 
-            line-height: 1.5;
+    border: 0;
 
-            margin-bottom: 20px;
-        }
+    border-radius: 9px;
 
+    background:
 
-        .terms-agreement input {
+        linear-gradient(
+            135deg,
+            var(--button),
+            var(--primary-light)
+        );
 
-            width: 16px;
-            height: 16px;
+    color: white;
 
-            margin-top: 2px;
+    font-size: 14px;
 
-            flex-shrink: 0;
+    font-weight: 700;
 
-            accent-color:
-                var(--primary);
+    letter-spacing: .2px;
 
-            cursor: pointer;
-        }
+    transition: .25s;
 
+    box-shadow:
+        0 10px 22px
+        rgba(8,59,120,.18);
 
-        .terms-link {
+    cursor: pointer;
+}
 
-            border: 0;
 
-            padding: 0;
+.main-button:hover {
 
-            background: transparent;
+    background:
 
-            color:
-                var(--primary-light);
+        linear-gradient(
+            135deg,
+            var(--button-hover),
+            var(--primary)
+        );
 
-            font-weight: 700;
+    transform:
+        translateY(-1px);
+}
 
-            text-decoration: underline;
 
-            cursor: pointer;
+/* =========================================================
+   FOOTER
+========================================================= */
 
-            font-size: inherit;
-        }
+.auth-footer {
 
+    text-align: center;
 
-        .terms-link:hover {
+    margin-top: 24px;
 
-            color: var(--primary);
-        }
+    font-size: 11px;
 
+    color: var(--muted);
 
+    line-height: 1.6;
+}
 
-        /* =========================================================
-           CUSTOM TERMS MODAL
-        ========================================================= */
 
-        .terms-modal-overlay {
+.auth-footer a {
 
-            position: fixed;
+    color:
+        var(--primary-light);
 
-            inset: 0;
+    text-decoration: none;
 
-            width: 100%;
-            height: 100%;
+    font-weight: 600;
+}
 
-            background:
-                rgba(2, 12, 28, .72);
 
-            backdrop-filter:
-                blur(5px);
+/* =========================================================
+   TERMS AGREEMENT
+========================================================= */
 
-            -webkit-backdrop-filter:
-                blur(5px);
+.terms-agreement {
 
-            display: none;
+    display: flex;
 
-            align-items: center;
+    align-items: flex-start;
 
-            justify-content: center;
+    gap: 9px;
 
-            padding: 20px;
+    color: var(--muted);
 
-            z-index: 99999;
-        }
+    font-size: 12px;
 
+    line-height: 1.5;
 
-        .terms-modal-overlay.show {
+    margin-bottom: 20px;
+}
 
-            display: flex;
-        }
 
+.terms-agreement input {
 
-        .terms-modal-box {
+    width: 16px;
 
-            width:
-                min(850px, 100%);
+    height: 16px;
 
-            max-height:
-                calc(100vh - 40px);
+    margin-top: 2px;
 
-            background:
-                var(--card);
+    flex-shrink: 0;
 
-            color:
-                var(--text);
+    accent-color:
+        var(--primary);
 
-            border:
-                1px solid var(--border);
+    cursor: pointer;
+}
 
-            border-radius: 16px;
 
-            box-shadow:
-                0 30px 100px
-                rgba(0,0,0,.35);
+.terms-link {
 
-            display: flex;
+    border: 0;
 
-            flex-direction: column;
+    padding: 0;
 
-            overflow: hidden;
+    background: transparent;
 
-            animation:
-                termsModalOpen .18s ease-out;
-        }
+    color:
+        var(--primary-light);
 
+    font-weight: 700;
 
-        @keyframes termsModalOpen {
+    text-decoration: underline;
 
-            from {
+    cursor: pointer;
 
-                opacity: 0;
+    font-size: inherit;
+}
 
-                transform:
-                    translateY(15px)
-                    scale(.98);
-            }
 
-            to {
+.terms-link:hover {
 
-                opacity: 1;
+    color:
+        var(--primary);
+}
 
-                transform:
-                    translateY(0)
-                    scale(1);
-            }
-        }
 
 
-        .terms-modal-header {
+/* =========================================================
+   FORGOT PASSWORD MODAL
+========================================================= */
 
-            flex-shrink: 0;
+.forgot-modal-overlay {
 
-            background:
+    position: fixed;
 
-                linear-gradient(
-                    135deg,
-                    var(--primary-dark),
-                    var(--primary)
-                );
+    inset: 0;
 
-            color: white;
+    width: 100%;
+    height: 100%;
 
-            padding:
-                18px 22px;
+    background:
+        rgba(2, 12, 28, .72);
 
-            display: flex;
+    backdrop-filter:
+        blur(7px);
 
-            align-items: center;
+    -webkit-backdrop-filter:
+        blur(7px);
 
-            justify-content: space-between;
+    display: none;
 
-            gap: 15px;
-        }
+    align-items: center;
+    justify-content: center;
 
+    padding: 20px;
 
-        .terms-modal-title {
+    z-index: 99998;
+}
 
-            margin: 0;
 
-            font-size: 18px;
+.forgot-modal-overlay.show {
 
-            font-weight: 750;
-        }
+    display: flex;
+}
 
 
-        .terms-modal-subtitle {
+.forgot-modal-box {
 
-            display: block;
+    width:
+        min(455px, 100%);
 
-            margin-top: 4px;
+    background:
+        var(--card);
 
-            font-size: 11px;
+    color:
+        var(--text);
 
-            opacity: .75;
-        }
+    border:
+        1px solid var(--border);
 
+    border-radius: 18px;
 
-        .terms-close-button {
+    box-shadow:
+        0 30px 100px rgba(0,0,0,.35);
 
-            width: 36px;
-            height: 36px;
+    overflow: hidden;
 
-            flex-shrink: 0;
+    animation:
+        forgotModalOpen .22s ease-out;
+}
 
-            border: 0;
 
-            border-radius: 8px;
+@keyframes forgotModalOpen {
 
-            background:
-                rgba(255,255,255,.10);
+    from {
 
-            color: white;
+        opacity: 0;
 
-            font-size: 20px;
+        transform:
+            translateY(18px)
+            scale(.96);
+    }
 
-            cursor: pointer;
+    to {
 
-            display: flex;
+        opacity: 1;
 
-            align-items: center;
+        transform:
+            translateY(0)
+            scale(1);
+    }
+}
 
-            justify-content: center;
 
-            transition: .2s;
-        }
+.forgot-modal-header {
 
+    position: relative;
 
-        .terms-close-button:hover {
+    padding:
+        26px 25px 23px;
 
-            background:
-                rgba(255,255,255,.22);
-        }
+    color: white;
 
+    background:
 
+        linear-gradient(
+            135deg,
+            var(--primary-dark),
+            var(--primary),
+            var(--primary-light)
+        );
 
-        /* =========================================================
-           TERMS SCROLL AREA
-        ========================================================= */
+    overflow: hidden;
+}
 
-        .terms-scroll-area {
 
-            flex: 1;
+.forgot-modal-header::after {
 
-            min-height: 0;
+    content: "";
 
-            overflow-y: auto;
+    position: absolute;
 
-            overscroll-behavior: contain;
+    width: 150px;
+    height: 150px;
 
-            -webkit-overflow-scrolling: touch;
-        }
+    right: -55px;
+    top: -70px;
 
+    border-radius: 50%;
 
-        .terms-content {
+    background:
+        rgba(255,255,255,.08);
+}
 
-            padding: 25px;
 
-            font-size: 13px;
+.forgot-modal-icon {
 
-            line-height: 1.7;
-        }
+    width: 48px;
+    height: 48px;
 
+    border-radius: 13px;
 
-        .terms-content h5 {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
-            color: var(--text);
+    margin-bottom: 14px;
 
-            font-size: 14px;
+    background:
+        rgba(255,255,255,.14);
 
-            font-weight: 750;
+    border:
+        1px solid rgba(255,255,255,.20);
 
-            margin-top: 22px;
+    font-size: 21px;
+}
 
-            margin-bottom: 8px;
-        }
 
+.forgot-modal-title {
 
-        .terms-content h5:first-child {
+    margin: 0 45px 5px 0;
 
-            margin-top: 0;
-        }
+    font-size: 20px;
 
+    font-weight: 750;
 
-        .terms-content p {
+    letter-spacing: -.3px;
+}
 
-            color: var(--muted);
 
-            margin-bottom: 10px;
-        }
+.forgot-modal-subtitle {
 
+    margin: 0;
 
-        .terms-content ul {
+    color:
+        rgba(255,255,255,.78);
 
-            color: var(--muted);
+    font-size: 12px;
 
-            padding-left: 20px;
+    line-height: 1.55;
+}
 
-            margin-bottom: 10px;
-        }
 
+.forgot-close-button {
 
-        .terms-content li {
+    position: absolute;
 
-            margin-bottom: 6px;
-        }
+    right: 17px;
+    top: 17px;
 
+    width: 35px;
+    height: 35px;
 
-        .terms-warning {
+    border: 0;
 
-            background:
-                rgba(255,193,7,.10);
+    border-radius: 9px;
 
-            border:
-                1px solid rgba(255,193,7,.30);
+    background:
+        rgba(255,255,255,.10);
 
-            color: var(--text);
+    color: white;
 
-            padding:
-                13px 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
-            border-radius: 10px;
+    cursor: pointer;
 
-            margin: 18px 0;
-        }
+    transition: .2s;
 
+    z-index: 2;
+}
 
-        .terms-warning i {
 
-            color: #d99b00;
-        }
+.forgot-close-button:hover {
 
+    background:
+        rgba(255,255,255,.22);
 
+    transform:
+        rotate(90deg);
+}
 
-        /* =========================================================
-           TERMS STATUS
-        ========================================================= */
 
-        .terms-scroll-status {
+.forgot-modal-body {
 
-            flex-shrink: 0;
+    padding: 24px 25px 25px;
+}
 
-            background:
-                var(--background);
 
-            border-top:
-                1px solid var(--border);
+.forgot-security-note {
 
-            padding:
-                9px 20px;
+    display: flex;
 
-            text-align: center;
+    align-items: flex-start;
 
-            color: var(--muted);
+    gap: 10px;
 
-            font-size: 11px;
+    padding: 12px 13px;
 
-            transition: .2s;
-        }
+    margin-bottom: 20px;
 
+    border-radius: 10px;
 
-        .terms-scroll-status.read {
+    background:
+        rgba(13,79,156,.07);
 
-            color: #198754;
+    border:
+        1px solid rgba(13,79,156,.14);
 
-            background:
-                rgba(25,135,84,.08);
-        }
+    color: var(--muted);
 
+    font-size: 11px;
 
+    line-height: 1.55;
+}
 
-        /* =========================================================
-           TERMS FOOTER
-        ========================================================= */
 
-        .terms-modal-footer {
+.forgot-security-note i {
 
-            flex-shrink: 0;
+    color:
+        var(--primary-light);
 
-            border-top:
-                1px solid var(--border);
+    font-size: 15px;
 
-            padding:
-                14px 20px;
+    margin-top: 1px;
+}
 
-            background:
-                var(--card);
 
-            display: flex;
+.forgot-question-box {
 
-            justify-content: flex-end;
+    margin-bottom: 18px;
+}
 
-            align-items: center;
 
-            gap: 10px;
-        }
+.forgot-question-label {
 
+    display: block;
 
-        .terms-cancel-button {
+    color: var(--text);
 
-            border:
-                1px solid var(--border);
+    font-size: 12px;
 
-            background:
-                var(--input-bg);
+    font-weight: 700;
 
-            color:
-                var(--text);
+    margin-bottom: 8px;
+}
 
-            border-radius: 8px;
 
-            padding:
-                10px 18px;
+.forgot-question {
 
-            font-size: 13px;
+    width: 100%;
 
-            font-weight: 600;
+    min-height: 48px;
 
-            cursor: pointer;
-        }
+    display: flex;
 
+    align-items: center;
 
-        .terms-accept-button {
+    gap: 10px;
 
-            border: 0;
+    padding: 11px 13px;
 
-            border-radius: 8px;
+    border-radius: 9px;
 
-            padding:
-                10px 18px;
+    background: var(--background);
 
-            background:
-                var(--primary);
+    border: 1px solid var(--border);
 
-            color: white;
+    color: var(--text);
 
-            font-size: 13px;
+    font-size: 13px;
 
-            font-weight: 700;
+    line-height: 1.45;
+}
 
-            cursor: pointer;
 
-            transition: .2s;
-        }
+.forgot-question i {
 
+    color:
+        var(--primary-light);
 
-        .terms-accept-button:hover:not(:disabled) {
+    flex-shrink: 0;
+}
 
-            background:
-                var(--primary-light);
 
-            transform:
-                translateY(-1px);
-        }
+.forgot-modal-body .input-group-custom {
 
+    margin-bottom: 20px;
+}
 
-        .terms-accept-button:disabled {
 
-            opacity: .45;
+.forgot-modal-body .form-control-custom {
 
-            cursor: not-allowed;
+    padding-right: 14px;
+}
 
-            transform: none;
-        }
 
+.forgot-submit-button {
 
+    width: 100%;
 
-        /* =========================================================
-           PREVENT BACKGROUND SCROLL WHILE TERMS OPEN
-        ========================================================= */
+    height: 49px;
 
-        body.terms-open {
+    border: 0;
 
-            overflow: hidden !important;
-        }
+    border-radius: 9px;
 
+    background:
 
+        linear-gradient(
+            135deg,
+            var(--button),
+            var(--primary-light)
+        );
 
-        /* =========================================================
-           MOBILE
-        ========================================================= */
+    color: white;
 
-        @media (max-width: 900px) {
+    font-size: 14px;
 
-            body {
+    font-weight: 700;
 
-                overflow: auto;
-            }
+    letter-spacing: .2px;
 
+    cursor: pointer;
 
-            .page-container {
+    transition: .25s;
 
-                width: 100%;
+    box-shadow:
+        0 10px 22px
+        rgba(8,59,120,.18);
+}
 
-                min-height: 100vh;
 
-                height: auto;
+.forgot-submit-button:hover {
 
-                display: block;
-            }
+    background:
 
+        linear-gradient(
+            135deg,
+            var(--button-hover),
+            var(--primary)
+        );
 
-            .incident-panel {
+    transform:
+        translateY(-1px);
+}
 
-                display: none;
-            }
 
+.forgot-cancel-button {
 
-            .auth-panel {
+    width: 100%;
 
-                width: 100%;
+    margin-top: 9px;
 
-                min-height: 100vh;
+    height: 40px;
 
-                height: auto;
+    border: 0;
 
-                overflow-y: auto;
-            }
+    background: transparent;
 
+    color: var(--muted);
 
-            .top-controls {
+    font-size: 12px;
 
-                padding:
-                    18px 20px 0;
-            }
+    font-weight: 600;
 
+    cursor: pointer;
 
-            .auth-inner {
+    transition: .2s;
+}
 
-                width:
-                    min(
-                        470px,
-                        calc(100% - 40px)
-                    );
 
-                padding-top: 20px;
+.forgot-cancel-button:hover {
 
-                padding-bottom: 30px;
-            }
+    color: var(--primary-light);
+}
 
 
-            .welcome h2 {
+body.forgot-open {
 
-                font-size: 26px;
-            }
+    overflow: hidden !important;
+}
 
 
-            .terms-modal-overlay {
+@media (max-width: 480px) {
 
-                padding: 10px;
-            }
+    .forgot-modal-overlay {
 
+        padding: 12px;
+    }
 
-            .terms-modal-box {
 
-                max-height:
-                    calc(100vh - 20px);
+    .forgot-modal-box {
 
-                border-radius: 12px;
-            }
+        border-radius: 14px;
+    }
 
 
-            .terms-content {
+    .forgot-modal-header {
 
-                padding: 20px;
-            }
-        }
+        padding:
+            22px 19px 20px;
+    }
 
 
-        @media (max-width: 480px) {
+    .forgot-modal-body {
 
-            .auth-inner {
+        padding:
+            20px 19px 21px;
+    }
 
-                width:
-                    calc(100% - 30px);
-            }
 
+    .forgot-modal-title {
 
-            .top-controls {
+        font-size: 18px;
+    }
 
-                padding-right: 15px;
-            }
+}
 
+/* =========================================================
+   TERMS MODAL
+========================================================= */
 
-            .welcome {
+.terms-modal-overlay {
 
-                margin-bottom: 22px;
-            }
+    position: fixed;
 
+    inset: 0;
 
-            .welcome h2 {
+    width: 100%;
 
-                font-size: 24px;
-            }
+    height: 100%;
 
+    background:
+        rgba(2, 12, 28, .72);
 
-            .form-control-custom {
+    backdrop-filter:
+        blur(5px);
 
-                height: 47px;
-            }
+    -webkit-backdrop-filter:
+        blur(5px);
 
+    display: none;
 
-            .form-options {
+    align-items: center;
 
-                flex-wrap: wrap;
-            }
+    justify-content: center;
 
+    padding: 20px;
 
-            .terms-modal-header {
+    z-index: 99999;
+}
 
-                padding:
-                    15px;
-            }
 
+.terms-modal-overlay.show {
 
-            .terms-modal-title {
+    display: flex;
+}
 
-                font-size: 16px;
-            }
 
+.terms-modal-box {
 
-            .terms-content {
+    width:
+        min(850px, 100%);
 
-                padding: 18px;
+    max-height:
+        calc(100vh - 40px);
 
-                font-size: 12.5px;
-            }
+    background:
+        var(--card);
 
+    color:
+        var(--text);
 
-            .terms-modal-footer {
+    border:
+        1px solid var(--border);
 
-                flex-direction: column;
-            }
+    border-radius: 16px;
 
+    box-shadow:
+        0 30px 100px
+        rgba(0,0,0,.35);
 
-            .terms-modal-footer button {
+    display: flex;
 
-                width: 100%;
-            }
-        }
+    flex-direction: column;
 
-    </style>
+    overflow: hidden;
+
+    animation:
+        termsModalOpen .18s ease-out;
+}
+
+
+@keyframes termsModalOpen {
+
+    from {
+
+        opacity: 0;
+
+        transform:
+            translateY(15px)
+            scale(.98);
+    }
+
+    to {
+
+        opacity: 1;
+
+        transform:
+            translateY(0)
+            scale(1);
+    }
+}
+
+
+.terms-modal-header {
+
+    flex-shrink: 0;
+
+    background:
+
+        linear-gradient(
+            135deg,
+            var(--primary-dark),
+            var(--primary)
+        );
+
+    color: white;
+
+    padding:
+        18px 22px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 15px;
+}
+
+
+.terms-modal-title {
+
+    margin: 0;
+
+    font-size: 18px;
+
+    font-weight: 750;
+}
+
+
+.terms-modal-subtitle {
+
+    display: block;
+
+    margin-top: 4px;
+
+    font-size: 11px;
+
+    opacity: .75;
+}
+
+
+.terms-close-button {
+
+    width: 36px;
+
+    height: 36px;
+
+    flex-shrink: 0;
+
+    border: 0;
+
+    border-radius: 8px;
+
+    background:
+        rgba(255,255,255,.10);
+
+    color: white;
+
+    font-size: 20px;
+
+    cursor: pointer;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    transition: .2s;
+}
+
+
+.terms-close-button:hover {
+
+    background:
+        rgba(255,255,255,.22);
+}
+
+
+/* =========================================================
+   TERMS SCROLL
+========================================================= */
+
+.terms-scroll-area {
+
+    flex: 1;
+
+    min-height: 0;
+
+    overflow-y: auto;
+
+    overscroll-behavior: contain;
+
+    -webkit-overflow-scrolling: touch;
+}
+
+
+.terms-content {
+
+    padding: 25px;
+
+    font-size: 13px;
+
+    line-height: 1.7;
+}
+
+
+.terms-content h5 {
+
+    color: var(--text);
+
+    font-size: 14px;
+
+    font-weight: 750;
+
+    margin-top: 22px;
+
+    margin-bottom: 8px;
+}
+
+
+.terms-content h5:first-child {
+
+    margin-top: 0;
+}
+
+
+.terms-content p {
+
+    color: var(--muted);
+
+    margin-bottom: 10px;
+}
+
+
+.terms-content ul {
+
+    color: var(--muted);
+
+    padding-left: 20px;
+
+    margin-bottom: 10px;
+}
+
+
+.terms-content li {
+
+    margin-bottom: 6px;
+}
+
+
+.terms-warning {
+
+    background:
+        rgba(255,193,7,.10);
+
+    border:
+        1px solid rgba(255,193,7,.30);
+
+    color: var(--text);
+
+    padding:
+        13px 15px;
+
+    border-radius: 10px;
+
+    margin: 18px 0;
+}
+
+
+.terms-warning i {
+
+    color: #d99b00;
+}
+
+
+/* =========================================================
+   TERMS STATUS
+========================================================= */
+
+.terms-scroll-status {
+
+    flex-shrink: 0;
+
+    background:
+        var(--background);
+
+    border-top:
+        1px solid var(--border);
+
+    padding:
+        9px 20px;
+
+    text-align: center;
+
+    color: var(--muted);
+
+    font-size: 11px;
+
+    transition: .2s;
+}
+
+
+.terms-scroll-status.read {
+
+    color: #198754;
+
+    background:
+        rgba(25,135,84,.08);
+}
+
+
+/* =========================================================
+   TERMS FOOTER
+========================================================= */
+
+.terms-modal-footer {
+
+    flex-shrink: 0;
+
+    border-top:
+        1px solid var(--border);
+
+    padding:
+        14px 20px;
+
+    background:
+        var(--card);
+
+    display: flex;
+
+    justify-content: flex-end;
+
+    align-items: center;
+
+    gap: 10px;
+}
+
+
+.terms-cancel-button {
+
+    border:
+        1px solid var(--border);
+
+    background:
+        var(--input-bg);
+
+    color:
+        var(--text);
+
+    border-radius: 8px;
+
+    padding:
+        10px 18px;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+
+.terms-accept-button {
+
+    border: 0;
+
+    border-radius: 8px;
+
+    padding:
+        10px 18px;
+
+    background:
+        var(--primary);
+
+    color: white;
+
+    font-size: 13px;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition: .2s;
+}
+
+
+.terms-accept-button:hover:not(:disabled) {
+
+    background:
+        var(--primary-light);
+
+    transform:
+        translateY(-1px);
+}
+
+
+.terms-accept-button:disabled {
+
+    opacity: .45;
+
+    cursor: not-allowed;
+
+    transform: none;
+}
+
+
+/* =========================================================
+   PREVENT BACKGROUND SCROLL
+========================================================= */
+
+body.terms-open {
+
+    overflow: hidden !important;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 900px) {
+
+    body {
+
+        overflow: auto;
+    }
+
+
+    .page-container {
+
+        width: 100%;
+
+        min-height: 100vh;
+
+        height: auto;
+
+        display: block;
+    }
+
+
+    .incident-panel {
+
+        display: none;
+    }
+
+
+    .auth-panel {
+
+        width: 100%;
+
+        min-height: 100vh;
+
+        height: auto;
+
+        overflow-y: auto;
+    }
+
+
+    .top-controls {
+
+        padding:
+            18px 20px 0;
+    }
+
+
+    .auth-inner {
+
+        width:
+            min(
+                470px,
+                calc(100% - 40px)
+            );
+
+        padding-top: 20px;
+
+        padding-bottom: 30px;
+    }
+
+
+    .welcome h2 {
+
+        font-size: 26px;
+    }
+
+
+    .terms-modal-overlay {
+
+        padding: 10px;
+    }
+
+
+    .terms-modal-box {
+
+        max-height:
+            calc(100vh - 20px);
+
+        border-radius: 12px;
+    }
+
+
+    .terms-content {
+
+        padding: 20px;
+    }
+}
+
+
+@media (max-width: 480px) {
+
+    .auth-inner {
+
+        width:
+            calc(100% - 30px);
+    }
+
+
+    .top-controls {
+
+        padding-right: 15px;
+    }
+
+
+    .welcome {
+
+        margin-bottom: 22px;
+    }
+
+
+    .welcome h2 {
+
+        font-size: 24px;
+    }
+
+
+    .form-control-custom {
+
+        height: 47px;
+    }
+
+
+    .form-options {
+
+        flex-wrap: wrap;
+    }
+
+
+    .terms-modal-header {
+
+        padding:
+            15px;
+    }
+
+
+    .terms-modal-title {
+
+        font-size: 16px;
+    }
+
+
+    .terms-content {
+
+        padding: 18px;
+
+        font-size: 12.5px;
+    }
+
+
+    .terms-modal-footer {
+
+        flex-direction: column;
+    }
+
+
+    .terms-modal-footer button {
+
+        width: 100%;
+    }
+
+}
+
+</style>
 
 </head>
 
@@ -1500,28 +2091,36 @@
 <body>
 
 
-
 <?php
+$password_generated = chr(rand(65, 90)) . str_pad(rand(0, 99999), 5, '0', STR_PAD_LEFT);
+
 
 if (isset($_SESSION['success'])) {
+
     $msgtext = $_SESSION['success'];
+
     $url = "#";
+
     $showAlert = true;
 
     unset($_SESSION['success']);
+
 }
 
+
 if (isset($_SESSION['error'])) {
+
     $msgtext = $_SESSION['error'];
+
     $url = "#";
+
     $showAlert = false;
 
     unset($_SESSION['error']);
+
 }
 
 ?>
-
-
 
 
 <div class="page-container">
@@ -1532,6 +2131,21 @@ if (isset($_SESSION['error'])) {
     ====================================================== -->
 
     <section class="incident-panel">
+
+
+        <!--
+            IMPORTANT:
+
+            These two layers are responsible for the
+            smooth crossfade.
+
+            There is always an image underneath another
+            image. No blank blue state.
+        -->
+
+        <div class="incident-background"></div>
+
+        <div class="incident-background-next"></div>
 
 
         <div class="incident-overlay"></div>
@@ -1569,7 +2183,7 @@ if (isset($_SESSION['error'])) {
 
                 <b>
 
-                    Ai Consult & Security<br>
+                    Ai Consult & Security
 
                     Services Ltd.
 
@@ -1581,8 +2195,11 @@ if (isset($_SESSION['error'])) {
             <p>
 
                 Securely report incidents, suspicious activities,
+
                 emergencies and other important events. Your report
+
                 helps organizations respond quickly and take the
+
                 appropriate action.
 
             </p>
@@ -1635,8 +2252,6 @@ if (isset($_SESSION['error'])) {
     <section class="auth-panel">
 
 
-        <!-- TOP CONTROLS -->
-
         <div class="top-controls">
 
 
@@ -1665,14 +2280,13 @@ if (isset($_SESSION['error'])) {
 
 
 
-        <!-- AUTH -->
-
         <div class="auth-inner">
 
 
-            <!-- WELCOME -->
-
-            <div class="welcome">
+            <div
+                class="welcome"
+                style="margin-top: -50px !important;"
+            >
 
 
                 <img
@@ -1682,12 +2296,16 @@ if (isset($_SESSION['error'])) {
 
 
                 <h2>
+
                     Welcome Back!
+
                 </h2>
 
 
                 <p>
+
                     Access your incident reporting account
+
                 </p>
 
 
@@ -1695,7 +2313,7 @@ if (isset($_SESSION['error'])) {
 
 
 
-            <!-- TABS -->
+            <?php if ($company_Allow_signup != 0) { ?>
 
             <div class="auth-tabs">
 
@@ -1705,7 +2323,9 @@ if (isset($_SESSION['error'])) {
                     id="loginTab"
                     type="button"
                 >
+
                     LOGIN
+
                 </button>
 
 
@@ -1714,16 +2334,20 @@ if (isset($_SESSION['error'])) {
                     id="signupTab"
                     type="button"
                 >
+
                     SIGN UP
+
                 </button>
 
 
             </div>
 
+            <?php } ?>
+
 
 
             <!-- =================================================
-                 LOGIN
+                 LOGIN FORM
             ================================================== -->
 
             <div
@@ -1739,19 +2363,24 @@ if (isset($_SESSION['error'])) {
 
 
                     <label class="form-label">
-                        User ID
+
+                       Reference ID
+
                     </label>
 
 
                     <div class="input-group-custom">
 
 
-                        <i class="bi bi-person input-icon"></i>
+                        <i
+                            class="bi bi-person input-icon"
+                        ></i>
 
 
                         <input
-                           maxlength="20"
-                            type="text" pattern="^[0-9]+$"
+                            maxlength="20"
+                            type="text"
+                            pattern="^[0-9]+$"
                             name="userid"
                             class="form-control-custom"
                             placeholder="Enter your user ID"
@@ -1764,18 +2393,22 @@ if (isset($_SESSION['error'])) {
 
 
                     <label class="form-label">
+
                         Password
+
                     </label>
 
 
                     <div class="input-group-custom">
 
 
-                        <i class="bi bi-lock input-icon"></i>
+                        <i
+                            class="bi bi-lock input-icon"
+                        ></i>
 
 
-                        <input 
-                        maxlength="20"
+                        <input
+                            maxlength="20"
                             type="password"
                             name="password"
                             class="form-control-custom"
@@ -1803,55 +2436,40 @@ if (isset($_SESSION['error'])) {
                     <div class="form-options">
 
 
-                        <label class="remember">
-
-                            <input
-                                type="radio"
-                                name="role"
-                                value="reporter"
-                                checked
-                            >
-
-                            <b>Reporter</b>
-
-                        </label>
-
-
-                        <label class="remember">
-
-                            <input
-                                type="radio"
-                                name="role"
-                                value="admin"
-                            >
-
-                            <b>Admin</b>
-
-                        </label>
-
-
-                        <label class="remember">
-
-                            <input
-                                type="radio"
-                                name="role"
-                                value="dev"
-                            >
-
-                            <b>Developer</b>
-
-                        </label>
+                        <span></span>
 
 
                         <a
                             href="#"
                             class="forgot"
+                            id="openForgotPasswordButton"
+                            onclick="
+                                openForgotPassword();
+                                return false;
+                            "
                         >
+
                             <b>Forgot password?</b>
+
                         </a>
 
 
                     </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1874,6 +2492,8 @@ if (isset($_SESSION['error'])) {
 
 
 
+                <?php if ($company_Allow_signup != 0) { ?>
+
                 <div class="auth-footer">
 
 
@@ -1895,13 +2515,15 @@ if (isset($_SESSION['error'])) {
 
                 </div>
 
+                <?php } ?>
+
 
             </div>
 
 
 
             <!-- =================================================
-                 SIGNUP
+                 SIGNUP FORM
             ================================================== -->
 
             <div
@@ -1911,37 +2533,17 @@ if (isset($_SESSION['error'])) {
 
 
                 <form
-                    id="signupAccountForm" action="index?action=create_reporter"
-                    method="post" enctype="multipart/form-data"
+                    id="signupAccountForm"
+                    action="index?action=create_reporter"
+                    method="post"
+                    enctype="multipart/form-data"
                 >
 
 
                     <label class="form-label">
-                        Full Name
-                    </label>
 
+                        Legal Name
 
-                    <div class="input-group-custom">
-
-
-                        <i class="bi bi-person input-icon"></i>
-
-
-                        <input
-                            type="text"
-                            name="fullname" maxlength="30"
-                            class="form-control-custom"
-                            placeholder="Enter your name"
-                            required
-                        >
-
-
-                    </div>
-
-
-
-                    <label class="form-label">
-                        Phone
                     </label>
 
 
@@ -1949,16 +2551,16 @@ if (isset($_SESSION['error'])) {
 
 
                         <i
-                            class="bi bi-telephone input-icon"
+                            class="bi bi-person input-icon"
                         ></i>
 
 
                         <input
-                            type="tel" maxlength="15"
-                             pattern="^\+?[0-9]+$" inputmode="numeric"
-                            name="phone"
+                            type="text"
+                            name="fullname"
+                            maxlength="30"
                             class="form-control-custom"
-                            placeholder="Enter your phone number"
+                            placeholder="e.g Jeff Eddy"
                             required
                         >
 
@@ -1968,7 +2570,9 @@ if (isset($_SESSION['error'])) {
 
 
                     <label class="form-label">
+
                         Email Address
+
                     </label>
 
 
@@ -1981,58 +2585,31 @@ if (isset($_SESSION['error'])) {
 
 
                         <input
-                            type="email" maxlength="40"
+                            type="email"
+                            maxlength="40"
                             name="email"
                             class="form-control-custom"
                             placeholder="Enter your email"
                             required
                         >
-
-
-                    </div>
-
-
-
-                    <label class="form-label">
-                        Password
-                    </label>
-
-
-                    <div class="input-group-custom">
-
-
-                        <i
-                            class="bi bi-lock input-icon"
-                        ></i>
-
-
-                        <input maxlength="20"
-                            type="password"
+                        <input
+                            type="hidden"
+                            maxlength="40"
                             name="password"
                             class="form-control-custom"
-                            id="signupPassword"
-                            placeholder="Create a password"
-                            required
+                            value ="<?=  $password_generated ?>  ?>"
+                            
                         >
 
 
-                        <i
-                            class="bi bi-eye password-toggle"
-                            onclick="
-                                togglePassword(
-                                    'signupPassword',
-                                    this
-                                )
-                            "
-                        ></i>
-
-
                     </div>
 
 
 
                     <label class="form-label">
-                        Confirm Password
+
+                        Phone
+
                     </label>
 
 
@@ -2040,38 +2617,25 @@ if (isset($_SESSION['error'])) {
 
 
                         <i
-                            class="bi bi-lock-fill input-icon"
+                            class="bi bi-telephone input-icon"
                         ></i>
 
 
                         <input
-                            type="password" maxlength="20"
-                            name="confirm_password"
+                            type="tel"
+                            maxlength="15"
+                            pattern="^\+?[0-9]+$"
+                            inputmode="numeric"
+                            name="phone"
                             class="form-control-custom"
-                            id="confirmPassword"
-                            placeholder="Confirm your password"
+                            placeholder="Enter your phone number"
                             required
                         >
-
-
-                        <i
-                            class="bi bi-eye password-toggle"
-                            onclick="
-                                togglePassword(
-                                    'confirmPassword',
-                                    this
-                                )
-                            "
-                        ></i>
 
 
                     </div>
 
 
-
-                    <!-- =================================================
-                         TERMS CHECKBOX
-                    ================================================== -->
 
                     <div class="terms-agreement">
 
@@ -2086,7 +2650,6 @@ if (isset($_SESSION['error'])) {
 
 
                         <span>
-
 
                             I confirm that I have read and agree to the
 
@@ -2104,8 +2667,8 @@ if (isset($_SESSION['error'])) {
 
 
                             and agree to comply with the reporting
-                            requirements of this system.
 
+                            requirements of this system.
 
                         </span>
 
@@ -2120,9 +2683,7 @@ if (isset($_SESSION['error'])) {
                         name="signup_reporter"
                     >
 
-                        <i
-                            class="bi bi-person-plus me-2"
-                        ></i>
+                        <i class="bi bi-person-plus me-2"></i>
 
                         Create Account
 
@@ -2169,7 +2730,150 @@ if (isset($_SESSION['error'])) {
 
 
 <!-- =============================================================
-     CUSTOM TERMS MODAL
+     FORGOT PASSWORD MODAL
+============================================================= -->
+
+<div
+    class="forgot-modal-overlay"
+    id="forgotPasswordModal"
+    aria-hidden="true"
+>
+
+    <div
+        class="forgot-modal-box"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="forgotPasswordModalTitle"
+    >
+
+        <div class="forgot-modal-header">
+
+            <button
+                type="button"
+                class="forgot-close-button"
+                id="closeForgotPasswordTop"
+                aria-label="Close"
+            >
+                <i class="bi bi-x-lg"></i>
+            </button>
+
+            <div class="forgot-modal-icon">
+                <i class="bi bi-shield-lock"></i>
+            </div>
+
+            <h4
+                class="forgot-modal-title"
+                id="forgotPasswordModalTitle"
+            >
+                Reset your password
+            </h4>
+
+            <p class="forgot-modal-subtitle">
+                Answer the security question and enter your registered email to reset your password.
+            </p>
+
+        </div>
+
+        <div class="forgot-modal-body">
+
+            <div class="forgot-security-note">
+                <i class="bi bi-info-circle-fill"></i>
+                <span>
+                    Enter the email address associated with your account and provide the correct answer to your security question.
+                </span>
+            </div>
+
+            <form id="forgotPasswordForm" method="post" enctype="multipart/form-data" action="index?action=login" >
+
+                <div class="forgot-question-box">
+
+                    <span class="forgot-question-label">
+                        Security Question
+                    </span>
+
+                    <div class="forgot-question">
+                        <i class="bi bi-question-circle-fill"></i>
+                        <span>
+                            What is the answer to your registered security question?
+                        </span>
+                    </div>
+
+                </div>
+
+
+                <label class="form-label">
+                    Your Answer
+                </label>
+
+                <div class="input-group-custom">
+
+                    <i
+                        class="bi bi-key input-icon"
+                    ></i>
+
+                    <input
+                        type="text"
+                        maxlength="100"
+                        name="security_answer"
+                        class="form-control-custom"
+                        placeholder="Enter your answer"
+                        autocomplete="off"
+                        required
+                    >
+
+                </div>
+
+                
+                <label class="form-label">
+                    Email Address
+                </label>
+
+                <div class="input-group-custom">
+
+                    <i
+                        class="bi bi-envelope input-icon"
+                    ></i>
+
+                    <input
+                        type="email"
+                        maxlength="50"
+                        name="forgot_email"
+                        class="form-control-custom"
+                        placeholder="Enter your registered email"
+                        autocomplete="email"
+                        required
+                    >
+
+                </div>
+
+                <button
+                    class="forgot-submit-button"
+                    type="submit"
+                    name="forgot_password"
+                >
+                    <i class="bi bi-arrow-repeat me-2"></i>
+                    Reset Password
+                </button>
+
+                <button
+                    type="button"
+                    class="forgot-cancel-button"
+                    id="closeForgotPasswordButton"
+                >
+                    Cancel
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =============================================================
+     TERMS MODAL
 ============================================================= -->
 
 <div
@@ -2186,8 +2890,6 @@ if (isset($_SESSION['error'])) {
         aria-labelledby="termsModalTitle"
     >
 
-
-        <!-- HEADER -->
 
         <div class="terms-modal-header">
 
@@ -2235,8 +2937,6 @@ if (isset($_SESSION['error'])) {
 
 
 
-        <!-- SCROLL CONTENT -->
-
         <div
             class="terms-scroll-area"
             id="termsScrollArea"
@@ -2254,9 +2954,13 @@ if (isset($_SESSION['error'])) {
                 <p>
 
                     This Incident Reporting System is provided to enable
+
                     authorized users to report incidents, accidents,
+
                     security concerns, suspicious activities, safety
+
                     issues, emergencies, policy violations and other
+
                     events requiring attention or investigation.
 
                 </p>
@@ -2271,7 +2975,9 @@ if (isset($_SESSION['error'])) {
                 <p>
 
                     All users are expected to provide information that is
+
                     truthful, accurate and complete to the best of their
+
                     knowledge.
 
                 </p>
@@ -2312,7 +3018,9 @@ if (isset($_SESSION['error'])) {
                 <p>
 
                     Reports should be submitted in good faith and for a
+
                     legitimate reporting, safety, security, compliance,
+
                     investigation or organizational purpose.
 
                 </p>
@@ -2321,7 +3029,9 @@ if (isset($_SESSION['error'])) {
                 <p>
 
                     Users must not use the reporting system to harass,
+
                     threaten, intimidate, defame, discriminate against or
+
                     deliberately target another person.
 
                 </p>
@@ -2339,15 +3049,18 @@ if (isset($_SESSION['error'])) {
                         class="bi bi-exclamation-triangle-fill me-2"
                     ></i>
 
-
                     <strong>Important:</strong>
 
-
                     This system should not be considered a replacement
+
                     for emergency services or immediate physical
+
                     assistance. If an incident presents an immediate
+
                     threat to life, health, safety or property, contact
+
                     the appropriate emergency service or responsible
+
                     authority immediately.
 
                 </div>
@@ -2362,6 +3075,7 @@ if (isset($_SESSION['error'])) {
                 <p>
 
                     Users should only provide information that is relevant
+
                     to the incident being reported.
 
                 </p>
@@ -2397,8 +3111,11 @@ if (isset($_SESSION['error'])) {
                 <p>
 
                     Where permitted, users may provide relevant supporting
+
                     information such as photographs, documents,
+
                     timestamps, locations, witness information or other
+
                     evidence connected to the incident.
 
                 </p>
@@ -2407,6 +3124,7 @@ if (isset($_SESSION['error'])) {
                 <p>
 
                     Users must not knowingly upload manipulated,
+
                     fraudulent, malicious or unrelated material.
 
                 </p>
@@ -2466,8 +3184,11 @@ if (isset($_SESSION['error'])) {
                 <p>
 
                     Submitted reports may be reviewed, categorized,
+
                     investigated, escalated, assigned to authorized
+
                     personnel and retained according to applicable
+
                     organizational procedures and retention requirements.
 
                 </p>
@@ -2476,7 +3197,9 @@ if (isset($_SESSION['error'])) {
                 <p>
 
                     Submission of a report does not guarantee that a
+
                     particular action, disciplinary measure or outcome
+
                     will result.
 
                 </p>
@@ -2491,10 +3214,15 @@ if (isset($_SESSION['error'])) {
                 <p>
 
                     Access to reports may be restricted to authorized
+
                     personnel based on their responsibilities and access
+
                     privileges. Users should understand that information
+
                     submitted through the system may need to be disclosed
+
                     where required for legitimate investigations,
+
                     organizational processes or applicable law.
 
                 </p>
@@ -2509,9 +3237,13 @@ if (isset($_SESSION['error'])) {
                 <p>
 
                     Reports should be handled in accordance with applicable
+
                     organizational policies concerning confidentiality and
+
                     protection against retaliation. Users should report
+
                     concerns honestly and should not knowingly misuse the
+
                     system to make allegations against another person.
 
                 </p>
@@ -2526,8 +3258,11 @@ if (isset($_SESSION['error'])) {
                 <p>
 
                     Users are responsible for maintaining the
+
                     confidentiality of their login credentials and must
+
                     immediately report suspected unauthorized access or
+
                     account compromise through the appropriate channel.
 
                 </p>
@@ -2542,10 +3277,15 @@ if (isset($_SESSION['error'])) {
                 <p>
 
                     For security, accountability and operational
+
                     purposes, system activity may be logged and audited
+
                     in accordance with applicable policies and
+
                     requirements. This may include account activity,
+
                     report submission information and system access
+
                     records.
 
                 </p>
@@ -2560,9 +3300,13 @@ if (isset($_SESSION['error'])) {
                 <p>
 
                     Personal information submitted through this system
+
                     will be handled according to the organization's
+
                     applicable privacy policies and legal requirements.
+
                     Users should avoid submitting personal information
+
                     that is not necessary for the incident report.
 
                 </p>
@@ -2577,8 +3321,11 @@ if (isset($_SESSION['error'])) {
                 <p>
 
                     By submitting an incident report, the reporter
+
                     confirms that the information provided is accurate to
+
                     the best of their knowledge and that the report is
+
                     being submitted for a legitimate purpose.
 
                 </p>
@@ -2593,10 +3340,15 @@ if (isset($_SESSION['error'])) {
                 <p>
 
                     These terms may be updated from time to time to
+
                     reflect changes in organizational procedures,
+
                     security requirements, applicable law or system
+
                     functionality. Users may be required to review and
+
                     accept updated terms before continuing to use the
+
                     system.
 
                 </p>
@@ -2611,9 +3363,13 @@ if (isset($_SESSION['error'])) {
                 <p>
 
                     By selecting the acceptance option during account
+
                     registration, you acknowledge that you have read,
+
                     understood and agreed to comply with these Incident
+
                     Reporting Terms & Conditions and the applicable rules
+
                     governing use of the reporting system.
 
                 </p>
@@ -2626,14 +3382,16 @@ if (isset($_SESSION['error'])) {
                         class="bi bi-info-circle-fill me-2"
                     ></i>
 
-
                     <strong>Reporting Reminder:</strong>
 
-
                     Always provide factual information, distinguish
+
                     observations from assumptions, preserve relevant
+
                     evidence where appropriate, and use the correct
+
                     emergency channel when immediate assistance is
+
                     required.
 
                 </div>
@@ -2660,8 +3418,6 @@ if (isset($_SESSION['error'])) {
 
 
 
-        <!-- SCROLL STATUS -->
-
         <div
             class="terms-scroll-status"
             id="termsScrollStatus"
@@ -2676,8 +3432,6 @@ if (isset($_SESSION['error'])) {
         </div>
 
 
-
-        <!-- FOOTER -->
 
         <div class="terms-modal-footer">
 
@@ -2726,322 +3480,751 @@ if (isset($_SESSION['error'])) {
 <script>
 
 
-    /* =========================================================
-       LOGIN / SIGNUP SWITCH
-    ========================================================= */
+/* =========================================================
+   INCIDENT BACKGROUND SLIDESHOW
+========================================================= */
 
-    const loginTab =
-        document.getElementById("loginTab");
+/*
+ * IMPORTANT:
+ *
+ * This slideshow intentionally does NOT use setInterval.
+ *
+ * Each cycle is:
+ *
+ * 1. Current image stays visible.
+ * 2. Wait 9 seconds.
+ * 3. Next image fades over the current image for 5.5 sec.
+ * 4. New image stays visible.
+ * 5. Wait another 9 seconds.
+ * 6. Repeat.
+ *
+ * This guarantees that every image gets the same amount
+ * of display time and no image can be skipped by an
+ * overlapping timer.
+ */
 
 
-    const signupTab =
-        document.getElementById("signupTab");
+/* =========================================================
+   ELEMENTS
+========================================================= */
 
-
-    const loginForm =
-        document.getElementById("loginForm");
-
-
-    const signupForm =
-        document.getElementById("signupForm");
-
-
-    loginTab.addEventListener(
-        "click",
-        switchToLogin
+const incidentBackground =
+    document.querySelector(
+        ".incident-background"
     );
 
 
-    signupTab.addEventListener(
-        "click",
-        switchToSignup
+const incidentBackgroundNext =
+    document.querySelector(
+        ".incident-background-next"
     );
 
 
-    function switchToLogin() {
+/* =========================================================
+   IMAGE LIST
+========================================================= */
 
-        loginTab.classList.add("active");
+const incidentBackgrounds = [
 
-        signupTab.classList.remove("active");
+    "views/assets/img/loginbg.png",
 
-        loginForm.classList.add("active");
+    "views/assets/img/loginbg2.png",
 
-        signupForm.classList.remove("active");
+    "views/assets/img/loginbg3.png",
+
+    "views/assets/img/loginbg4.png"
+
+];
+
+
+/* =========================================================
+   TIMING
+========================================================= */
+
+/*
+ * How long the current image stays fully visible.
+ *
+ * 9000 = 9 seconds.
+ */
+
+const IMAGE_DISPLAY_TIME = 9000;
+
+
+/*
+ * How long the actual crossfade takes.
+ *
+ * 5500 = 5.5 seconds.
+ */
+
+const IMAGE_FADE_TIME = 5500;
+
+
+/* =========================================================
+   STATE
+========================================================= */
+
+/*
+ * Current image index.
+ *
+ * 0 = loginbg.png
+ * 1 = loginbg2.png
+ * 2 = loginbg3.png
+ * 3 = loginbg4.png
+ */
+
+let currentIncidentBackground = 0;
+
+
+/*
+ * false:
+ *
+ * .incident-background is currently visible.
+ *
+ *
+ * true:
+ *
+ * .incident-background-next is currently visible.
+ */
+
+let visibleNextLayer = false;
+
+
+/* =========================================================
+   BACKGROUND IMAGE BUILDER
+========================================================= */
+
+function createIncidentBackgroundImage(
+    imagePath
+) {
+
+    return `
+        linear-gradient(
+            135deg,
+            rgba(3, 28, 60, .65),
+            rgba(4, 48, 98, .50)
+        ),
+        url("${imagePath}")
+    `;
+
+}
+
+
+/* =========================================================
+   PRELOAD IMAGES
+========================================================= */
+
+/*
+ * Preload every image before it is needed.
+ *
+ * This prevents the browser from showing a blank
+ * area while waiting for an image to download.
+ */
+
+incidentBackgrounds.forEach(
+    function(imagePath) {
+
+        const preload =
+            new Image();
+
+        preload.src =
+            imagePath;
+
+    }
+);
+
+
+/* =========================================================
+   INITIAL IMAGE
+========================================================= */
+
+incidentBackground.style.backgroundImage =
+
+    createIncidentBackgroundImage(
+        incidentBackgrounds[0]
+    );
+
+
+/*
+ * loginbg.png is visible from the beginning.
+ */
+
+incidentBackground.classList.remove(
+    "show"
+);
+
+
+/* =========================================================
+   PREPARE SECOND LAYER
+========================================================= */
+
+incidentBackgroundNext.style.backgroundImage =
+
+    createIncidentBackgroundImage(
+        incidentBackgrounds[1]
+    );
+
+
+incidentBackgroundNext.classList.remove(
+    "show"
+);
+
+
+/* =========================================================
+   CROSSFADE
+========================================================= */
+
+function changeIncidentBackground() {
+
+
+    /*
+     * Determine the next image.
+     */
+
+    const nextIndex =
+
+        (
+            currentIncidentBackground + 1
+        ) %
+        incidentBackgrounds.length;
+
+
+    /*
+     * =====================================================
+     * CASE 1
+     *
+     * Original layer is currently visible.
+     *
+     * Fade .incident-background-next over it.
+     * =====================================================
+     */
+
+    if (!visibleNextLayer) {
+
+
+        /*
+         * Put the next image into the hidden layer.
+         */
+
+        incidentBackgroundNext.style.backgroundImage =
+
+            createIncidentBackgroundImage(
+                incidentBackgrounds[nextIndex]
+            );
+
+
+        /*
+         * Make sure it starts transparent.
+         */
+
+        incidentBackgroundNext.classList.remove(
+            "show"
+        );
+
+
+        /*
+         * Force browser reflow.
+         *
+         * This guarantees that the browser sees:
+         *
+         * opacity: 0
+         *
+         * BEFORE:
+         *
+         * opacity: 1
+         */
+
+        void incidentBackgroundNext.offsetWidth;
+
+
+        /*
+         * Fade the next image IN.
+         *
+         * The current image underneath it remains
+         * completely visible during this process.
+         */
+
+        incidentBackgroundNext.classList.add(
+            "show"
+        );
+
 
     }
 
 
-    function switchToSignup() {
+    /*
+     * =====================================================
+     * CASE 2
+     *
+     * Next layer is currently visible.
+     *
+     * Fade .incident-background over it.
+     * =====================================================
+     */
 
-        signupTab.classList.add("active");
-
-        loginTab.classList.remove("active");
-
-        signupForm.classList.add("active");
-
-        loginForm.classList.remove("active");
-
-    }
-
-
-
-    /* =========================================================
-       PASSWORD VISIBILITY
-    ========================================================= */
-
-    function togglePassword(
-        inputId,
-        icon
-    ) {
-
-        const input =
-            document.getElementById(inputId);
+    else {
 
 
-        if (!input) {
-            return;
-        }
+        /*
+         * Put the next image into the original layer.
+         */
 
+        incidentBackground.style.backgroundImage =
 
-        if (input.type === "password") {
-
-            input.type = "text";
-
-
-            icon.classList.remove(
-                "bi-eye"
+            createIncidentBackgroundImage(
+                incidentBackgrounds[nextIndex]
             );
 
 
-            icon.classList.add(
-                "bi-eye-slash"
-            );
+        /*
+         * Start transparent.
+         */
 
-        } else {
-
-            input.type = "password";
-
-
-            icon.classList.remove(
-                "bi-eye-slash"
-            );
-
-
-            icon.classList.add(
-                "bi-eye"
-            );
-
-        }
-
-    }
-
-
-
-    /* =========================================================
-       DARK / LIGHT MODE
-    ========================================================= */
-
-    const themeToggle =
-        document.getElementById(
-            "themeToggle"
+        incidentBackground.classList.remove(
+            "show"
         );
 
 
-    const themeIcon =
-        document.getElementById(
-            "themeIcon"
-        );
+        /*
+         * Force browser reflow.
+         */
+
+        void incidentBackground.offsetWidth;
 
 
-    const savedTheme =
-        localStorage.getItem(
-            "incidentTheme"
-        );
+        /*
+         * Fade the new image over the
+         * currently visible image.
+         */
 
-
-    if (savedTheme === "dark") {
-
-        document.body.classList.add(
-            "dark-mode"
-        );
-
-
-        themeIcon.classList.remove(
-            "bi-moon-stars-fill"
-        );
-
-
-        themeIcon.classList.add(
-            "bi-sun-fill"
+        incidentBackground.classList.add(
+            "show"
         );
 
     }
 
 
-    themeToggle.addEventListener(
-        "click",
+    /*
+     * Update current image.
+     */
+
+    currentIncidentBackground =
+        nextIndex;
+
+
+    /*
+     * Switch which layer is considered
+     * the visible layer.
+     */
+
+    visibleNextLayer =
+        !visibleNextLayer;
+
+
+    /*
+     * =====================================================
+     * WAIT FOR CROSSFADE TO FINISH
+     * =====================================================
+     */
+
+    setTimeout(
         function() {
 
-            document.body.classList.toggle(
-                "dark-mode"
-            );
+
+            /*
+             * Hide/reset the OLD layer.
+             *
+             * The NEW layer is already fully visible,
+             * so this does not create a blank moment.
+             */
+
+            if (visibleNextLayer) {
 
 
-            const dark =
-                document.body.classList.contains(
-                    "dark-mode"
+                /*
+                 * .incident-background-next is now
+                 * the visible layer.
+                 *
+                 * Reset .incident-background.
+                 */
+
+                incidentBackground.classList.remove(
+                    "show"
                 );
 
-
-            localStorage.setItem(
-                "incidentTheme",
-                dark ? "dark" : "light"
-            );
-
-
-            if (dark) {
-
-                themeIcon.classList.remove(
-                    "bi-moon-stars-fill"
-                );
-
-
-                themeIcon.classList.add(
-                    "bi-sun-fill"
-                );
 
             } else {
 
-                themeIcon.classList.remove(
-                    "bi-sun-fill"
-                );
 
+                /*
+                 * .incident-background is now
+                 * the visible layer.
+                 *
+                 * Reset .incident-background-next.
+                 */
 
-                themeIcon.classList.add(
-                    "bi-moon-stars-fill"
+                incidentBackgroundNext.classList.remove(
+                    "show"
                 );
 
             }
 
-        }
+
+            /*
+             * =================================================
+             * IMPORTANT:
+             *
+             * Schedule the NEXT transition only AFTER
+             * the current transition has completely finished.
+             *
+             * This replaces setInterval.
+             *
+             * Therefore there can never be two transitions
+             * fighting each other.
+             * =================================================
+             */
+
+            setTimeout(
+                changeIncidentBackground,
+                IMAGE_DISPLAY_TIME
+            );
+
+
+        },
+        IMAGE_FADE_TIME
+    );
+
+}
+
+
+/* =========================================================
+   START SLIDESHOW
+========================================================= */
+
+/*
+ * Do NOT immediately transition.
+ *
+ * loginbg.png gets its full 9 seconds first.
+ */
+
+setTimeout(
+    changeIncidentBackground,
+    IMAGE_DISPLAY_TIME
+);
+
+
+/* =========================================================
+   LOGIN / SIGNUP SWITCHING
+========================================================= */
+
+const loginTab =
+    document.getElementById(
+        "loginTab"
     );
 
 
+const signupTab =
+    document.getElementById(
+        "signupTab"
+    );
 
-    /* =========================================================
-       CUSTOM TERMS MODAL
-    ========================================================= */
 
-    const termsModal =
+const loginForm =
+    document.getElementById(
+        "loginForm"
+    );
+
+
+const signupForm =
+    document.getElementById(
+        "signupForm"
+    );
+
+
+<?php if ($company_Allow_signup != 0) { ?>
+
+loginTab.addEventListener(
+    "click",
+    switchToLogin
+);
+
+
+signupTab.addEventListener(
+    "click",
+    switchToSignup
+);
+
+<?php } ?>
+
+
+function switchToLogin() {
+
+    loginTab.classList.add(
+        "active"
+    );
+
+    signupTab.classList.remove(
+        "active"
+    );
+
+    loginForm.classList.add(
+        "active"
+    );
+
+    signupForm.classList.remove(
+        "active"
+    );
+
+}
+
+
+function switchToSignup() {
+
+    signupTab.classList.add(
+        "active"
+    );
+
+    loginTab.classList.remove(
+        "active"
+    );
+
+    signupForm.classList.add(
+        "active"
+    );
+
+    loginForm.classList.remove(
+        "active"
+    );
+
+}
+
+
+/* =========================================================
+   PASSWORD TOGGLE
+========================================================= */
+
+function togglePassword(
+    inputId,
+    icon
+) {
+
+    const input =
         document.getElementById(
-            "termsModal"
+            inputId
         );
 
 
-    const openTermsButton =
-        document.getElementById(
-            "openTermsButton"
+    if (!input) {
+
+        return;
+
+    }
+
+
+    if (
+        input.type ===
+        "password"
+    ) {
+
+        input.type = "text";
+
+
+        icon.classList.remove(
+            "bi-eye"
         );
 
 
-    const closeTermsButton =
-        document.getElementById(
-            "closeTermsButton"
+        icon.classList.add(
+            "bi-eye-slash"
+        );
+
+    }
+
+    else {
+
+        input.type = "password";
+
+
+        icon.classList.remove(
+            "bi-eye-slash"
         );
 
 
-    const closeTermsTop =
-        document.getElementById(
-            "closeTermsTop"
+        icon.classList.add(
+            "bi-eye"
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   DARK / LIGHT MODE
+========================================================= */
+
+const themeToggle =
+    document.getElementById(
+        "themeToggle"
+    );
+
+
+const themeIcon =
+    document.getElementById(
+        "themeIcon"
+    );
+
+
+const savedTheme =
+    localStorage.getItem(
+        "incidentTheme"
+    );
+
+
+if (
+    savedTheme ===
+    "dark"
+) {
+
+    document.body.classList.add(
+        "dark-mode"
+    );
+
+
+    themeIcon.classList.remove(
+        "bi-moon-stars-fill"
+    );
+
+
+    themeIcon.classList.add(
+        "bi-sun-fill"
+    );
+
+}
+
+
+themeToggle.addEventListener(
+    "click",
+    function() {
+
+
+        document.body.classList.toggle(
+            "dark-mode"
         );
 
 
-    const acceptTermsButton =
-        document.getElementById(
-            "acceptTermsButton"
+        const dark =
+            document.body.classList.contains(
+                "dark-mode"
+            );
+
+
+        localStorage.setItem(
+            "incidentTheme",
+            dark
+                ? "dark"
+                : "light"
         );
 
 
-    const termsScrollArea =
-        document.getElementById(
-            "termsScrollArea"
+        if (dark) {
+
+            themeIcon.classList.remove(
+                "bi-moon-stars-fill"
+            );
+
+
+            themeIcon.classList.add(
+                "bi-sun-fill"
+            );
+
+        }
+
+        else {
+
+            themeIcon.classList.remove(
+                "bi-sun-fill"
+            );
+
+
+            themeIcon.classList.add(
+                "bi-moon-stars-fill"
+            );
+
+        }
+
+    }
+);
+
+
+
+/* =========================================================
+   FORGOT PASSWORD MODAL
+========================================================= */
+
+const forgotPasswordModal =
+    document.getElementById(
+        "forgotPasswordModal"
+    );
+
+
+const openForgotPasswordButton =
+    document.getElementById(
+        "openForgotPasswordButton"
+    );
+
+
+const closeForgotPasswordButton =
+    document.getElementById(
+        "closeForgotPasswordButton"
+    );
+
+
+const closeForgotPasswordTop =
+    document.getElementById(
+        "closeForgotPasswordTop"
+    );
+
+
+const forgotPasswordForm =
+    document.getElementById(
+        "forgotPasswordForm"
+    );
+
+
+/* =========================================================
+   OPEN FORGOT PASSWORD
+========================================================= */
+
+function openForgotPassword() {
+
+    forgotPasswordModal.classList.add(
+        "show"
+    );
+
+
+    forgotPasswordModal.setAttribute(
+        "aria-hidden",
+        "false"
+    );
+
+
+    document.body.classList.add(
+        "forgot-open"
+    );
+
+
+    const emailInput =
+        forgotPasswordForm.querySelector(
+            'input[name="forgot_email"]'
         );
 
 
-    const termsScrollStatus =
-        document.getElementById(
-            "termsScrollStatus"
-        );
-
-
-    const termsCheckbox =
-        document.getElementById(
-            "termsCheckbox"
-        );
-
-
-    let termsRead = false;
-
-
-
-    /* =========================================================
-       OPEN TERMS
-    ========================================================= */
-
-    function openTerms() {
-
-        termsModal.classList.add("show");
-
-        termsModal.setAttribute(
-            "aria-hidden",
-            "false"
-        );
-
-
-        document.body.classList.add(
-            "terms-open"
-        );
-
-
-        /*
-         * Always start at the top.
-         */
-
-        termsScrollArea.scrollTop = 0;
-
-
-        /*
-         * User must read/scroll to bottom
-         * every time they open the terms.
-         */
-
-        termsRead = false;
-
-
-        acceptTermsButton.disabled = true;
-
-
-        termsScrollStatus.classList.remove(
-            "read"
-        );
-
-
-        termsScrollStatus.innerHTML =
-
-            '<i class="bi bi-arrow-down-circle me-1"></i>' +
-
-            'Please scroll to the bottom to read all terms.';
-
-
-        /*
-         * Small timeout makes sure the browser
-         * has completed layout before checking height.
-         */
+    if (emailInput) {
 
         setTimeout(
             function() {
 
-                checkTermsRead();
+                emailInput.focus();
 
             },
             100
@@ -3049,489 +4232,615 @@ if (isset($_SESSION['error'])) {
 
     }
 
+}
 
 
-    /* =========================================================
-       CLOSE TERMS
-    ========================================================= */
+/* =========================================================
+   CLOSE FORGOT PASSWORD
+========================================================= */
 
-    function closeTerms() {
+function closeForgotPassword() {
 
-        termsModal.classList.remove(
-            "show"
-        );
-
-
-        termsModal.setAttribute(
-            "aria-hidden",
-            "true"
-        );
+    forgotPasswordModal.classList.remove(
+        "show"
+    );
 
 
-        document.body.classList.remove(
-            "terms-open"
-        );
-
-    }
-
+    forgotPasswordModal.setAttribute(
+        "aria-hidden",
+        "true"
+    );
 
 
-    /* =========================================================
-       OPEN BUTTON
-    ========================================================= */
+    document.body.classList.remove(
+        "forgot-open"
+    );
 
-    openTermsButton.addEventListener(
+}
+
+
+/* =========================================================
+   OPEN BUTTON
+========================================================= */
+
+if (openForgotPasswordButton) {
+
+    openForgotPasswordButton.addEventListener(
         "click",
         function(event) {
 
             event.preventDefault();
 
-            openTerms();
+            openForgotPassword();
 
         }
     );
 
+}
 
 
-    /* =========================================================
-       CLOSE BUTTONS
-    ========================================================= */
+/* =========================================================
+   CLOSE BUTTONS
+========================================================= */
 
-    closeTermsButton.addEventListener(
+if (closeForgotPasswordButton) {
+
+    closeForgotPasswordButton.addEventListener(
         "click",
         function() {
 
-            closeTerms();
+            closeForgotPassword();
 
         }
     );
 
+}
 
-    closeTermsTop.addEventListener(
+
+if (closeForgotPasswordTop) {
+
+    closeForgotPasswordTop.addEventListener(
         "click",
         function() {
 
-            closeTerms();
+            closeForgotPassword();
 
         }
     );
 
+}
 
 
-    /* =========================================================
-       CLICK OUTSIDE MODAL
-    ========================================================= */
+/* =========================================================
+   CLICK OUTSIDE MODAL
+========================================================= */
 
-    termsModal.addEventListener(
+if (forgotPasswordModal) {
+
+    forgotPasswordModal.addEventListener(
         "click",
         function(event) {
 
             if (
                 event.target ===
-                termsModal
+                forgotPasswordModal
             ) {
 
-                closeTerms();
+                closeForgotPassword();
 
             }
 
         }
-    );
-
-
-
-    /* =========================================================
-       ESC KEY
-    ========================================================= */
-
-    document.addEventListener(
-        "keydown",
-        function(event) {
-
-            if (
-                event.key === "Escape" &&
-                termsModal.classList.contains("show")
-            ) {
-
-                closeTerms();
-
-            }
-
-        }
-    );
-
-
-
-    /* =========================================================
-       CHECK IF USER REACHED BOTTOM
-    ========================================================= */
-
-    function checkTermsRead() {
-
-        if (!termsScrollArea) {
-            return;
-        }
-
-
-        const currentPosition =
-            termsScrollArea.scrollTop +
-            termsScrollArea.clientHeight;
-
-
-        const totalHeight =
-            termsScrollArea.scrollHeight;
-
-
-        /*
-         * 15px tolerance handles browser
-         * rounding differences.
-         */
-
-        const reachedBottom =
-            currentPosition >=
-            totalHeight - 15;
-
-
-        if (reachedBottom) {
-
-            termsRead = true;
-
-
-            acceptTermsButton.disabled =
-                false;
-
-
-            termsScrollStatus.classList.add(
-                "read"
-            );
-
-
-            termsScrollStatus.innerHTML =
-
-                '<i class="bi bi-check-circle-fill me-1"></i>' +
-
-                'You have read all the terms. You may now accept them.';
-
-        }
-
-    }
-
-
-
-    /* =========================================================
-       SCROLL EVENT
-    ========================================================= */
-
-    termsScrollArea.addEventListener(
-        "scroll",
-        function() {
-
-            checkTermsRead();
-
-        }
-    );
-
-
-
-    /* =========================================================
-       ACCEPT TERMS
-    ========================================================= */
-
-    acceptTermsButton.addEventListener(
-        "click",
-        function(event) {
-
-            event.preventDefault();
-
-
-            /*
-             * Safety check.
-             */
-
-            if (!termsRead) {
-
-                Swal.fire({
-
-                    title:
-                        "Please read the terms",
-
-                    text:
-                        "Scroll to the bottom of the Terms & Conditions before accepting them.",
-
-                    icon:
-                        "warning",
-
-                    confirmButtonText:
-                        "OK",
-
-                    allowOutsideClick:
-                        true,
-
-                    allowEscapeKey:
-                        true
-
-                });
-
-
-                return;
-
-            }
-
-
-            /*
-             * CHECK THE CHECKBOX.
-             */
-
-            termsCheckbox.checked = true;
-
-
-            /*
-             * Trigger change event.
-             */
-
-            termsCheckbox.dispatchEvent(
-                new Event(
-                    "change",
-                    {
-                        bubbles: true
-                    }
-                )
-            );
-
-
-            /*
-             * CLOSE THE CUSTOM MODAL.
-             *
-             * No Bootstrap modal code is used here.
-             * This prevents the page freezing problem.
-             */
-
-            closeTerms();
-
-
-            /*
-             * Optional visual feedback.
-             */
-
-            setTimeout(
-                function() {
-
-                    termsCheckbox.focus();
-
-                },
-                50
-            );
-
-        }
-    );
-
-
-
-    /* =========================================================
-       SIGNUP FORM VALIDATION
-    ========================================================= */
-
-    const signupAccountForm =
-        document.getElementById(
-            "signupAccountForm"
-        );
-
-
-    signupAccountForm.addEventListener(
-        "submit",
-        function(event) {
-
-
-            const password =
-                document.getElementById(
-                    "signupPassword"
-                ).value;
-
-
-            const confirmPassword =
-                document.getElementById(
-                    "confirmPassword"
-                ).value;
-
-
-
-            /* -------------------------------------------------
-               PASSWORD MATCH
-            ------------------------------------------------- */
-
-            if (
-                password !==
-                confirmPassword
-            ) {
-
-                event.preventDefault();
-
-
-                Swal.fire({
-
-                    title:
-                        "Passwords do not match",
-
-                    text:
-                        "Please check the password fields.",
-
-                    icon:
-                        "warning",
-
-                    confirmButtonText:
-                        "OK"
-
-                });
-
-
-                return false;
-            }
-
-
-
-            /* -------------------------------------------------
-               TERMS ACCEPTANCE
-            ------------------------------------------------- */
-
-            if (
-                !termsCheckbox.checked
-            ) {
-
-                event.preventDefault();
-
-
-                Swal.fire({
-
-                    title:
-                        "Terms & Conditions required",
-
-                    text:
-                        "You must read and accept the Incident Reporting Terms & Conditions before creating an account.",
-
-                    icon:
-                        "warning",
-
-                    showCancelButton:
-                        true,
-
-                    confirmButtonText:
-                        "Read Terms",
-
-                    cancelButtonText:
-                        "Cancel",
-
-                    allowOutsideClick:
-                        true,
-
-                    allowEscapeKey:
-                        true
-
-                }).then(
-                    function(result) {
-
-                        if (
-                            result.isConfirmed
-                        ) {
-
-                            openTerms();
-
-                        }
-
-                    }
-                );
-
-
-                return false;
-            }
-
-
-            return true;
-
-        }
-    );
-
-
-
-    /* =========================================================
-       CHECKBOX CHANGE
-    ========================================================= */
-
-    termsCheckbox.addEventListener(
-        "change",
-        function() {
-
-            if (
-                this.checked
-            ) {
-
-                this.setAttribute(
-                    "aria-checked",
-                    "true"
-                );
-
-            } else {
-
-                this.setAttribute(
-                    "aria-checked",
-                    "false"
-                );
-
-            }
-
-        }
-    );
-
-</script>
-
-
-
-<!-- =============================================================
-     GOOGLE TRANSLATOR
-============================================================= -->
-
-<!--
-
-<script>
-
-function googleTranslateElementInit() {
-
-    new google.translate.TranslateElement(
-
-        {
-            pageLanguage: "en",
-
-            includedLanguages:
-                "en,fr,es,pt,ar,ha,yo,ig",
-
-            layout:
-                google.translate.TranslateElement
-                    .InlineLayout
-                    .SIMPLE
-        },
-
-        "google_translate_element"
     );
 
 }
 
+
+/* =========================================================
+   ESC KEY
+========================================================= */
+
+document.addEventListener(
+    "keydown",
+    function(event) {
+
+        if (
+            event.key === "Escape" &&
+            forgotPasswordModal.classList.contains("show")
+        ) {
+
+            closeForgotPassword();
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   FORGOT PASSWORD SUBMIT
+========================================================= */
+
+if (forgotPasswordForm) {
+
+    forgotPasswordForm.addEventListener(
+        "submit",
+        function() {
+
+            /*
+             * The form submits normally using:
+             *
+             * name="forgot_password"
+             * name="forgot_email"
+             * name="security_answer"
+             *
+             * so the existing PHP/backend can process
+             * the request without changing the login form.
+             */
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   TERMS MODAL
+========================================================= */
+
+const termsModal =
+    document.getElementById(
+        "termsModal"
+    );
+
+
+const openTermsButton =
+    document.getElementById(
+        "openTermsButton"
+    );
+
+
+const closeTermsButton =
+    document.getElementById(
+        "closeTermsButton"
+    );
+
+
+const closeTermsTop =
+    document.getElementById(
+        "closeTermsTop"
+    );
+
+
+const acceptTermsButton =
+    document.getElementById(
+        "acceptTermsButton"
+    );
+
+
+const termsScrollArea =
+    document.getElementById(
+        "termsScrollArea"
+    );
+
+
+const termsScrollStatus =
+    document.getElementById(
+        "termsScrollStatus"
+    );
+
+
+const termsCheckbox =
+    document.getElementById(
+        "termsCheckbox"
+    );
+
+
+let termsRead = false;
+
+
+/* =========================================================
+   OPEN TERMS
+========================================================= */
+
+function openTerms() {
+
+    termsModal.classList.add(
+        "show"
+    );
+
+
+    termsModal.setAttribute(
+        "aria-hidden",
+        "false"
+    );
+
+
+    document.body.classList.add(
+        "terms-open"
+    );
+
+
+    termsScrollArea.scrollTop =
+        0;
+
+
+    termsRead = false;
+
+
+    acceptTermsButton.disabled =
+        true;
+
+
+    termsScrollStatus.classList.remove(
+        "read"
+    );
+
+
+    termsScrollStatus.innerHTML =
+
+        '<i class="bi bi-arrow-down-circle me-1"></i>' +
+
+        'Please scroll to the bottom to read all terms.';
+
+
+    setTimeout(
+        function() {
+
+            checkTermsRead();
+
+        },
+        100
+    );
+
+}
+
+
+/* =========================================================
+   CLOSE TERMS
+========================================================= */
+
+function closeTerms() {
+
+    termsModal.classList.remove(
+        "show"
+    );
+
+
+    termsModal.setAttribute(
+        "aria-hidden",
+        "true"
+    );
+
+
+    document.body.classList.remove(
+        "terms-open"
+    );
+
+}
+
+
+/* =========================================================
+   OPEN TERMS BUTTON
+========================================================= */
+
+openTermsButton.addEventListener(
+    "click",
+    function(event) {
+
+        event.preventDefault();
+
+        openTerms();
+
+    }
+);
+
+
+/* =========================================================
+   CLOSE TERMS BUTTONS
+========================================================= */
+
+closeTermsButton.addEventListener(
+    "click",
+    function() {
+
+        closeTerms();
+
+    }
+);
+
+
+closeTermsTop.addEventListener(
+    "click",
+    function() {
+
+        closeTerms();
+
+    }
+);
+
+
+/* =========================================================
+   CLICK OUTSIDE MODAL
+========================================================= */
+
+termsModal.addEventListener(
+    "click",
+    function(event) {
+
+        if (
+            event.target ===
+            termsModal
+        ) {
+
+            closeTerms();
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   ESC KEY
+========================================================= */
+
+document.addEventListener(
+    "keydown",
+    function(event) {
+
+        if (
+            event.key === "Escape" &&
+            termsModal.classList.contains("show")
+        ) {
+
+            closeTerms();
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   CHECK TERMS READ
+========================================================= */
+
+function checkTermsRead() {
+
+    if (!termsScrollArea) {
+
+        return;
+
+    }
+
+
+    const currentPosition =
+
+        termsScrollArea.scrollTop +
+
+        termsScrollArea.clientHeight;
+
+
+    const totalHeight =
+
+        termsScrollArea.scrollHeight;
+
+
+    const reachedBottom =
+
+        currentPosition >=
+        totalHeight - 15;
+
+
+    if (reachedBottom) {
+
+
+        termsRead = true;
+
+
+        acceptTermsButton.disabled =
+            false;
+
+
+        termsScrollStatus.classList.add(
+            "read"
+        );
+
+
+        termsScrollStatus.innerHTML =
+
+            '<i class="bi bi-check-circle-fill me-1"></i>' +
+
+            'You have read all the terms. You may now accept them.';
+
+    }
+
+}
+
+
+/* =========================================================
+   TERMS SCROLL EVENT
+========================================================= */
+
+termsScrollArea.addEventListener(
+    "scroll",
+    function() {
+
+        checkTermsRead();
+
+    }
+);
+
+
+/* =========================================================
+   ACCEPT TERMS
+========================================================= */
+
+acceptTermsButton.addEventListener(
+    "click",
+    function(event) {
+
+        event.preventDefault();
+
+
+        if (!termsRead) {
+
+            Swal.fire({
+
+                title:
+                    "Please read the terms",
+
+                text:
+                    "Scroll to the bottom of the Terms & Conditions before accepting them.",
+
+                icon:
+                    "warning",
+
+                confirmButtonText:
+                    "OK"
+
+            });
+
+
+            return;
+
+        }
+
+
+        termsCheckbox.checked =
+            true;
+
+
+        termsCheckbox.dispatchEvent(
+
+            new Event(
+                "change",
+                {
+                    bubbles: true
+                }
+            )
+
+        );
+
+
+        closeTerms();
+
+
+        setTimeout(
+            function() {
+
+                termsCheckbox.focus();
+
+            },
+            50
+        );
+
+    }
+);
+
+
+/* =========================================================
+   SIGNUP VALIDATION
+========================================================= */
+
+const signupAccountForm =
+    document.getElementById(
+        "signupAccountForm"
+    );
+
+
+signupAccountForm.addEventListener(
+    "submit",
+    function(event) {
+
+
+        if (
+            !termsCheckbox.checked
+        ) {
+
+            event.preventDefault();
+
+
+            Swal.fire({
+
+                title:
+                    "Terms & Conditions required",
+
+                text:
+                    "You must read and accept the Incident Reporting Terms & Conditions before creating an account.",
+
+                icon:
+                    "warning",
+
+                showCancelButton:
+                    true,
+
+                confirmButtonText:
+                    "Read Terms",
+
+                cancelButtonText:
+                    "Cancel"
+
+            }).then(
+                function(result) {
+
+                    if (
+                        result.isConfirmed
+                    ) {
+
+                        openTerms();
+
+                    }
+
+                }
+            );
+
+
+            return false;
+
+        }
+
+
+        return true;
+
+    }
+);
+
+
+/* =========================================================
+   TERMS CHECKBOX
+========================================================= */
+
+termsCheckbox.addEventListener(
+    "change",
+    function() {
+
+
+        if (
+            this.checked
+        ) {
+
+            this.setAttribute(
+                "aria-checked",
+                "true"
+            );
+
+        }
+
+        else {
+
+            this.setAttribute(
+                "aria-checked",
+                "false"
+            );
+
+        }
+
+    }
+);
+
 </script>
-
-
-<script
-    src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"
-></script>
-
--->
-
-
-
-<!-- =============================================================
-     PHP SESSION ALERT
-============================================================= -->
-
-
-
-
 
 
 
@@ -3543,36 +4852,103 @@ function googleTranslateElementInit() {
 
 <script src="views/assets/js/dataTables.bootstrap5.min.js"></script>
 
+
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+
+document.addEventListener(
+    'DOMContentLoaded',
+    function() {
+
+
         <?php if ($showAlert): ?>
-            Swal.fire({
-                title: 'Successful!',
-                text: '<?php echo htmlspecialchars($msgtext, ENT_QUOTES, 'UTF-8'); ?>',
-                icon: 'info',
-                confirmButtonText: 'OK',
-                allowOutsideClick: true,
-                allowEscapeKey: true
-            }).then((result) => {
-                if (result.isConfirmed || result.dismiss) {
-                    window.location.href = '<?php echo htmlspecialchars($url, ENT_QUOTES, 'UTF-8'); ?>';
+
+
+        Swal.fire({
+
+            title:
+                'Successful!',
+
+            text:
+                '<?php echo htmlspecialchars($msgtext, ENT_QUOTES, 'UTF-8'); ?>',
+
+            icon:
+                'info',
+
+            confirmButtonText:
+                'OK',
+
+            allowOutsideClick:
+                true,
+
+            allowEscapeKey:
+                true
+
+        }).then(
+            (result) => {
+
+                if (
+                    result.isConfirmed ||
+                    result.dismiss
+                ) {
+
+                    window.location.href =
+                        '<?php echo htmlspecialchars($url, ENT_QUOTES, 'UTF-8'); ?>';
+
                 }
-            });
+
+            }
+        );
+
+
         <?php else: ?>
-            Swal.fire({
-                title: 'Error',
-                text: '<?php echo htmlspecialchars($msgtext, ENT_QUOTES, 'UTF-8'); ?>',
-                icon: 'error',
-                confirmButtonText: 'OK',
-                allowOutsideClick: true,
-                allowEscapeKey: true
-            }).then((result) => {
-                if (result.isConfirmed || result.dismiss) {
-                    window.location.href = '<?php echo htmlspecialchars($url, ENT_QUOTES, 'UTF-8'); ?>';
+
+
+        Swal.fire({
+
+            title:
+                'Error',
+
+            text:
+                '<?php echo htmlspecialchars($msgtext, ENT_QUOTES, 'UTF-8'); ?>',
+
+            icon:
+                'error',
+
+            confirmButtonText:
+                'OK',
+
+            allowOutsideClick:
+                true,
+
+            allowEscapeKey:
+                true
+
+        }).then(
+            (result) => {
+
+                if (
+                    result.isConfirmed ||
+                    result.dismiss
+                ) {
+
+                    window.location.href =
+                        '<?php echo htmlspecialchars($url, ENT_QUOTES, 'UTF-8'); ?>';
+
                 }
-            });
+
+            }
+        );
+
+
         <?php endif; ?>
-    });
+
+    }
+
+);
+
 </script>
+
+
 </body>
+
 </html>

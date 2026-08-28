@@ -2,15 +2,48 @@
 <?php 
 require_once  ROOT_PATH .'/models/User.php';
 class AuthMiddleware {
+       private $conn;
+
+    public function __construct() {
+        $database = new Database();
+        $this->conn = $database->getConnection();
+       
+    }
 
   public function IsLoginSessionActive(): void {
-    if (!isset($_SESSION['userid']) || !isset($_SESSION['role']) || !isset($_SESSION['level'])) {
+    if (!isset($_SESSION['userid']) || !isset($_SESSION['role'])) {
+         if (session_status() === PHP_SESSION_NONE) session_start();
+        session_destroy();
         header("Location: index");
         exit;
     }
+    }
+public function GetAllUserRoleCapacity(): array {
+    if (!isset($_SESSION['userid']) || !isset($_SESSION['role'])) {
+        header("Location: index?action=dashboard");
+        exit;
+    }
 
-    header("Location: index?action=dashboard");
-    exit;
+    $stmt = $this->conn->prepare(
+        "SELECT * FROM login WHERE userid = :userid LIMIT 1"
+    );
+
+    $stmt->bindValue(':userid', $_SESSION['userid'], PDO::PARAM_INT);
+    $stmt->execute();
+
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$user) {
+        return [
+            'success' => false,
+            'error'   => 'Unable to retrieve the user role. Please try again.'
+        ];
+    }
+
+    return [
+        'success' => true,
+        'user'    => $user
+    ];
 }
 
 
