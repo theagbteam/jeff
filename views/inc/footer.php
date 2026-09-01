@@ -1,49 +1,38 @@
-<script src="app/views/assets/js/bootstrap.bundle.min.js"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        <?php if ($showAlert): ?>
-            Swal.fire({
-                title: 'Successful!',
-                text: '<?php echo htmlspecialchars($msgtext, ENT_QUOTES, 'UTF-8'); ?>',
-                icon: 'info',
-                confirmButtonText: 'OK',
-                allowOutsideClick: true,
-                allowEscapeKey: true
-            }).then((result) => {
-                if (result.isConfirmed || result.dismiss) {
-                    window.location.href = '<?php echo htmlspecialchars($url, ENT_QUOTES, 'UTF-8'); ?>';
-                }
-            });
-        <?php else: ?>
-            Swal.fire({
-                title: 'Error',
-                text: '<?php echo htmlspecialchars($msgtext, ENT_QUOTES, 'UTF-8'); ?>',
-                icon: 'error',
-                confirmButtonText: 'OK',
-                allowOutsideClick: true,
-                allowEscapeKey: true
-            }).then((result) => {
-                if (result.isConfirmed || result.dismiss) {
-                    window.location.href = '<?php echo htmlspecialchars($url, ENT_QUOTES, 'UTF-8'); ?>';
-                }
-            });
-        <?php endif; ?>
-    });
-</script>
 
-<script src="app/views/assets/js/jquery.dataTables.min.js"></script>
-<script src="app/views/assets/js/dataTables.bootstrap5.min.js"></script>
-<script>
-$(document).ready(function () {
-    $('#monthlyReportTable').DataTable({
-        pageLength: <?= (int)$page_length ?>,
-        lengthMenu: [<?= json_encode($lengthMenu) ?>, <?= json_encode($lengthMenu) ?>],
-        ordering: true,
-        responsive: true
-    });
-});
-</script>
+            <footer class="footer">
 
+                <div class="d-sm-flex justify-content-center justify-content-sm-between">
 
-</body>
-</html>
+                    <span
+                        style="text-decoration:none !important;"
+                        class="text-muted text-center text-sm-left d-block d-sm-inline-block"
+                    >
+
+                        Copyright © <?= $company_copyright ?>
+
+                        <a
+                            href="<?= htmlspecialchars($company_copyrightlink) ?>"
+                            target="_blank"
+                        >
+
+                            <?= htmlspecialchars($company_poweredby) ?>
+
+                        </a>
+
+                        All rights reserved.
+
+                    </span>
+
+                    <span
+                        class="text-muted float-none float-sm-end d-block mt-1 mt-sm-0 text-center"
+                    >
+
+                        Hand coded by Agb team
+
+                        <i class="mdi mdi-heart text-danger"></i>
+
+                    </span>
+
+                </div>
+
+            </footer>

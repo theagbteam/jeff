@@ -10,7 +10,10 @@
         name="viewport"
         content="width=device-width, initial-scale=1.0"
     >
-
+  <link
+        rel="shortcut icon"
+        href="views/uploads/img/<?= htmlspecialchars($company_favicon) ?>"
+    >
     <meta
         name="description"
         content="Secure incident reporting and management system for $company_name. Report, track, review, and manage incidents efficiently."
@@ -2539,6 +2542,35 @@ if (isset($_SESSION['error'])) {
                     enctype="multipart/form-data"
                 >
 
+
+                    <label class="form-label">
+    Title
+</label>
+
+<div class="input-group-custom">
+
+    <i
+        class="bi bi-person input-icon"
+    ></i>
+
+    <select
+        name="title"
+        class="form-control-custom"
+        required
+    >
+        <option value="" selected disabled>
+            Select title
+        </option>
+
+        <option value="Mr">Mr</option>
+        <option value="Mrs">Mrs</option>
+        <option value="Miss">Miss</option>
+        <option value="Ms">Ms</option>
+        <option value="Dr">Dr</option>
+        <option value="Prof">Prof</option>
+    </select>
+
+</div>
 
                     <label class="form-label">
 

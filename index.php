@@ -1,12 +1,12 @@
  <?php
 session_start();
-define('ROOT_PATH', 'C:\\xampp\\htdocs\\jeff');
+define('ROOT_PATH', __DIR__);
 require_once ROOT_PATH . "/controllers/UserController.php";
 require_once ROOT_PATH . "/controllers/DevController.php";
 require_once ROOT_PATH . "/middleware/AuthMiddleware.php";
 $userid = $_SESSION['userid'] ?? null;
 $SearchForMiddleware = new AuthMiddleware();
-$UserController = new UserController();
+// $UserController = new UserController();
   $entryroles = $_SESSION['role'] ?? "guest";
 //  $action = $_GET['action'] ?? 'login';
 

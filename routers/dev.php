@@ -1,6 +1,6 @@
  <?php
  
-//  require_once ROOT_PATH . "/controllers/UserController.php";
+ require_once ROOT_PATH . "/controllers/UserController.php";
 // require_once   ROOT_PATH ."/middleware/AuthMiddleware.php";
 $Usercontroller = new UserController();
 $Devcontroller = new DevController();
@@ -11,11 +11,14 @@ $Devcontroller = new DevController();
 
 switch ($action) {
         case 'dashboard':
-    //  $SearchForMiddleware->IsLoginSessionActive() ;
         $Devcontroller->dashboard();
         break;
+        case 'totalrequest':
+    //  $SearchForMiddleware->IsLoginSessionActive() ;
+        $Devcontroller->totalrequest();
+        break;
     case 'logout':
-        $UserController->logout();
+        $Usercontroller->logout();
         break;
     
     default:

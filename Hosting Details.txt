@@ -1,0 +1,12 @@
+NAMECHEAP WEBHOST LOGIN 
+username: aiconsult2 
+password: Consult2026@@
+
+NAMECHEAP CPANEL LOGIN 
+*cPanel details*
+URLs	https://server245.web-hosting.com/cpanel
+ 	(if your domain is still setting up)
+ 	http://aisecurity.ltd/cpanel
+cPanel username	aisekfdg
+cPanel password	JgvYpjbHhu0u
+

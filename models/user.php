@@ -18,51 +18,163 @@ class User {
 
 
 
-    public function login($userid,$password) {
-        $table_login = "login";
-        $stmt = $this->conn->prepare(
-            "SELECT * FROM {$table_login} WHERE userid = :userid LIMIT 1"
-        );
-        $stmt->bindParam(":userid", $userid);
+
+
+
+
+ public function SelectUsersTable() {
+        try {
+
+            $sql = "SELECT *
+                    FROM users
+                    ORDER BY sn DESC
+                    LIMIT 10";
+
+            $stmt = $this->conn->prepare($sql);
+            $stmt->execute();
+
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        } catch (PDOException $e) {
+
+            return [];
+        }
+    }
+
+
+
+
+public function clearMsgNotification($userid) {
+    $stmt = $this->conn->prepare(
+        "UPDATE users 
+         SET msg_notification = 0 
+         WHERE userid = :userid"
+    );
+
+    $stmt->bindParam(":userid", $userid);
+    return $stmt->execute();
+}
+
+
+
+
+
+
+
+public function SelectUsersAndLoginTable()
+{
+    try {
+
+        $sql = "SELECT
+                    users.sn AS user_sn,
+                    users.date AS user_date,
+                    users.title AS user_title,
+                    users.user_image AS user_image,
+                    users.userid AS user_userid,
+                    users.email AS user_email,
+                    users.phone AS user_phone,
+                    users.msg AS user_msg,
+                    users.fullname AS user_fullname,
+                    users.status AS user_status,
+
+                    login.sn AS login_sn,
+                    login.userid AS login_userid,
+                    login.password AS login_password,
+                    login.last_login AS login_last_login,
+                    login.level AS login_level,
+                    login.role AS login_role,
+                    login.role_name AS login_role_name,
+                    login.Role_edit_user AS login_edit_user,
+                    login.Role_create_user AS login_create_user,
+                    login.Role_delete_user AS login_delete_user,
+                    login.Role_approve_user AS login_approve_user,
+                    login.Role_create_report AS login_create_report,
+                    login.Role_approve_report AS login_approve_report,
+                    login.Role_edit_report AS login_edit_report,
+                    login.Role_delete_report AS login_delete_report,
+                    login.Role_comment AS login_comment,
+                    login.status AS login_status
+
+                FROM users
+                LEFT JOIN login
+                    ON users.userid = login.userid
+
+                ORDER BY users.sn DESC
+                ";
+
+        $stmt = $this->conn->prepare($sql);
         $stmt->execute();
 
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    } catch (PDOException $e) {
+
+        return [];
+    }
+}
 
 
-        // ❌ user not found
-        if (!$user) {
-            return [
-                'success' => false,
-                'error'   => 'User ID does not exist'
-            ];
-        }
 
-        // ❌ wrong password
-        if (!password_verify($password, $user['password'])) {
-            return [
-                'success' => false,
-                'error'   => 'Incorrect password'
-            ];
-        }
 
-              // ✅ login success
+
+
+
+
+public function login($userid, $password) {
+    $table_login = "login";
+
+    $stmt = $this->conn->prepare(
+        "SELECT * FROM {$table_login} WHERE userid = :userid LIMIT 1"
+    );
+
+    $stmt->bindParam(":userid", $userid);
+    $stmt->execute();
+
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    // User not found
+    if (!$user) {
+        return [
+            'success' => false,
+            'error'   => 'User ID does not exist'
+        ];
+    }
+
+    // Wrong password
+    if (!password_verify($password, $user['password'])) {
+        return [
+            'success' => false,
+            'error'   => 'Incorrect password'
+        ];
+    }
+
+    // Account status
+    if ($user['status'] == 0) {
+        return [
+            'success' => false,
+            'error'   => 'Your account is not active yet'
+        ];
+    }
+
+    if ($user['status'] == 1) {
+        // Account is active, proceed with login
         return [
             'success' => true,
             'user'    => $user
         ];
     }
 
-   public function SelectOneUserAllData()
-{
-    if (!isset($_SESSION['userid'])) {
-        return [
-            'success' => false,
-            'error'   => 'User is not logged in'
-        ];
-    }
+    // Any other status = deleted
+    return [
+        'success' => false,
+        'error'   => 'This account has been archived and is currently unavailable'
+    ];
+}
 
-    $userid = $_SESSION['userid'];
 
+
+
+   public function SelectUserTableForOne($userid){
     $stmt = $this->conn->prepare(
         "SELECT * FROM users WHERE userid = :userid LIMIT 1"
     );
@@ -88,39 +200,10 @@ class User {
 
 
 
-public function getRoleCounts()
-{
-    $sql = "SELECT
-                SUM(role = 'developer') AS developers,
-                SUM(role = 'reporter') AS reporters,
-                SUM(role = 'supervisor') AS supervisors,
-                SUM(role = 'administrator') AS administrators
-            FROM login";
-
-    $stmt = $this->conn->prepare($sql);
-    $stmt->execute();
-
-    return $stmt->fetch(PDO::FETCH_ASSOC);
-}
-public function TicketCount()
-{
-    $sql = "SELECT
-                COUNT(*) AS total,
-                SUM(status = 0) AS status_0,
-                SUM(status = 1) AS status_1,
-                SUM(status = 2) AS status_2
-            FROM tickets";
-
-    $stmt = $this->conn->prepare($sql);
-    $stmt->execute();
-
-    return $stmt->fetch(PDO::FETCH_ASSOC);
-}
-
 
 function getAParticularLoginUser($userid){
     $sql = "SELECT * FROM login WHERE userid = ?";
-    $stmt = $conn->prepare($sql);
+    $stmt = $this->conn->prepare($sql);
     $stmt->bind_param("s", $userid);
     $stmt->execute();
 
@@ -130,169 +213,332 @@ function getAParticularLoginUser($userid){
 }
 
 
-    
-public function create_reporter($name, $email, $password, $phone, $affirmation)
-{
-    try {
-  $callCompanyModel = new CompanyModel() ;
-        // Get website/company settings
-        $web_settings = $callCompanyModel->web_settings();
-         //Reporter
-         $Login_acess=1;
+   
+    public function CreateUserAccount(
+        $company_userid,
+        $title,
+        $fullname,
+        $phone,
+        $role,
+        $role_name,
+        $email
+    ) {
+        try {
 
-        $company_approvalstatus = $web_settings['company_acct_approval'];
-        $company_userid  = $web_settings['company_userid'];
+            $status = 1;
 
-        $today = date('Y-m-d');
+            $Role_comment =
+            $Role_create_user =
+            $Role_approve_user =
+            $Role_delete_user =
+            $Role_edit_user =
+            $Role_create_report =
+            $Role_delete_report =
+            $Role_edit_report =
+            $Role_approve_report = 0;
 
-        $reporter_name        = trim($name);
-        $reporter_email       = trim($email);
-        $reporter_password    = $password;
-        $reporter_phone       = trim($phone);
-        $reporter_affirmation = (int) $affirmation;
+
+            // =====================================================
+            // SET ROLE PERMISSIONS
+            // =====================================================
+
+            if ($role == "administrator") {
+
+                $Role_comment =
+                $Role_create_user =
+                $Role_approve_user =
+                $Role_delete_user =
+                $Role_edit_user =
+                $Role_create_report =
+                $Role_delete_report =
+                $Role_edit_report =
+                $Role_approve_report = 1;
+
+            } elseif ($role == "supervisor") {
+
+                $Role_comment = 1;
+                $Role_create_report = 1;
+                $Role_approve_report = 1;
+
+            } else {
+
+                // Reporter
+                $Role_comment = 1;
+                $Role_create_report = 1;
+            }
 
 
-        // =====================================================
-        // CHECK IF PHONE OR EMAIL ALREADY EXISTS
-        // =====================================================
+            // =====================================================
+            // CHECK IF PHONE ALREADY EXISTS
+            // =====================================================
 
-        $sql = "SELECT phone, email
+            $sql = "
+                SELECT userid
                 FROM users
                 WHERE phone = :phone
-                   OR email = :email
-                LIMIT 2";
+                LIMIT 1
+            ";
 
-        $stmt = $this->conn->prepare($sql);
+            $stmt = $this->conn->prepare($sql);
 
-        $stmt->execute([
-            ':phone' => $reporter_phone,
-            ':email' => $reporter_email
-        ]);
+            $stmt->execute([
+                ':phone' => $phone
+            ]);
 
-        $existingRecords = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $phoneExists = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        $phoneExists = false;
-        $emailExists = false;
 
-        foreach ($existingRecords as $record) {
+            if ($phoneExists) {
 
-            if ($record['phone'] === $reporter_phone) {
-                $phoneExists = true;
+                return [
+                    'success'     => false,
+                    'password'    => null,
+                    'phone_exists' => true,
+                    'email_exists' => false,
+                    'error'       => null
+                ];
             }
 
-            if ($record['email'] === $reporter_email) {
-                $emailExists = true;
+
+            // =====================================================
+            // CHECK IF EMAIL ALREADY EXISTS
+            // =====================================================
+
+            $sql = "
+                SELECT userid
+                FROM users
+                WHERE email = :email
+                LIMIT 1
+            ";
+
+            $stmt = $this->conn->prepare($sql);
+
+            $stmt->execute([
+                ':email' => $email
+            ]);
+
+            $emailExists = $stmt->fetch(PDO::FETCH_ASSOC);
+
+
+            if ($emailExists) {
+
+                return [
+                    'success'      => false,
+                    'password'     => null,
+                    'phone_exists' => false,
+                    'email_exists' => true,
+                    'error'        => null
+                ];
             }
-        }
 
 
-        // =====================================================
-        // RETURN ERRORS IF PHONE OR EMAIL EXISTS
-        // =====================================================
+            // =====================================================
+            // GET LAST SN FROM LOGIN TABLE
+            // =====================================================
 
-        if ($phoneExists || $emailExists) {
+            $sql = "SELECT MAX(sn) AS last_sn FROM login";
+
+            $stmt = $this->conn->prepare($sql);
+
+            $stmt->execute();
+
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+
+            $lastSn = $result['last_sn'] ?? 0;
+
+            $userid = $company_userid + $lastSn;
+
+
+            // =====================================================
+            // START TRANSACTION
+            // =====================================================
+
+            $this->conn->beginTransaction();
+
+
+            // =====================================================
+            // GENERATE PASSWORD
+            // 2 LETTERS + 4 NUMBERS
+            // =====================================================
+
+            $password =
+                chr(rand(65, 90)) .
+                chr(rand(65, 90)) .
+                rand(1000, 9999);
+
+
+            // =====================================================
+            // HASH PASSWORD
+            // =====================================================
+
+            $hashedPassword = password_hash(
+                $phone,
+                PASSWORD_DEFAULT
+            );
+
+
+            // =====================================================
+            // INSERT INTO LOGIN TABLE
+            // =====================================================
+
+            $sql = "
+                INSERT INTO login (
+                    userid,
+                    password,
+                    role,
+                    role_name,
+                    status,
+                    Role_comment,
+                    Role_create_user,
+                    Role_approve_user,
+                    Role_delete_user,
+                    Role_edit_user,
+                    Role_create_report,
+                    Role_delete_report,
+                    Role_edit_report,
+                    Role_approve_report
+                )
+                VALUES (
+                    :userid,
+                    :password,
+                    :role,
+                    :role_name,
+                    :status,
+                    :Role_comment,
+                    :Role_create_user,
+                    :Role_approve_user,
+                    :Role_delete_user,
+                    :Role_edit_user,
+                    :Role_create_report,
+                    :Role_delete_report,
+                    :Role_edit_report,
+                    :Role_approve_report
+                )
+            ";
+
+            $stmt = $this->conn->prepare($sql);
+
+            $stmt->execute([
+                ':userid'              => $userid,
+                ':password'            => $hashedPassword,
+                ':role'                => $role,
+                ':role_name'           => $role_name,
+                ':status'              => $status,
+                ':Role_comment'        => $Role_comment,
+                ':Role_create_user'    => $Role_create_user,
+                ':Role_approve_user'   => $Role_approve_user,
+                ':Role_delete_user'    => $Role_delete_user,
+                ':Role_edit_user'      => $Role_edit_user,
+                ':Role_create_report'  => $Role_create_report,
+                ':Role_delete_report'  => $Role_delete_report,
+                ':Role_edit_report'    => $Role_edit_report,
+                ':Role_approve_report' => $Role_approve_report
+            ]);
+
+
+            // =====================================================
+            // INSERT INTO USERS TABLE
+            // =====================================================
+
+            $sql = "
+                INSERT INTO users (
+                    status,
+                    title,
+                    fullname,
+                    phone,
+                    email,
+                    userid,
+                    date
+                )
+                VALUES (
+                    1,
+                    :title,
+                    :fullname,
+                    :phone,
+                    :email,
+                    :userid,
+                    :date
+                )
+            ";
+
+            $stmt = $this->conn->prepare($sql);
+
+            $stmt->execute([
+                ':fullname' => $fullname,
+                ':title' => $title,
+                ':phone'    => $phone,
+                ':email'    => $email,
+                ':userid'   => $userid,
+                ':date'     => date('Y-m-d H:i:s')
+            ]);
+
+
+            // =====================================================
+            // COMMIT TRANSACTION
+            // =====================================================
+
+            $this->conn->commit();
+
+
+            // =====================================================
+            // SUCCESS
+            // =====================================================
 
             return [
-                'success'       => false,
-                'phone_exists'  => $phoneExists,
-                'email_exists'  => $emailExists
+                'success'      => true,
+                'password'     => $password,
+                'phone_exists' => false,
+                'email_exists' => false,
+                'error'        => null
+            ];
+
+
+        } catch (PDOException $e) {
+
+
+            // =====================================================
+            // ROLLBACK IF TRANSACTION IS ACTIVE
+            // =====================================================
+
+            if ($this->conn->inTransaction()) {
+                $this->conn->rollBack();
+            }
+
+
+            // =====================================================
+            // RETURN DATABASE ERROR
+            // =====================================================
+
+            return [
+                'success'      => false,
+                'password'     => null,
+                'phone_exists' => false,
+                'email_exists' => false,
+                'error'        => $e->getMessage()
             ];
         }
-
-
-        // =====================================================
-        // GET LAST SERIAL NUMBER
-        // =====================================================
-
-        $sql = "SELECT MAX(sn) AS last_sn FROM users";
-
-        $stmt = $this->conn->prepare($sql);
-        $stmt->execute();
-
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        $lastSn = (int) ($result['last_sn'] ?? 0);
-
-        // Generate new user ID
-        $new_userid = $lastSn + (int) $company_userid;
-
-
-        // =====================================================
-        // START TRANSACTION
-        // =====================================================
-
-        $this->conn->beginTransaction();
-
-
-        // =====================================================
-        // INSERT USER
-        // =====================================================
-
-        $sql = "INSERT INTO users
-                (userid, `date`, fullname, phone, email, affirmation)
-                VALUES
-                (:userid, :date, :fullname, :phone, :email, :affirmation)";
-
-        $stmt = $this->conn->prepare($sql);
-
-        $stmt->execute([
-            ':userid'      => $new_userid,
-            ':date'        => $today,
-            ':fullname'    => $reporter_name,
-            ':phone'       => $reporter_phone,
-            ':email'       => $reporter_email,
-            ':affirmation' => $reporter_affirmation
-        ]);
-
-
-        // =====================================================
-        // INSERT LOGIN CREDENTIALS
-        // =====================================================
-
-        $sql = "INSERT INTO login
-                (userid, password, reporter, status)
-                VALUES
-                (:userid, :password, :reporter, :status)";
-
-        $stmt = $this->conn->prepare($sql);
-
-        $stmt->execute([
-            ':userid'   => $new_userid,
-            ':password' => password_hash($reporter_password,PASSWORD_DEFAULT),
-            ':reporter' => $Login_acess,
-            ':status'   => $company_approvalstatus
-        ]);
-
-
-        // =====================================================
-        // COMMIT
-        // =====================================================
-
-        $this->conn->commit();
-
-        return [
-            'success'       => true,
-            'phone_exists'  => false,
-            'email_exists'  => false
-        ];
-
-
-    } catch (PDOException $e) {
-
-        if ($this->conn->inTransaction()) {
-            $this->conn->rollBack();
-        }
-
-        error_log(
-            "create_reporter error: " . $e->getMessage()
-        );
-
-        return [
-            'success' => false,
-            'error'   => true
-        ];
     }
 }
 
 
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
