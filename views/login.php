@@ -40,6 +40,7 @@
         href="views/inc/sweetalert/sweetalert2.min.css"
     >
 
+  
 
     <!-- Bootstrap CSS -->
 
@@ -2087,11 +2088,417 @@ body.terms-open {
 }
 
 </style>
+<style>
 
+/* =========================
+   PAGE LOADER
+========================= */
+
+#pageLoader {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background: #ffffff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999999;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+#pageLoader.hide {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.loader-content {
+    text-align: center;
+}
+
+.spinner {
+    width: 55px;
+    height: 55px;
+    border: 5px solid #e5e7eb;
+    border-top: 5px solid #0d6efd;
+    border-radius: 50%;
+    animation: loaderSpin 0.8s linear infinite;
+    margin: 0 auto 15px;
+}
+
+.loader-text {
+    font-size: 15px;
+    font-weight: 600;
+    color: #333;
+}
+
+@keyframes loaderSpin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+/* =========================
+   PAGE LOADER
+========================= */
+
+#pageLoader {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background: #ffffff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999999;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+#pageLoader.hide {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.loader-content {
+    text-align: center;
+}
+
+.spinner {
+    width: 55px;
+    height: 55px;
+    border: 5px solid #e5e7eb;
+    border-top: 5px solid #0d6efd;
+    border-radius: 50%;
+    animation: loaderSpin 0.8s linear infinite;
+    margin: 0 auto 15px;
+}
+
+.loader-text {
+    font-size: 15px;
+    font-weight: 600;
+    color: #333;
+}
+
+@keyframes loaderSpin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+
+/* =========================
+   PAGE LOADER
+========================= */
+
+#pageLoader {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background: #ffffff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999999;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+#pageLoader.hide {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.loader-content {
+    text-align: center;
+}
+
+.spinner {
+    width: 55px;
+    height: 55px;
+    border: 5px solid #e5e7eb;
+    border-top: 5px solid #0d6efd;
+    border-radius: 50%;
+    animation: loaderSpin 0.8s linear infinite;
+    margin: 0 auto 15px;
+}
+
+.loader-text {
+    font-size: 15px;
+    font-weight: 600;
+    color: #333;
+}
+
+@keyframes loaderSpin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+/* =========================
+   PAGE LOADER
+========================= */
+
+#pageLoader {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background: #ffffff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999999;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+#pageLoader.hide {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.loader-content {
+    text-align: center;
+}
+
+.spinner {
+    width: 55px;
+    height: 55px;
+    border: 5px solid #e5e7eb;
+    border-top: 5px solid #0d6efd;
+    border-radius: 50%;
+    animation: loaderSpin 0.8s linear infinite;
+    margin: 0 auto 15px;
+}
+
+.loader-text {
+    font-size: 15px;
+    font-weight: 600;
+    color: #333;
+}
+
+@keyframes loaderSpin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+
+/* =========================
+   PAGE LOADER
+========================= */
+
+#pageLoader {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background: #ffffff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999999;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+#pageLoader.hide {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.loader-content {
+    text-align: center;
+}
+
+.spinner {
+    width: 55px;
+    height: 55px;
+    border: 5px solid #e5e7eb;
+    border-top: 5px solid #0d6efd;
+    border-radius: 50%;
+    animation: loaderSpin 0.8s linear infinite;
+    margin: 0 auto 15px;
+}
+
+.loader-text {
+    font-size: 15px;
+    font-weight: 600;
+    color: #333;
+}
+
+@keyframes loaderSpin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+
+/* =========================
+   PAGE LOADER
+========================= */
+
+#pageLoader {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background: #ffffff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999999;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+#pageLoader.hide {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.loader-content {
+    text-align: center;
+}
+
+.spinner {
+    width: 55px;
+    height: 55px;
+    border: 5px solid #e5e7eb;
+    border-top: 5px solid #0d6efd;
+    border-radius: 50%;
+    animation: loaderSpin 0.8s linear infinite;
+    margin: 0 auto 15px;
+}
+
+.loader-text {
+    font-size: 15px;
+    font-weight: 600;
+    color: #333;
+}
+
+@keyframes loaderSpin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+
+/* =========================
+   PAGE LOADER
+========================= */
+
+#pageLoader {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background: #ffffff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999999;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+#pageLoader.hide {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.loader-content {
+    text-align: center;
+}
+
+.spinner {
+    width: 55px;
+    height: 55px;
+    border: 5px solid #e5e7eb;
+    border-top: 5px solid #0d6efd;
+    border-radius: 50%;
+    animation: loaderSpin 0.8s linear infinite;
+    margin: 0 auto 15px;
+}
+
+.loader-text {
+    font-size: 15px;
+    font-weight: 600;
+    color: #333;
+}
+
+@keyframes loaderSpin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+
+</style>
 </head>
 
 
 <body>
+   <!-- PAGE LOADER -->
+<div id="pageLoader">
+    <div class="loader-content">
+        <div class="spinner"></div>
+        <div class="loader-text">Loading...</div>
+    </div>
+</div>
 
 
 <?php
@@ -4979,7 +5386,24 @@ document.addEventListener(
 );
 
 </script>
+<script>
 
+    
+window.addEventListener("load", function () {
+
+    const loader = document.getElementById("pageLoader");
+
+    if (loader) {
+        loader.classList.add("hide");
+
+        setTimeout(function () {
+            loader.remove();
+        }, 500);
+    }
+
+});
+
+</script>
 
 </body>
 

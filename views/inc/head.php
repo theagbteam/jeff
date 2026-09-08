@@ -14,7 +14,7 @@ if (isset($_SESSION['error'])) {
     unset($_SESSION['error']);
 }
 
-
+// $page_name = "users";
 
 // $current_action = isset($_GET['action'])
 //     ? trim($_GET['action'])
@@ -23,7 +23,7 @@ if (isset($_SESSION['error'])) {
 // if ($current_action === '' || $current_action === 'index') {
 //     $current_action = 'dashboard';
 // }
-$current_action = ($page_name === '') ? 'dashboard' : $page_name;
+$current_action = $page_name;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -40,7 +40,7 @@ $current_action = ($page_name === '') ? 'dashboard' : $page_name;
     <title>
         <?= htmlspecialchars($company_alias) ?>
         -
-        <?= ucfirst(htmlspecialchars($current_action)) ?>
+        <?= ucfirst(htmlspecialchars($page_name)) ?>
     </title>
 
     <script src="views/inc/sweetalert/sweetalert2@11.js"></script>
@@ -903,6 +903,61 @@ $current_action = ($page_name === '') ? 'dashboard' : $page_name;
 
         }
 
+/* =========================
+   PAGE LOADER
+========================= */
+
+#pageLoader {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background: #ffffff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999999;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+#pageLoader.hide {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.loader-content {
+    text-align: center;
+}
+
+.spinner {
+    width: 55px;
+    height: 55px;
+    border: 5px solid #e5e7eb;
+    border-top: 5px solid #0d6efd;
+    border-radius: 50%;
+    animation: loaderSpin 0.8s linear infinite;
+    margin: 0 auto 15px;
+}
+
+.loader-text {
+    font-size: 15px;
+    font-weight: 600;
+    color: #333;
+}
+
+@keyframes loaderSpin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+        
     </style>
 
 </head>

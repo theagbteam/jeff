@@ -1,4 +1,4 @@
-    <nav class="sidebar sidebar-offcanvas"id="sidebar">
+<nav class="sidebar sidebar-offcanvas"id="sidebar">
 
         <div
             class="sidebar-brand-wrapper d-none d-lg-flex align-items-center justify-content-center fixed-top"
@@ -88,64 +88,97 @@
 
             </li>
 
+         <li class="nav-item menu-items <?= $page_name === 'dashboard' ? 'active' : '' ?>">
+
+    <a class="nav-link"
+       href="index.php?action=dashboard"
+       style="<?= $page_name === 'dashboard' ? 'color:lawngreen !important;' : '' ?>">
+
+      <span class="menu-icon"
+      style="<?= $page_name === 'dashboard' ? 'color:lawngreen !important;' : '' ?>">
+
+    <i class="mdi mdi-view-dashboard"
+       style="<?= $page_name === 'dashboard' ? 'color:green !important;' : '' ?>"></i>
+
+</span>
+
+        <span class="menu-title"
+              style="<?= $page_name === 'dashboard' ? 'color:lawngreen !important;' : '' ?>">
+
+            Dashboard
+
+        </span>
+
+    </a>
+
+</li>
+
+    
+<li class="nav-item menu-items <?= $page_name === 'total request' ? 'active' : '' ?>">
+
+    <a class="nav-link"
+       href="index.php?action=totalrequest"
+       style="<?= $page_name === 'total request' ? 'color:lawngreen !important;' : '' ?>">
+
+      <span class="menu-icon"
+      style="<?= $page_name === 'total request' ? 'color:lawngreen !important;' : '' ?>">
+
+    <i class="mdi mdi-file-document-multiple"
+       style="<?= $page_name === 'total request' ? 'color:green !important;' : '' ?>"></i>
+
+</span>
+
+        <span class="menu-title"
+              style="<?= $page_name === 'total request' ? 'color:lawngreen !important;' : '' ?>">
+
+            Total request
+
+        </span>
+
+    </a>
+
+</li>
+
+
+
+
+
+
+<li class="nav-item menu-items <?= $page_name === 'users' ? 'active' : '' ?>">
+
+    <a class="nav-link"
+       href="index.php?action=users"
+       style="<?= $page_name === 'users' ? 'color:lawngreen !important;' : '' ?>">
+
+      <span class="menu-icon"
+      style="<?= $page_name === 'users' ? 'color:lawngreen !important;' : '' ?>">
+
+    <i class="mdi mdi-account-multiple"
+       style="<?= $page_name === 'users' ? 'color:green !important;' : '' ?>"></i>
+
+</span>
+
+        <span class="menu-title"
+              style="<?= $page_name === 'users' ? 'color:lawngreen !important;' : '' ?>">
+
+            Users
+
+        </span>
+
+    </a>
+
+</li>
+
+
+
             <li
-                class="nav-item menu-items dashboard-menu <?= $current_action === 'dashboard' ? 'active' : '' ?>"
+                class="nav-item menu-items <?= $page_name === 'deleted_items' ? 'active' : '' ?>"
             >
-
-                <a
-                    class="nav-link"
-                    href="index?action=dashboard"
-                >
-
-                    <span class="menu-icon">
-
-                        <i class="mdi mdi-speedometer"></i>
-
-                    </span>
-
-                    <span class="menu-title">
-
-                        Dashboard
-
-                    </span>
-
-                </a>
 
             </li>
 
             <li
-                class="nav-item menu-items <?= $current_action === 'users' ? 'active' : '' ?>"
-            >
-
-                <a
-                    class="nav-link"
-                    href="#"
-                >
-
-                    <span class="menu-icon">
-
-                        <i class="mdi mdi-account-multiple"></i>
-
-                    </span>
-
-                    <span class="menu-title">
-
-                        Users
-
-                    </span>
-
-                </a>
-
-            </li>
-
-            <li
-                class="nav-item menu-items <?= $current_action === 'deleted_items' ? 'active' : '' ?>"
-            >
-
-            </li>
-
-            <li
-                class="nav-item menu-items <?= $current_action === 'corridors' ? 'active' : '' ?>"
+                class="nav-item menu-items <?= $page_name === 'corridors' ? 'active' : '' ?>"
             >
 
                 <a
@@ -170,7 +203,7 @@
             </li>
 
             <li
-                class="nav-item menu-items <?= $current_action === 'incidence_source' ? 'active' : '' ?>"
+                class="nav-item menu-items <?= $page_name === 'incidence_source' ? 'active' : '' ?>"
             >
 
                 <a
@@ -195,7 +228,7 @@
             </li>
 
             <li
-                class="nav-item menu-items <?= $current_action === 'operators' ? 'active' : '' ?>"
+                class="nav-item menu-items <?= $page_name === 'operators' ? 'active' : '' ?>"
             >
 
                 <a
@@ -220,7 +253,7 @@
             </li>
 
             <li
-                class="nav-item menu-items <?= $current_action === 'owners' ? 'active' : '' ?>"
+                class="nav-item menu-items <?= $page_name === 'owners' ? 'active' : '' ?>"
             >
 
                 <a
@@ -245,7 +278,7 @@
             </li>
 
             <li
-                class="nav-item menu-items <?= $current_action === 'pipelines' ? 'active' : '' ?>"
+                class="nav-item menu-items <?= $page_name === 'pipelines' ? 'active' : '' ?>"
             >
 
                 <a
@@ -270,7 +303,7 @@
             </li>
 
             <li
-                class="nav-item menu-items <?= $current_action === 'pipeline_types' ? 'active' : '' ?>"
+                class="nav-item menu-items <?= $page_name === 'pipeline_types' ? 'active' : '' ?>"
             >
 
                 <a
@@ -295,7 +328,7 @@
             </li>
 
             <li
-                class="nav-item menu-items <?= $current_action === 'priority' ? 'active' : '' ?>"
+                class="nav-item menu-items <?= $page_name === 'priority' ? 'active' : '' ?>"
             >
 
                 <a
@@ -320,7 +353,7 @@
             </li>
 
             <li
-                class="nav-item menu-items <?= $current_action === 'zones' ? 'active' : '' ?>"
+                class="nav-item menu-items <?= $page_name === 'zones' ? 'active' : '' ?>"
             >
 
                 <a
@@ -345,7 +378,7 @@
             </li>
 
             <li
-                class="nav-item menu-items <?= $current_action === 'wellhead_status' ? 'active' : '' ?>"
+                class="nav-item menu-items <?= $page_name === 'wellhead_status' ? 'active' : '' ?>"
             >
 
                 <a
@@ -370,7 +403,7 @@
             </li>
 
             <li
-                class="nav-item menu-items <?= $current_action === 'report_types' ? 'active' : '' ?>"
+                class="nav-item menu-items <?= $page_name === 'report_types' ? 'active' : '' ?>"
             >
 
                 <a

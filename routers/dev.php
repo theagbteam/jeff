@@ -13,6 +13,18 @@ switch ($action) {
         case 'dashboard':
         $Devcontroller->dashboard();
         break;
+        case 'users':
+        $Devcontroller->users();
+        break;
+        case 'updateCompanyDetails':
+        $Devcontroller->updateCompanyDetails();
+        break;
+        case 'updateMailerDetails':
+        $Devcontroller->updateMailerDetails();
+        break;
+        case 'settings':
+        $Devcontroller->settings();
+        break;
         case 'totalrequest':
     //  $SearchForMiddleware->IsLoginSessionActive() ;
         $Devcontroller->totalrequest();

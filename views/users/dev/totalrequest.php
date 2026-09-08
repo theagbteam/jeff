@@ -1,7 +1,13 @@
 <?php include "views/inc/head.php"  ?>
 
 <body>
-
+<!-- PAGE LOADER -->
+<div id="pageLoader">
+    <div class="loader-content">
+        <div class="spinner"></div>
+        <div class="loader-text">Loading...</div>
+    </div>
+</div>
 <div class="container-scroller">
 
     <div
@@ -22,25 +28,15 @@
 
 <?php include "views/inc/topbar.php"  ?>
 
-
-
-
-
-
-
-
-
-
-
-        
+       
 
         <div class="main-panel">
 
             <div class="content-wrapper">
-<?php include "views/inc/summaryboxes.php"  ?>
+          <?php include "views/inc/summaryboxes.php"  ?>
 
 
-<?php include "views/inc/userspreview.php"  ?>
+<?php include "views/inc/totalrequestpreview.php"  ?>
 
             </div>
 <?php include "views/inc/footer.php"  ?>

@@ -207,7 +207,7 @@
                             </a>
 
                             <a
-                                href="#"
+                                href="index.php?action=settings"
                                 class="dropdown-item account-menu-item"
                             >
 

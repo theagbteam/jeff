@@ -1,5 +1,7 @@
  <?php
-session_start();
+  if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
 define('ROOT_PATH', __DIR__);
 require_once ROOT_PATH . "/controllers/UserController.php";
 require_once ROOT_PATH . "/controllers/DevController.php";

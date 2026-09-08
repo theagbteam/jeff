@@ -1,6 +1,6 @@
  <?php
-session_start();
-define('ROOT_PATH', 'C:\\xampp\\htdocs\\jeff');
+// session_start();
+// define('ROOT_PATH', 'C:\\xampp\\htdocs\\jeff');
 require_once ROOT_PATH ."/controllers/UserController.php";
 require_once   ROOT_PATH ."/middleware/AuthMiddleware.php";
 

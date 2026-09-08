@@ -1,3 +1,4 @@
+
 <?php  if ($page_name=="dashboard") :  ?>
                 <div class="row">
 
@@ -36,7 +37,7 @@
                                     </div>
 
                                     <h6 class="text-muted font-weight-normal">
-                                        Total Requests
+                                        Pending Requests
                                     </h6>
 
                                 </div>
@@ -50,7 +51,7 @@
                     <div class="col-xl-3 col-sm-6 grid-margin stretch-card">
 
                         <a
-                            href="index.php?action=dashboard"
+                            href="index.php?action=users"
                             style="text-decoration:none; width:100%;"
                         >
 
@@ -96,7 +97,7 @@
                     <div class="col-xl-3 col-sm-6 grid-margin stretch-card">
 
                         <a
-                            href="index.php?action=dashboard"
+                            href="index.php?action=users"
                             style="text-decoration:none; width:100%;"
                         >
 
@@ -142,7 +143,7 @@
                     <div class="col-xl-3 col-sm-6 grid-margin stretch-card">
 
                         <a
-                            href="index.php?action=dashboard"
+                            href="index.php?action=users"
                             style="text-decoration:none; width:100%;"
                         >
 

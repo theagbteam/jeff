@@ -1,7 +1,7 @@
 NAMECHEAP WEBHOST LOGIN 
 username: aiconsult2 
 password: Consult2026@@
-
+gmail : aesi ghqz oyjr mmci
 NAMECHEAP CPANEL LOGIN 
 *cPanel details*
 URLs	https://server245.web-hosting.com/cpanel

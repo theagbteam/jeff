@@ -1,3 +1,10 @@
+<?php
+
+$table_name = "users";
+$user_sn = 0;
+
+?>
+
 <div class="row">
 
     <div class="col-12 grid-margin stretch-card">
@@ -71,6 +78,8 @@
                                     <?php
 
                                     $user_image = "noimage2.png";
+
+                                    $user_sn = $user['user_sn'] ?? 0;
 
                                     if ($user['user_image'] != "") {
                                         $user_image = $user['user_image'];
@@ -205,34 +214,58 @@
                                         <!-- ACTION -->
                                         <td>
 
-                                            <!-- EDIT BUTTON -->
-                                            <button
-                                                type="button"
-                                                class="dashboard-table-action"
-                                                title="Edit"
-                                                onclick="window.location.href='index?action=edit_user&id=<?= urlencode($user_id); ?>'"
-                                            >
-                                                <i class="mdi mdi-pencil"></i>
-                                            </button>
+                                            <?php if ($user['login_status'] == 0 || $user['login_status'] == 1): ?>
 
-    <?php if ($user['login_status'] == 0 || $user['login_status'] == 1): ?>
-     
+                                                <!-- EDIT BUTTON -->
+                                                <!-- EDIT PASSES ONLY USER SN -->
+                                                <button
+                                                    type="button"
+                                                    class="dashboard-table-action"
+                                                    title="Edit"
+                                                    onclick="window.location.href='index?action=edit_user&sn=<?= urlencode($user_sn); ?>'"
+                                                >
+                                                    <i class="mdi mdi-pencil"></i>
+                                                </button>
 
-                                            <!-- DELETE BUTTON -->
-                                            <button
-                                                type="button"
-                                                class="dashboard-table-action delete-user-btn"
-                                                title="Delete"
-                                                onclick="showDeleteModal(
-                                                    '<?= htmlspecialchars($user_id, ENT_QUOTES); ?>',
-                                                    '<?= htmlspecialchars($user_name, ENT_QUOTES); ?>'
-                                                )"
-                                            >
-                                       
-                                              <i class="mdi mdi-delete"></i>
-                                               
-                                            </button>
- <?php  endif; ?>
+
+                                                <!-- DELETE BUTTON -->
+                                                <!-- DELETE PASSES SN + TABLE NAME -->
+                                                <button
+                                                    type="button"
+                                                    class="dashboard-table-action delete-user-btn"
+                                                    title="Delete"
+                                                    onclick="showDeleteModal(
+                                                        '<?= htmlspecialchars($user_sn, ENT_QUOTES); ?>',
+                                                        '<?= htmlspecialchars($user_name, ENT_QUOTES); ?>',
+                                                        '<?= htmlspecialchars($table_name, ENT_QUOTES); ?>'
+                                                    )"
+                                                >
+
+                                                    <i class="mdi mdi-delete"></i>
+
+                                                </button>
+
+                                            <?php else: ?>
+
+                                                <!-- RESTORE BUTTON -->
+                                                <!-- RESTORE WILL ASK FOR CONFIRMATION FIRST -->
+                                                <button
+                                                    type="button"
+                                                    class="dashboard-table-action recycle-user-btn"
+                                                    title="Restore"
+                                                    onclick="showRestoreModal(
+                                                        '<?= htmlspecialchars($user_sn, ENT_QUOTES); ?>',
+                                                        '<?= htmlspecialchars($user_name, ENT_QUOTES); ?>',
+                                                        '<?= htmlspecialchars($table_name, ENT_QUOTES); ?>'
+                                                    )"
+                                                >
+
+                                                    <i class="mdi mdi-recycle"></i>
+
+                                                </button>
+
+                                            <?php endif; ?>
+
                                         </td>
 
                                     </tr>
@@ -370,6 +403,92 @@
 
 
 <!-- =========================================================
+     RESTORE CONFIRMATION MODAL
+========================================================= -->
+
+<div
+    id="restoreModal"
+    class="restore-modal-overlay"
+    aria-hidden="true"
+>
+
+    <div
+        class="restore-modal-box"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="restoreModalTitle"
+    >
+
+        <!-- CLOSE BUTTON -->
+        <button
+            type="button"
+            class="restore-modal-close"
+            onclick="closeRestoreModal()"
+            aria-label="Close"
+        >
+            &times;
+        </button>
+
+
+        <!-- RESTORE ICON -->
+        <div class="restore-modal-icon">
+
+            <i class="mdi mdi-recycle"></i>
+
+        </div>
+
+
+        <!-- TITLE -->
+        <h3 id="restoreModalTitle">
+            Restore User?
+        </h3>
+
+
+        <!-- MESSAGE -->
+        <p>
+
+            Do you want to restore
+
+            <strong id="restoreUserName">
+                this user
+            </strong>?
+
+        </p>
+
+
+        <!-- ACTION BUTTONS -->
+        <div class="restore-modal-actions">
+
+            <button
+                type="button"
+                class="restore-modal-cancel"
+                onclick="closeRestoreModal()"
+            >
+                Cancel
+            </button>
+
+
+            <button
+                type="button"
+                class="restore-modal-confirm"
+                id="confirmRestoreBtn"
+            >
+
+                <i class="mdi mdi-restore"></i>
+
+                Yes, Restore
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- =========================================================
      DELETE MODAL CSS
 ========================================================= -->
 
@@ -389,7 +508,20 @@
 
 
 /* ---------------------------------------------------------
-   MODAL OVERLAY
+   RECYCLE / RESTORE BUTTON
+--------------------------------------------------------- */
+
+.recycle-user-btn {
+    color: #16a34a;
+}
+
+.recycle-user-btn:hover {
+    color: #15803d;
+}
+
+
+/* ---------------------------------------------------------
+   DELETE MODAL OVERLAY
 --------------------------------------------------------- */
 
 .delete-modal-overlay {
@@ -427,7 +559,7 @@
 }
 
 
-/* SHOW MODAL */
+/* SHOW DELETE MODAL */
 
 .delete-modal-overlay.show {
 
@@ -441,7 +573,7 @@
 
 
 /* ---------------------------------------------------------
-   MODAL BOX
+   DELETE MODAL BOX
 --------------------------------------------------------- */
 
 .delete-modal-box {
@@ -479,7 +611,7 @@
 }
 
 
-/* MODAL ANIMATION */
+/* DELETE MODAL ANIMATION */
 
 .delete-modal-overlay.show .delete-modal-box {
 
@@ -491,7 +623,7 @@
 
 
 /* ---------------------------------------------------------
-   CLOSE BUTTON
+   DELETE CLOSE BUTTON
 --------------------------------------------------------- */
 
 .delete-modal-close {
@@ -578,7 +710,7 @@
 
 
 /* ---------------------------------------------------------
-   TITLE
+   DELETE TITLE
 --------------------------------------------------------- */
 
 .delete-modal-box h3 {
@@ -597,7 +729,7 @@
 
 
 /* ---------------------------------------------------------
-   MESSAGE
+   DELETE MESSAGE
 --------------------------------------------------------- */
 
 .delete-modal-box p {
@@ -625,47 +757,7 @@
 
 
 /* ---------------------------------------------------------
-   WARNING
---------------------------------------------------------- */
-
-.delete-modal-warning {
-
-    display: flex;
-
-    align-items: center;
-
-    justify-content: center;
-
-    gap: 8px;
-
-    margin-bottom: 26px;
-
-    padding: 12px 15px;
-
-    border-radius: 11px;
-
-    background: #fff7ed;
-
-    border: 1px solid #fed7aa;
-
-    color: #c2410c;
-
-    font-size: 13px;
-
-    font-weight: 500;
-
-}
-
-
-.delete-modal-warning i {
-
-    font-size: 19px;
-
-}
-
-
-/* ---------------------------------------------------------
-   ACTION BUTTONS
+   DELETE ACTION BUTTONS
 --------------------------------------------------------- */
 
 .delete-modal-actions {
@@ -701,7 +793,7 @@
 }
 
 
-/* CANCEL */
+/* DELETE CANCEL */
 
 .delete-modal-cancel {
 
@@ -725,7 +817,7 @@
 }
 
 
-/* CONFIRM DELETE */
+/* DELETE CONFIRM */
 
 .delete-modal-confirm {
 
@@ -771,13 +863,362 @@
 }
 
 
+/* =========================================================
+   RESTORE MODAL
+========================================================= */
+
+
+/* ---------------------------------------------------------
+   RESTORE MODAL OVERLAY
+--------------------------------------------------------- */
+
+.restore-modal-overlay {
+
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 99999;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    padding: 20px;
+
+    background: rgba(15, 23, 42, 0.62);
+
+    backdrop-filter: blur(7px);
+
+    -webkit-backdrop-filter: blur(7px);
+
+    opacity: 0;
+
+    visibility: hidden;
+
+    pointer-events: none;
+
+    transition:
+        opacity 0.25s ease,
+        visibility 0.25s ease;
+
+}
+
+
+/* SHOW RESTORE MODAL */
+
+.restore-modal-overlay.show {
+
+    opacity: 1;
+
+    visibility: visible;
+
+    pointer-events: auto;
+
+}
+
+
+/* ---------------------------------------------------------
+   RESTORE MODAL BOX
+--------------------------------------------------------- */
+
+.restore-modal-box {
+
+    position: relative;
+
+    width: 100%;
+
+    max-width: 440px;
+
+    padding: 38px 32px 30px;
+
+    background: #ffffff;
+
+    border-radius: 22px;
+
+    text-align: center;
+
+    box-shadow:
+
+        0 30px 80px rgba(15, 23, 42, 0.25),
+
+        0 10px 30px rgba(15, 23, 42, 0.12);
+
+    transform: translateY(25px) scale(0.94);
+
+    transition:
+
+        transform 0.3s cubic-bezier(.2,.8,.2,1),
+
+        opacity 0.3s ease;
+
+    opacity: 0;
+
+}
+
+
+/* RESTORE MODAL ANIMATION */
+
+.restore-modal-overlay.show .restore-modal-box {
+
+    transform: translateY(0) scale(1);
+
+    opacity: 1;
+
+}
+
+
+/* ---------------------------------------------------------
+   RESTORE CLOSE BUTTON
+--------------------------------------------------------- */
+
+.restore-modal-close {
+
+    position: absolute;
+
+    top: 15px;
+
+    right: 17px;
+
+    width: 36px;
+
+    height: 36px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border: none;
+
+    border-radius: 50%;
+
+    background: #f0fdf4;
+
+    color: #64748b;
+
+    font-size: 26px;
+
+    line-height: 1;
+
+    cursor: pointer;
+
+    transition: all 0.2s ease;
+
+}
+
+
+.restore-modal-close:hover {
+
+    background: #dcfce7;
+
+    color: #16a34a;
+
+    transform: rotate(90deg);
+
+}
+
+
+/* ---------------------------------------------------------
+   RESTORE ICON
+--------------------------------------------------------- */
+
+.restore-modal-icon {
+
+    width: 82px;
+
+    height: 82px;
+
+    margin: 0 auto 20px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: #f0fdf4;
+
+    border: 8px solid #dcfce7;
+
+    color: #16a34a;
+
+    font-size: 34px;
+
+    box-shadow:
+
+        0 10px 25px rgba(22, 163, 74, 0.14);
+
+}
+
+
+/* ---------------------------------------------------------
+   RESTORE TITLE
+--------------------------------------------------------- */
+
+.restore-modal-box h3 {
+
+    margin: 0 0 10px;
+
+    color: #14532d;
+
+    font-size: 25px;
+
+    font-weight: 700;
+
+    letter-spacing: -0.3px;
+
+}
+
+
+/* ---------------------------------------------------------
+   RESTORE MESSAGE
+--------------------------------------------------------- */
+
+.restore-modal-box p {
+
+    margin: 0 auto 20px;
+
+    max-width: 350px;
+
+    color: #64748b;
+
+    font-size: 15px;
+
+    line-height: 1.65;
+
+}
+
+
+.restore-modal-box p strong {
+
+    color: #166534;
+
+    font-weight: 700;
+
+}
+
+
+/* ---------------------------------------------------------
+   RESTORE ACTION BUTTONS
+--------------------------------------------------------- */
+
+.restore-modal-actions {
+
+    display: flex;
+
+    gap: 12px;
+
+    width: 100%;
+
+}
+
+
+.restore-modal-cancel,
+.restore-modal-confirm {
+
+    flex: 1;
+
+    min-height: 48px;
+
+    padding: 0 18px;
+
+    border-radius: 11px;
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition: all 0.2s ease;
+
+}
+
+
+/* RESTORE CANCEL */
+
+.restore-modal-cancel {
+
+    border: 1px solid #e2e8f0;
+
+    background: #ffffff;
+
+    color: #475569;
+
+}
+
+
+.restore-modal-cancel:hover {
+
+    background: #f8fafc;
+
+    border-color: #cbd5e1;
+
+    color: #1e293b;
+
+}
+
+
+/* RESTORE CONFIRM */
+
+.restore-modal-confirm {
+
+    border: 1px solid #16a34a;
+
+    background: #16a34a;
+
+    color: #ffffff;
+
+    box-shadow:
+
+        0 6px 16px rgba(22, 163, 74, 0.20);
+
+}
+
+
+.restore-modal-confirm:hover {
+
+    background: #15803d;
+
+    border-color: #15803d;
+
+    transform: translateY(-1px);
+
+    box-shadow:
+
+        0 8px 20px rgba(22, 163, 74, 0.28);
+
+}
+
+
+.restore-modal-confirm:active {
+
+    transform: translateY(0);
+
+}
+
+
+.restore-modal-confirm i {
+
+    margin-right: 5px;
+
+}
+
+
 /* ---------------------------------------------------------
    MOBILE
 --------------------------------------------------------- */
 
 @media (max-width: 480px) {
 
-    .delete-modal-box {
+    .delete-modal-box,
+    .restore-modal-box {
 
         max-width: 100%;
 
@@ -788,7 +1229,8 @@
     }
 
 
-    .delete-modal-icon {
+    .delete-modal-icon,
+    .restore-modal-icon {
 
         width: 72px;
 
@@ -799,14 +1241,16 @@
     }
 
 
-    .delete-modal-box h3 {
+    .delete-modal-box h3,
+    .restore-modal-box h3 {
 
         font-size: 22px;
 
     }
 
 
-    .delete-modal-actions {
+    .delete-modal-actions,
+    .restore-modal-actions {
 
         flex-direction: column-reverse;
 
@@ -814,7 +1258,9 @@
 
 
     .delete-modal-cancel,
-    .delete-modal-confirm {
+    .delete-modal-confirm,
+    .restore-modal-cancel,
+    .restore-modal-confirm {
 
         width: 100%;
 
@@ -829,12 +1275,18 @@
 
 
 <!-- =========================================================
-     DELETE MODAL JAVASCRIPT
+     DELETE & RESTORE JAVASCRIPT
 ========================================================= -->
 
 <script>
 
-let deleteUserId = null;
+let deleteUserSn = null;
+
+let deleteTableName = null;
+
+let restoreUserSn = null;
+
+let restoreTableName = null;
 
 
 /*
@@ -843,9 +1295,11 @@ let deleteUserId = null;
 |--------------------------------------------------------------------------
 */
 
-function showDeleteModal(userId, userName) {
+function showDeleteModal(userSn, userName, tableName) {
 
-    deleteUserId = userId;
+    deleteUserSn = userSn;
+
+    deleteTableName = tableName;
 
     const modal = document.getElementById('deleteModal');
 
@@ -878,7 +1332,9 @@ function closeDeleteModal() {
 
     document.body.style.overflow = '';
 
-    deleteUserId = null;
+    deleteUserSn = null;
+
+    deleteTableName = null;
 
 }
 
@@ -893,25 +1349,101 @@ document
     .getElementById('confirmDeleteBtn')
     .addEventListener('click', function () {
 
-        if (!deleteUserId) {
+        if (!deleteUserSn || !deleteTableName) {
             return;
         }
 
 
-        /*
-         * Redirect to your existing delete action.
-         */
-
         window.location.href =
-            'index?action=delete_user&id=' +
-            encodeURIComponent(deleteUserId);
+            'index?action=delete_user' +
+            '&sn=' + encodeURIComponent(deleteUserSn) +
+            '&table_name=' + encodeURIComponent(deleteTableName);
 
     });
 
 
 /*
 |--------------------------------------------------------------------------
-| CLOSE WHEN CLICKING OUTSIDE MODAL
+| SHOW RESTORE MODAL
+|--------------------------------------------------------------------------
+*/
+
+function showRestoreModal(userSn, userName, tableName) {
+
+    restoreUserSn = userSn;
+
+    restoreTableName = tableName;
+
+    const modal = document.getElementById('restoreModal');
+
+    const userNameElement = document.getElementById('restoreUserName');
+
+    userNameElement.textContent = userName;
+
+    modal.classList.add('show');
+
+    modal.setAttribute('aria-hidden', 'false');
+
+    document.body.style.overflow = 'hidden';
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| CLOSE RESTORE MODAL
+|--------------------------------------------------------------------------
+*/
+
+function closeRestoreModal() {
+
+    const modal = document.getElementById('restoreModal');
+
+    modal.classList.remove('show');
+
+    modal.setAttribute('aria-hidden', 'true');
+
+    document.body.style.overflow = '';
+
+    restoreUserSn = null;
+
+    restoreTableName = null;
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| CONFIRM RESTORE
+|--------------------------------------------------------------------------
+*/
+
+document
+    .getElementById('confirmRestoreBtn')
+    .addEventListener('click', function () {
+
+        if (!restoreUserSn || !restoreTableName) {
+            return;
+        }
+
+
+        /*
+         * RESTORE passes:
+         * sn
+         * table_name
+         */
+
+        window.location.href =
+            'index?action=restore_user' +
+            '&sn=' + encodeURIComponent(restoreUserSn) +
+            '&table_name=' + encodeURIComponent(restoreTableName);
+
+    });
+
+
+/*
+|--------------------------------------------------------------------------
+| CLOSE DELETE MODAL WHEN CLICKING OUTSIDE
 |--------------------------------------------------------------------------
 */
 
@@ -930,20 +1462,53 @@ document
 
 /*
 |--------------------------------------------------------------------------
-| CLOSE WITH ESC KEY
+| CLOSE RESTORE MODAL WHEN CLICKING OUTSIDE
+|--------------------------------------------------------------------------
+*/
+
+document
+    .getElementById('restoreModal')
+    .addEventListener('click', function (event) {
+
+        if (event.target === this) {
+
+            closeRestoreModal();
+
+        }
+
+    });
+
+
+/*
+|--------------------------------------------------------------------------
+| CLOSE MODALS WITH ESC KEY
 |--------------------------------------------------------------------------
 */
 
 document.addEventListener('keydown', function (event) {
 
-    if (
-        event.key === 'Escape' &&
-        document
-            .getElementById('deleteModal')
-            .classList.contains('show')
-    ) {
+    if (event.key === 'Escape') {
 
-        closeDeleteModal();
+        if (
+            document
+                .getElementById('deleteModal')
+                .classList.contains('show')
+        ) {
+
+            closeDeleteModal();
+
+        }
+
+
+        if (
+            document
+                .getElementById('restoreModal')
+                .classList.contains('show')
+        ) {
+
+            closeRestoreModal();
+
+        }
 
     }
 

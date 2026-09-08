@@ -27,7 +27,7 @@
                         class="text-muted float-none float-sm-end d-block mt-1 mt-sm-0 text-center"
                     >
 
-                        Hand coded by Agb team
+                        <?= $company_settings['company_appversion']  ?>
 
                         <i class="mdi mdi-heart text-danger"></i>
 

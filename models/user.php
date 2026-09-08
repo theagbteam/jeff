@@ -17,29 +17,91 @@ class User {
     }
 
 
+public function getLastLogin($userid)
+{
+    try {
+
+        $sql = "SELECT last_login
+                FROM login
+                WHERE userid = :userid
+                ORDER BY last_login DESC
+                LIMIT 1 ";
+
+        $stmt = $this->conn->prepare($sql);
+
+        $stmt->execute([
+            ':userid' => $userid
+        ]);
+
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $result['last_login'] ?? null;
+
+    } catch (PDOException $e) {
+
+        return null;
+    }
+}
 
 
 
-
-
- public function SelectUsersTable() {
+public function SelectUsersAndLoginTable($userid) {
         try {
+            $sql = "SELECT
+                        users.sn AS user_sn,
+                        users.date AS user_date,
+                        users.title AS user_title,
+                        users.user_image AS user_image,
+                        users.userid AS user_userid,
+                        users.email AS user_email,
+                        users.phone AS user_phone,
+                        users.msg AS user_msg,
+                        users.fullname AS user_fullname,
+                        users.status AS user_status,
 
-            $sql = "SELECT *
+                        login.sn AS login_sn,
+                        login.userid AS login_userid,
+                        login.password AS login_password,
+                        login.last_login AS login_last_login,
+                        login.level AS login_level,
+                        login.role AS login_role,
+                        login.role_name AS login_role_name,
+                        login.Role_edit_user AS login_edit_user,
+                        login.Role_create_user AS login_create_user,
+                        login.Role_delete_user AS login_delete_user,
+                        login.Role_approve_user AS login_approve_user,
+                        login.Role_create_report AS login_create_report,
+                        login.Role_approve_report AS login_approve_report,
+                        login.Role_edit_report AS login_edit_report,
+                        login.Role_delete_report AS login_delete_report,
+                        login.Role_comment AS login_comment,
+                        login.status AS login_status
+
                     FROM users
-                    ORDER BY sn DESC
-                    LIMIT 10";
+
+                    LEFT JOIN login
+                        ON users.userid = login.userid
+
+                    WHERE users.userid != :userid
+
+                    ORDER BY users.sn DESC";
 
             $stmt = $this->conn->prepare($sql);
-            $stmt->execute();
+
+            $stmt->execute([
+                ':userid' => $userid
+            ]);
 
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         } catch (PDOException $e) {
-
             return [];
         }
     }
+
+
+
+
 
 
 
@@ -60,58 +122,6 @@ public function clearMsgNotification($userid) {
 
 
 
-
-public function SelectUsersAndLoginTable()
-{
-    try {
-
-        $sql = "SELECT
-                    users.sn AS user_sn,
-                    users.date AS user_date,
-                    users.title AS user_title,
-                    users.user_image AS user_image,
-                    users.userid AS user_userid,
-                    users.email AS user_email,
-                    users.phone AS user_phone,
-                    users.msg AS user_msg,
-                    users.fullname AS user_fullname,
-                    users.status AS user_status,
-
-                    login.sn AS login_sn,
-                    login.userid AS login_userid,
-                    login.password AS login_password,
-                    login.last_login AS login_last_login,
-                    login.level AS login_level,
-                    login.role AS login_role,
-                    login.role_name AS login_role_name,
-                    login.Role_edit_user AS login_edit_user,
-                    login.Role_create_user AS login_create_user,
-                    login.Role_delete_user AS login_delete_user,
-                    login.Role_approve_user AS login_approve_user,
-                    login.Role_create_report AS login_create_report,
-                    login.Role_approve_report AS login_approve_report,
-                    login.Role_edit_report AS login_edit_report,
-                    login.Role_delete_report AS login_delete_report,
-                    login.Role_comment AS login_comment,
-                    login.status AS login_status
-
-                FROM users
-                LEFT JOIN login
-                    ON users.userid = login.userid
-
-                ORDER BY users.sn DESC
-                ";
-
-        $stmt = $this->conn->prepare($sql);
-        $stmt->execute();
-
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    } catch (PDOException $e) {
-
-        return [];
-    }
-}
 
 
 
@@ -198,19 +208,6 @@ public function login($userid, $password) {
     ];
 }
 
-
-
-
-function getAParticularLoginUser($userid){
-    $sql = "SELECT * FROM login WHERE userid = ?";
-    $stmt = $this->conn->prepare($sql);
-    $stmt->bind_param("s", $userid);
-    $stmt->execute();
-
-    $result = $stmt->get_result();
-
-    return $result->fetch_assoc();
-}
 
 
    
@@ -485,14 +482,18 @@ function getAParticularLoginUser($userid){
             // SUCCESS
             // =====================================================
 
-            return [
-                'success'      => true,
-                'password'     => $password,
-                'phone_exists' => false,
-                'email_exists' => false,
-                'error'        => null
-            ];
+         return [
+    'success'      => true,
+    'userid'       => $userid,
+    'password'     => $password,
+    'phone_exists' => false,
+    'email_exists' => false,
+    'error'        => null
+];
 
+
+
+            
 
         } catch (PDOException $e) {
 
