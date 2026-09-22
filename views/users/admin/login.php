@@ -6,9 +6,9 @@
   <title><?= $this->siteSettings['company_alias'] . "-" . $page_name ; ?></title>
   <link href="views/assets/css/bootstrap.min.css" rel="stylesheet" />
 
-   <script src="views/inc/sweetalert/sweetalert2@11.js"></script>
- <script src="views/inc/sweetalert/jquery-3.6.4.min.js"></script>
-<link rel="stylesheet" href="views/inc/sweetalert/sweetalert2.min.css"> 
+   <script src="views/inc/dev/sweetalert/sweetalert2@11.js"></script>
+ <script src="views/inc/dev/sweetalert/jquery-3.6.4.min.js"></script>
+<link rel="stylesheet" href="views/inc/dev/sweetalert/sweetalert2.min.css"> 
     
   <style>
     :root {
@@ -278,4 +278,4 @@ if (!empty($error)) {
     index = nextIndex;
   }, 20000);
 </script>
-<?php include 'views/inc/footer.php' ?>
+<?php include 'views/inc/dev/footer.php' ?>

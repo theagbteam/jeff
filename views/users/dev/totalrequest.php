@@ -1,4 +1,4 @@
-<?php include "views/inc/head.php"  ?>
+<?php include "views/inc/dev/head.php"  ?>
 
 <body>
 <!-- PAGE LOADER -->
@@ -21,32 +21,32 @@
 
 
 
-<?php include "views/inc/sidebar.php"  ?>
+<?php include "views/inc/dev/sidebar.php"  ?>
 
 
     <div class="container-fluid page-body-wrapper">
 
-<?php include "views/inc/topbar.php"  ?>
+<?php include "views/inc/dev/topbar.php"  ?>
 
        
 
         <div class="main-panel">
 
             <div class="content-wrapper">
-          <?php include "views/inc/summaryboxes.php"  ?>
+          <?php include "views/inc/dev/summaryboxes.php"  ?>
 
 
-<?php include "views/inc/totalrequestpreview.php"  ?>
+<?php include "views/inc/dev/totalrequestpreview.php"  ?>
 
             </div>
-<?php include "views/inc/footer.php"  ?>
+<?php include "views/inc/dev/footer.php"  ?>
 
         </div>
 
     </div>
 
 </div>
-<?php include "views/inc/footerscripts.php"  ?>
+<?php include "views/inc/dev/footerscripts.php"  ?>
 </body>
 
 </html>

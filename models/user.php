@@ -17,6 +17,79 @@ class User {
     }
 
 
+public function updateuserpwd($data)
+{
+    try {
+
+        $userid = $data['userid'];
+        $old_password = $data['old_password'];
+        $new_password = $data['new_password'];
+        $verify_password = $data['verify_password'];
+
+        if (empty($userid) || empty($old_password) || empty($new_password) || empty($verify_password)) {
+            return "All password fields are required.";
+        }
+
+        if ($new_password !== $verify_password) {
+            return "New password and verify password do not match.";
+        }
+
+        $sql = "SELECT password FROM login WHERE userid = :userid LIMIT 1";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindValue(':userid', $userid, PDO::PARAM_STR);
+        $stmt->execute();
+
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$user) {
+            return "User account not found.";
+        }
+
+        if (!password_verify($old_password, $user['password'])) {
+            return "Old password is incorrect.";
+        }
+
+        $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
+
+        $sql = "UPDATE login
+                SET password = :password
+                WHERE userid = :userid
+                LIMIT 1";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindValue(':password', $hashed_password, PDO::PARAM_STR);
+        $stmt->bindValue(':userid', $userid, PDO::PARAM_STR);
+        $stmt->execute();
+
+        if ($stmt->rowCount() > 0) {
+            return "Password updated successfully.";
+        }
+
+        return "Password could not be updated.";
+
+    } catch (PDOException $e) {
+
+        return $e->getMessage();
+
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 public function getLastLogin($userid)
 {
     try {
@@ -45,6 +118,121 @@ public function getLastLogin($userid)
 
 
 
+
+public function restorerecord()
+{
+    $status_value = 1;
+
+    $restore_token = $_GET['token'] ?? '';
+
+    $restore_data = json_decode(
+        base64_decode($restore_token),
+        true
+    );
+
+    $sn = $restore_data['sn'] ?? '';
+    $table_name = $restore_data['table_name'] ?? '';
+    $page_controller = $restore_data['page_controller'] ?? '';
+    $user_name = $restore_data['user_name'] ?? '';
+
+    $sql = "UPDATE `$table_name` SET status = :status_value WHERE sn = :sn";
+
+    $stmt = $this->conn->prepare($sql);
+
+    if ($stmt->execute([
+        'status_value' => $status_value,
+        'sn' => $sn
+    ])) {
+        return [
+            'success' => true,
+            'page_controller' => $page_controller,
+            'user_name' => $user_name
+        ];
+    }
+
+    return [
+        'success' => false,
+        'page_controller' => $page_controller,
+        'user_name' => $user_name
+    ];
+}
+
+
+
+
+public function SelectUsersAndLoginTableforOnePerson($user_id) {
+    try {
+        $sql = "SELECT
+                    users.sn AS user_sn,
+                    users.date AS user_date,
+                    users.title AS user_title,
+                    users.user_image AS user_image,
+                    users.userid AS user_userid,
+                    users.email AS user_email,
+                    users.phone AS user_phone,
+                    users.msg AS user_msg,
+                    users.fullname AS user_fullname,
+                    users.status AS user_status,
+                    users.msg_notification AS user_msg_notification,
+
+                    login.sn AS login_sn,
+                    login.userid AS login_userid,
+                    login.password AS login_password,
+                    login.last_login AS login_last_login,
+                    login.level AS login_level,
+                    login.role AS login_role,
+                    login.role_name AS login_role_name,
+                    login.Role_edit_user AS login_edit_user,
+                    login.Role_create_user AS login_create_user,
+                    login.Role_delete_user AS login_delete_user,
+                    login.Role_approve_user AS login_approve_user,
+                    login.Role_create_report AS login_create_report,
+                    login.Role_approve_report AS login_approve_report,
+                    login.Role_edit_report AS login_edit_report,
+                    login.Role_delete_report AS login_delete_report,
+                    login.Role_comment AS login_comment,
+                    login.status AS login_status
+
+                FROM users
+
+                LEFT JOIN login
+                    ON users.userid = login.userid
+
+                WHERE users.userid = :userid
+
+                ORDER BY users.sn DESC";
+
+        $stmt = $this->conn->prepare($sql);
+
+        $stmt->execute([
+            ':userid' => $user_id
+        ]);
+
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($user) {
+            return [
+                'success' => true,
+                'user' => $user
+            ];
+        }
+
+        return [
+            'success' => false,
+            'user' => [],
+            'error' => 'User not found.'
+        ];
+
+    } catch (PDOException $e) {
+        return [
+            'success' => false,
+            'user' => [],
+            'error' => $e->getMessage()
+        ];
+    }
+}
+
+
 public function SelectUsersAndLoginTable($userid) {
         try {
             $sql = "SELECT
@@ -58,6 +246,7 @@ public function SelectUsersAndLoginTable($userid) {
                         users.msg AS user_msg,
                         users.fullname AS user_fullname,
                         users.status AS user_status,
+                        users.msg_notification AS user_msg_notification,
 
                         login.sn AS login_sn,
                         login.userid AS login_userid,
@@ -207,6 +396,11 @@ public function login($userid, $password) {
         'user'    => $userData
     ];
 }
+
+
+
+
+
 
 
 

@@ -32,12 +32,12 @@
     <title><?php echo $company_alias . "  -  " . $page_name; ?></title>
 
 
-    <script src="views/inc/sweetalert/sweetalert2@11.js"></script>
-    <script src="views/inc/sweetalert/jquery-3.6.4.min.js"></script>
+    <script src="views/inc/dev/sweetalert/sweetalert2@11.js"></script>
+    <script src="views/inc/dev/sweetalert/jquery-3.6.4.min.js"></script>
 
     <link
         rel="stylesheet"
-        href="views/inc/sweetalert/sweetalert2.min.css"
+        href="views/inc/dev/sweetalert/sweetalert2.min.css"
     >
 
   

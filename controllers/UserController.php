@@ -110,6 +110,9 @@ class UserController {
 
             if (!empty($loginResult['success'])) {
 
+ $_SESSION=[]; setcookie(session_name(),'',time()-42000,'/'); session_destroy(); 
+          
+
                 $userResult = $GetTheModelClassCalledUser->SelectUserTableForOne($userid);
 
                 if (!empty($userResult['success']) && !empty($userResult['user'])) {
@@ -274,6 +277,105 @@ class UserController {
     }
 
 
+
+
+    /* ==========================
+       UPDATE PASSWORD
+    ========================== */
+
+public function updatepassword(){
+$callusermodel = new User();
+ $AuthMiddlewareModel = new AuthMiddleware();
+ $callCompanyModel = new CompanyModel();
+ $company_settings = $callCompanyModel->web_settings();
+ $CallMailerModel = new Mailer;
+  $company_logfile_url = $company_settings['company_logfile_url'] ?? '';
+if (isset($_POST['update_user_password'])) {
+$userid = $_SESSION['userid'];
+$role_name = $role = $_SESSION['role'] ;
+$subject = $action = "Your Password was updated";
+$data = [
+'userid' => $userid,
+'old_password' => trim($_POST['old_password'] ?? ''),
+'new_password' => trim($_POST['new_password'] ?? ''),
+'verify_password' => trim($_POST['verify_password'] ?? '')
+];
+
+
+if (
+    $data['old_password'] === '' ||
+    $data['new_password'] === '' ||
+    $data['verify_password'] === ''
+) {
+    $_SESSION['error'] = "Empty fields are not allowed";
+    header("Location: " . ($_SERVER['HTTP_REFERER'] ?? 'index.php?action=index'));
+    exit;
+}
+
+$result = $callusermodel->updateuserpwd($data);
+
+if ($result === "Password updated successfully.") {
+
+    $_SESSION['success'] = $result;
+
+ $userResult = $callusermodel->SelectUserTableForOne($userid);
+
+                if (!empty($userResult['success']) && !empty($userResult['user'])) {
+
+                    $user = $userResult['user'];
+
+                    $user_fullname =  $user['fullname'] ?? 'User';
+   $parts = explode(' ', trim($user_fullname));
+$first = array_shift($parts);
+$AbrvName = !empty($first)? $first . (!empty($parts) ? ' ' . implode('.', array_map(fn($p) => strtoupper($p[0]), $parts)) : '') : 'User';
+  
+                    $receiveraddress = $user['email'] ?? '';
+    $user_details = $AbrvName . "  " . $userid;
+  
+                }
+
+
+
+$message = "Hello $user_fullname,<br><br>"
+. "Your account password has been changed successfully.<br><br>"
+. "<strong>Reference ID:</strong> $userid<br><br>"
+. "If you made this change, no further action is required.<br><br>"
+. "If you did not change your password, please contact the Support Team immediately.<br><br>"
+. "Best regards,<br>"
+. "The Support Team";
+$logResult = $AuthMiddlewareModel->writelog($userid,$role_name,$role,$user_details,$action,$company_logfile_url);
+ $SendEmail = $CallMailerModel->sendmail(
+                    $receiveraddress,
+                    $subject,
+                    $message
+                );
+  header("Location: " . ($_SERVER['HTTP_REFERER'] ?? 'index.php?action=index'));
+  exit;
+} else {
+
+    $_SESSION['error'] = $result;
+      header("Location: " . ($_SERVER['HTTP_REFERER'] ?? 'index.php?action=index'));
+exit;
+}
+
+header("Location: " . ($_SERVER['HTTP_REFERER'] ?? 'index.php?action=index'));
+exit;
+
+
+}
+}
+
+
+
+
+
+
+
+
+
+
+
+    
     /* ==========================
        Create Reporter
     ========================== */
@@ -518,6 +620,70 @@ $message = "Hello $fullname,<br><br>"
     }
 
 
+
+
+
+
+
+public function restoreuser(){
+    $CallUserModel = new User();
+        $callAuthMiddlewareClass = new AuthMiddleware;
+             $callCompanyModel = new CompanyModel() ;
+      $company_settings = $callCompanyModel ->web_settings();
+      $company_logfile_url  = $company_settings['company_logfile_url'] ;
+       $company_settings = $callCompanyModel->web_settings();
+      $company_online = $company_settings['company_online'] ?? 0;
+           $company_url = $company_settings['company_url'] ?? '';
+            $loginurl = $company_url."/index.php?action=login" ;
+         $userid =$_SESSION['userid']; 
+  
+     $result = $callAuthMiddlewareClass->SelectloginTableForOne($userid);
+if ($result['success']) {
+    $user = $result['user'];
+    $role_name = $user['role_name'];
+    $role = $user['role'];
+    $admin_fullname = $user['fullname'];
+    $parts = explode(' ', trim($admin_fullname));
+$first = array_shift($parts);
+$AbrvName = !empty($first)? $first . (!empty($parts) ? ' ' . implode('.', array_map(fn($p) => strtoupper($p[0]), $parts)) : '') : 'User';
+  
+   }
+      $result = $CallUserModel->restorerecord();
+    $page_controller = $result['page_controller'];
+    $user_fullname = base64_decode($result['user_name']);
+    if ($result['success']) {
+        $_SESSION['success'] = 'Record restored successfully';
+
+ $user_details = $AbrvName . "  " . $userid;
+      $action = "Restored user " . $user_fullname  . " to system";
+ $logResult = $callAuthMiddlewareClass->writelog($userid, $role_name,$role, $user_details, $action,$company_logfile_url);
+
+   
+       header("Location: index?action=" . base64_decode($page_controller));
+exit;
+        exit;
+    }
+
+    $_SESSION['error'] = 'Failed to restore record.';
+   header("Location: index?action=" . base64_decode($page_controller));
+    exit;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     /* ==========================
        NEW PERSONNEL PAGE
     ========================== */
@@ -636,95 +802,6 @@ $message = "Hello $fullname,<br><br>"
 
     }
 
-
-    /* ==========================
-       UPDATE PASSWORD
-    ========================== */
-
-    public function updatePassword(): void {
-
-        $serviceNo = $this->serviceNo;
-
-        if (!$serviceNo) {
-
-            echo json_encode([
-
-                'status' => 'error',
-
-                'message' => 'Unauthorized'
-
-            ]);
-
-            exit;
-
-        }
-
-
-        $password = $_POST['password'] ?? '';
-
-        $confirm = $_POST['confirm_password'] ?? '';
-
-
-        if (
-
-            !$password ||
-
-            $password !== $confirm ||
-
-            strlen($password) < 6
-
-        ) {
-
-            echo json_encode([
-
-                'status' => 'error',
-
-                'message' => 'Invalid password'
-
-            ]);
-
-            exit;
-
-        }
-
-
-        $hashed = password_hash(
-
-            $password,
-
-            PASSWORD_BCRYPT
-
-        );
-
-
-        if (
-            $this->photoPasswordModel->updatePassword(
-                $serviceNo,
-                $hashed
-            )
-        ) {
-
-            echo json_encode([
-
-                'status' => 'success'
-
-            ]);
-
-        } else {
-
-            echo json_encode([
-
-                'status' => 'error',
-
-                'message' => 'Password update failed'
-
-            ]);
-
-        }
-
-        exit;
-
-    }
 
 
     /* ==========================

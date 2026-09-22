@@ -1,7 +1,24 @@
-NAMECHEAP WEBHOST LOGIN 
+NAMECHEAP WEBHOST 
 username: aiconsult2 
 password: Consult2026@@
-gmail : aesi ghqz oyjr mmci
+CLOUDFLARE LOGIN 
+username: info@aisecurity.ltd
+password: Consult2026@@
+GO DADDY LOGIN 
+Username : Ferdinandamurun@gmail.com
+Password: Tables1234_
+
+
+
+Nameservers
+dns1.namecheaphosting.com
+dns2.namecheaphosting.com
+
+
+
+
+
+GMAIL: aesi ghqz oyjr mmci
 NAMECHEAP CPANEL LOGIN 
 *cPanel details*
 URLs	https://server245.web-hosting.com/cpanel

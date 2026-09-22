@@ -26,6 +26,180 @@ class ModelDev
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
+
+
+public function UpdateUserAccount($data){
+try {
+
+    $this->conn->beginTransaction();
+
+    /*
+    |--------------------------------------------------------------------------
+    | USERS TABLE
+    |--------------------------------------------------------------------------
+    */
+
+    $sqlUsers = "
+        UPDATE users SET
+            title = :title,
+            fullname = :fullname,
+            email = :email,
+            phone = :phone,
+            msg_notification = :msg_notification,
+            msg = :msg,
+            user_image = :user_image,
+            status = :status
+        WHERE userid = :userid
+        LIMIT 1
+    ";
+
+    $stmtUsers = $this->conn->prepare($sqlUsers);
+
+    $stmtUsers->bindValue(':title', $data['title'], PDO::PARAM_STR);
+    $stmtUsers->bindValue(':fullname', $data['fullname'], PDO::PARAM_STR);
+    $stmtUsers->bindValue(':email', $data['email'], PDO::PARAM_STR);
+    $stmtUsers->bindValue(':phone', $data['phone'], PDO::PARAM_STR);
+    $stmtUsers->bindValue(':msg_notification', $data['msg_notification'], PDO::PARAM_INT);
+    $stmtUsers->bindValue(':msg', $data['msg'], PDO::PARAM_STR);
+    $stmtUsers->bindValue(':user_image', $data['user_image'], PDO::PARAM_STR);
+    $stmtUsers->bindValue(':status', $data['status'], PDO::PARAM_INT);
+    $stmtUsers->bindValue(':userid', $data['userid'], PDO::PARAM_STR);
+
+    $stmtUsers->execute();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | LOGIN TABLE
+    |--------------------------------------------------------------------------
+    */
+
+    $sqlLogin = "
+        UPDATE login SET
+            role = :role,
+            Role_edit_user = :Role_edit_user,
+            Role_create_user = :Role_create_user,
+            Role_delete_user = :Role_delete_user,
+            Role_approve_user = :Role_approve_user,
+            Role_create_report = :Role_create_report,
+            Role_approve_report = :Role_approve_report,
+            Role_edit_report = :Role_edit_report,
+            Role_delete_report = :Role_delete_report,
+            Role_comment = :Role_comment,
+            status = :status
+        WHERE userid = :userid
+        LIMIT 1
+    ";
+
+    $stmtLogin = $this->conn->prepare($sqlLogin);
+
+    $stmtLogin->bindValue(':role', $data['role'], PDO::PARAM_STR);
+    $stmtLogin->bindValue(':Role_edit_user', $data['Role_edit_user'], PDO::PARAM_INT);
+    $stmtLogin->bindValue(':Role_create_user', $data['Role_create_user'], PDO::PARAM_INT);
+    $stmtLogin->bindValue(':Role_delete_user', $data['Role_delete_user'], PDO::PARAM_INT);
+    $stmtLogin->bindValue(':Role_approve_user', $data['Role_approve_user'], PDO::PARAM_INT);
+    $stmtLogin->bindValue(':Role_create_report', $data['Role_create_report'], PDO::PARAM_INT);
+    $stmtLogin->bindValue(':Role_approve_report', $data['Role_approve_report'], PDO::PARAM_INT);
+    $stmtLogin->bindValue(':Role_edit_report', $data['Role_edit_report'], PDO::PARAM_INT);
+    $stmtLogin->bindValue(':Role_delete_report', $data['Role_delete_report'], PDO::PARAM_INT);
+    $stmtLogin->bindValue(':Role_comment', $data['Role_comment'], PDO::PARAM_INT);
+    $stmtLogin->bindValue(':status', $data['status'], PDO::PARAM_INT);
+    $stmtLogin->bindValue(':userid', $data['userid'], PDO::PARAM_STR);
+
+    $stmtLogin->execute();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | COMMIT
+    |--------------------------------------------------------------------------
+    */
+
+    $this->conn->commit();
+
+    return true;
+
+} catch (PDOException $e) {
+
+    if ($this->conn->inTransaction()) {
+        $this->conn->rollBack();
+    }
+
+    return false;
+}
+
+
+}
+
+public function CreateCorridorAndThoseSimilar($corridor_name, $userid, $role, $the_tb){
+try {
+$date_created = date('Y-m-d H:i:s');
+
+
+    $sql_check = "SELECT name FROM {$the_tb} WHERE name = :name LIMIT 1";
+
+    $stmt_check = $this->conn->prepare($sql_check);
+
+    $stmt_check->execute([
+        ':name' => $corridor_name
+    ]);
+
+    $existing_corridor = $stmt_check->fetch(PDO::FETCH_ASSOC);
+
+    if ($existing_corridor) {
+        return [
+            'status' => false,
+            'message' => 'This record already exists'
+        ];
+    }
+
+    $sql_user = "SELECT fullname FROM users WHERE userid = :userid LIMIT 1";
+
+    $stmt_user = $this->conn->prepare($sql_user);
+
+    $stmt_user->execute([
+        ':userid' => $userid
+    ]);
+
+    $user = $stmt_user->fetch(PDO::FETCH_ASSOC);
+
+    $creator_name = $user['fullname'] ?? '';
+
+    $sql = "INSERT INTO {$the_tb}
+            (name, creator_userid, creator_name, creator_role, date_created, status)
+            VALUES
+            (:name, :creator_userid, :creator_name, :creator_role, :date_created, :status)";
+
+    $stmt = $this->conn->prepare($sql);
+
+    $stmt->execute([
+        ':name' => $corridor_name,
+        ':creator_userid' => $userid,
+        ':creator_name' => $creator_name,
+        ':creator_role' => $role,
+        ':date_created' => $date_created,
+        ':status' => 1
+    ]);
+
+    return [
+        'status' => true,
+        'message' => 'Record created successfully'
+    ];
+
+} catch (PDOException $e) {
+    return [
+        'status' => false,
+        'message' => 'Unable to create record'
+    ];
+}
+
+
+}
+
+
+
+
+    
     public function updateCompanyDetails(array $data): array
 {
     $sn = 1;
@@ -229,6 +403,186 @@ users.status AS user_status
 
 
 }
+
+public function requestReply($data)
+{
+    $sn     = $data['sn'];
+    $status = $data['status'];
+
+    $sql = "UPDATE request 
+            SET status = :status 
+            WHERE sn = :sn";
+
+    $stmt = $this->conn->prepare($sql);
+
+    $stmt->bindValue(':status', $status, PDO::PARAM_INT);
+    $stmt->bindValue(':sn', $sn, PDO::PARAM_INT);
+
+    if ($stmt->execute()) {
+        return true;
+    }
+
+    return false;
+}
+
+
+
+
+
+
+
+
+public function EraseRecord($table_name_token, $sn_token){
+    try {
+
+        $table_name = base64_decode($table_name_token, true);
+        $sn = base64_decode($sn_token, true);
+
+        if ($table_name === false || $sn === false) {
+            return "Invalid token";
+        }
+
+        $table_name = trim($table_name);
+        $sn = trim($sn);
+
+        $allowed_tables = [
+            'corridor',
+            'incidence_source',
+            'operator',
+            'owner',
+            'pipeline',
+            'pipeline_type',
+            'priority',
+            'zone'
+        ];
+
+        if (!in_array($table_name, $allowed_tables, true)) {
+            return "Invalid table name";
+        }
+
+        if ($sn === '' || !preg_match('/^[0-9]+$/', $sn)) {
+            return "Invalid record ID";
+        }
+
+        $sn = (int) $sn;
+
+        if ($sn <= 0) {
+            return "Invalid record ID";
+        }
+
+        $sql = "DELETE FROM `{$table_name}` WHERE sn = :sn LIMIT 1";
+
+        $stmt = $this->conn->prepare($sql);
+
+        $stmt->execute([
+            ':sn' => $sn
+        ]);
+
+        if ($stmt->rowCount() > 0) {
+            return true;
+        }
+
+        return "Record not found";
+
+    } catch (PDOException $e) {
+
+        return "Unable to delete record";
+
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+public function clearlog($userid, $password, $company_logfile_url)
+{
+    try {
+
+        $sql = "SELECT password FROM login WHERE userid = :userid LIMIT 1";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindValue(':userid', $userid, PDO::PARAM_STR);
+        $stmt->execute();
+
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$user) {
+            return "Invalid username or password.";
+        }
+
+        if (!password_verify($password, $user['password'])) {
+            return "Invalid username or password.";
+        }
+
+        $clear = $this->conn->prepare("DELETE FROM audit_trail");
+        $clear->execute();
+
+        file_put_contents($company_logfile_url, '');
+
+        return "Audit trail cleared successfully.";
+
+    } catch (PDOException $e) {
+
+        return "An error occurred while clearing the Log trail.";
+
+    }
+}
+
+
+
+
+
+public function SelectCorridorsAndThoseSimilar($tb_name)
+{
+    try {
+
+        $allowed_tables = [
+            'corridor',
+            'incidence_source',
+            'operator',
+            'owner',
+            'pipeline',
+            'pipeline_type',
+            'priority',
+            'zone',
+            'wellhead_status',
+            'report_type'
+        ];
+
+        if (!in_array($tb_name, $allowed_tables, true)) {
+            return [];
+        }
+
+        $sql = "SELECT * FROM `{$tb_name}` ORDER BY date_created DESC";
+
+        $stmt = $this->conn->prepare($sql);
+
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    } catch (PDOException $e) {
+
+        return [];
+
+    }
+}
+
+
+
+
+
+
+
+
+
 
 
 

@@ -2,12 +2,12 @@
 
 <body>
     <!-- PAGE LOADER -->
-<div id="pageLoader">
+<!-- <div id="pageLoader">
     <div class="loader-content">
         <div class="spinner"></div>
         <div class="loader-text">Loading...</div>
     </div>
-</div>
+</div> -->
 <div class="container-scroller">
     <div class="row p-0 m-0 proBanner" id="proBanner">
         <div class="col-md-12 p-0 m-0"></div>
@@ -21,7 +21,7 @@
             <div class="content-wrapper">
 <!-- <?php include "views/inc/dev/summaryboxes.php"  ?> -->
 
-<?php include "views/inc/dev/settingsform.php"  ?>
+<?php include "views/inc/dev/viewlogfilebox.php"  ?>
 
             </div>
 <?php include "views/inc/dev/footer.php"  ?>

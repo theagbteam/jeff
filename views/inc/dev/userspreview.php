@@ -1,8 +1,8 @@
 <?php
 
-$table_name = "users";
-$user_sn = 0;
-
+$Ltable_name = "login";
+$Ltable_sn = $user_sn = 0;
+$page_controller = base64_encode("users");
 ?>
 
 <div class="row">
@@ -69,16 +69,17 @@ $user_sn = 0;
 
                         <tbody>
 
-                            <?php if (!empty($LoadUsersAndLoginTable)): ?>
+                            <?php if (!empty($LoadUsersAndLoginTableForAdmin)): ?>
 
                                 <?php $sn = 1; ?>
 
-                                <?php foreach ($LoadUsersAndLoginTable as $user): ?>
+                                <?php foreach ($LoadUsersAndLoginTableForAdmin as $user): ?>
 
                                     <?php
 
                                     $user_image = "noimage2.png";
 
+                                    $Luser_sn = $user['login_sn'];
                                     $user_sn = $user['user_sn'] ?? 0;
 
                                     if ($user['user_image'] != "") {
@@ -222,7 +223,7 @@ $user_sn = 0;
                                                     type="button"
                                                     class="dashboard-table-action"
                                                     title="Edit"
-                                                    onclick="window.location.href='index?action=edit_user&sn=<?= urlencode($user_sn); ?>'"
+                                                    onclick="window.location.href='index?action=edit_user&token=<?= urlencode(base64_encode($user_id)); ?>'"
                                                 >
                                                     <i class="mdi mdi-pencil"></i>
                                                 </button>
@@ -230,7 +231,7 @@ $user_sn = 0;
 
                                                 <!-- DELETE BUTTON -->
                                                 <!-- DELETE PASSES SN + TABLE NAME -->
-                                                <button
+                                                <!-- <button
                                                     type="button"
                                                     class="dashboard-table-action delete-user-btn"
                                                     title="Delete"
@@ -243,7 +244,7 @@ $user_sn = 0;
 
                                                     <i class="mdi mdi-delete"></i>
 
-                                                </button>
+                                                </button> -->
 
                                             <?php else: ?>
 
@@ -254,9 +255,9 @@ $user_sn = 0;
                                                     class="dashboard-table-action recycle-user-btn"
                                                     title="Restore"
                                                     onclick="showRestoreModal(
-                                                        '<?= htmlspecialchars($user_sn, ENT_QUOTES); ?>',
+                                                        '<?= htmlspecialchars($Luser_sn, ENT_QUOTES); ?>',
                                                         '<?= htmlspecialchars($user_name, ENT_QUOTES); ?>',
-                                                        '<?= htmlspecialchars($table_name, ENT_QUOTES); ?>'
+                                                        '<?= htmlspecialchars($Ltable_name, ENT_QUOTES); ?>'
                                                     )"
                                                 >
 
@@ -1288,6 +1289,8 @@ let restoreUserSn = null;
 
 let restoreTableName = null;
 
+let restoreUserName = null;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -1372,6 +1375,8 @@ function showRestoreModal(userSn, userName, tableName) {
 
     restoreUserSn = userSn;
 
+    restoreUserName = userName;
+
     restoreTableName = tableName;
 
     const modal = document.getElementById('restoreModal');
@@ -1407,6 +1412,8 @@ function closeRestoreModal() {
 
     restoreUserSn = null;
 
+    restoreUserName = null;
+
     restoreTableName = null;
 
 }
@@ -1431,12 +1438,28 @@ document
          * RESTORE passes:
          * sn
          * table_name
+         * user_name
+         * page_controller
          */
+
+        const restoreToken = btoa(
+            unescape(
+                encodeURIComponent(
+                    JSON.stringify({
+                        sn: restoreUserSn,
+                        table_name: restoreTableName,
+                        user_name: restoreUserName,
+                        page_controller: "<?= $page_controller ?>"
+                    })
+                )
+            )
+        );
+
 
         window.location.href =
             'index?action=restore_user' +
-            '&sn=' + encodeURIComponent(restoreUserSn) +
-            '&table_name=' + encodeURIComponent(restoreTableName);
+            '&token=' + encodeURIComponent(restoreToken) +
+            '&page_controller=' + encodeURIComponent("<?= $page_controller ?>");
 
     });
 
@@ -1515,3 +1538,4 @@ document.addEventListener('keydown', function (event) {
 });
 
 </script>
+

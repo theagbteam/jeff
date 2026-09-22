@@ -204,9 +204,10 @@ $totalrequest_sn = 0;
                                     <td>
 
                                         <?php if (
-                                            strtolower($ticket_priority) == 2
+                                            (int)$ticket_priority === 2
                                         ): ?>
 
+                                            <!-- HIGH = RED -->
                                             <span
                                                 class="dashboard-status dashboard-status-danger"
                                                 style="
@@ -219,19 +220,31 @@ $totalrequest_sn = 0;
                                             </span>
 
                                         <?php elseif (
-                                            strtolower($ticket_priority) == 1
+                                            (int)$ticket_priority === 1
                                         ): ?>
 
+                                            <!-- MEDIUM = ORANGE/YELLOW -->
                                             <span
                                                 class="dashboard-status dashboard-status-pending"
+                                                style="
+                                                    background-color: #fef3c7;
+                                                    color: #d97706;
+                                                    border: 1px solid #fde68a;
+                                                "
                                             >
                                                 Medium
                                             </span>
 
                                         <?php else: ?>
 
+                                            <!-- LOW = GREEN -->
                                             <span
                                                 class="dashboard-status dashboard-status-active"
+                                                style="
+                                                    background-color: #dcfce7;
+                                                    color: #16a34a;
+                                                    border: 1px solid #bbf7d0;
+                                                "
                                             >
                                                 Low
                                             </span>
@@ -319,21 +332,21 @@ $totalrequest_sn = 0;
                                     <!-- ACTION -->
                                     <td>
 
-                                        <button
+                                        <!-- <button
                                             type="button"
                                             class="dashboard-table-action"
                                             title="View Request"
                                             onclick="window.location.href='index?action=view_totalrequest&sn=<?= urlencode($totalrequest_sn); ?>&table_name=<?= urlencode($table_name); ?>'"
                                         >
                                             <i class="mdi mdi-eye"></i>
-                                        </button>
+                                        </button> -->
 
 
                                         <?php if ($ticket_status == -1): ?>
 
                                             <!-- RESTORE BUTTON -->
 
-                                            <button
+                                            <!-- <button
                                                 type="button"
                                                 class="dashboard-table-action recycle-totalrequest-btn"
                                                 title="Restore"
@@ -346,12 +359,12 @@ $totalrequest_sn = 0;
 
                                                 <i class="mdi mdi-recycle"></i>
 
-                                            </button>
+                                            </button> -->
 
                                         <?php else: ?>
 
                                             <!-- REPLY BUTTON -->
-
+<?php if ($ticket_status != 4): ?> 
                                             <button
                                                 type="button"
                                                 class="dashboard-table-action"
@@ -369,10 +382,10 @@ $totalrequest_sn = 0;
                                                 <i class="mdi mdi-reply"></i>
                                             </button>
 
-
+<?php endif ; ?>
                                             <!-- DELETE BUTTON -->
 
-                                            <button
+                                            <!-- <button
                                                 type="button"
                                                 class="dashboard-table-action delete-totalrequest-btn"
                                                 title="Delete"
@@ -385,7 +398,7 @@ $totalrequest_sn = 0;
 
                                                 <i class="mdi mdi-delete"></i>
 
-                                            </button>
+                                            </button> -->
 
                                         <?php endif; ?>
 
@@ -549,7 +562,7 @@ $totalrequest_sn = 0;
 
 
     <form
-        method="POST"
+        method="POST" enctype="multipart/form-data"
         action="index.php?action=totalrequest"
     >
 
@@ -557,13 +570,34 @@ $totalrequest_sn = 0;
             type="hidden"
             name="sn"
             id="replyTicketSn"
-            value=""
+            value="<?= htmlspecialchars($totalrequest_sn, ENT_QUOTES); ?>"
+        >
+        <input
+            type="hidden"
+            name="ticketer_email"
+            id="replyTicketSn"
+            value="<?= htmlspecialchars( $ticketer_email, ENT_QUOTES); ?>"
         >
 
         <input
             type="hidden"
             name="table_name"
             value="<?= htmlspecialchars($table_name, ENT_QUOTES); ?>"
+        >
+        <input
+            type="hidden"
+            name="ticket_no"
+            value="<?= htmlspecialchars($ticket_no, ENT_QUOTES); ?>"
+        >
+        <input
+            type="hidden"
+            name="ticketer_name"
+            value="<?= htmlspecialchars($ticketer_name, ENT_QUOTES); ?>"
+        >
+        <input
+            type="hidden"
+            name="ticket_status"
+            value="<?= htmlspecialchars($ticket_status , ENT_QUOTES); ?>"
         >
 
 
@@ -594,6 +628,12 @@ $totalrequest_sn = 0;
                 id="replyStatus"
                 class="reply-form-control"
                 required
+                style="
+                    background-color: #ffffff !important;
+                    color: #334155 !important;
+                    border-color: #e2e8f0 !important;
+                    color-scheme: light;
+                "
             >
 
                 <option value="0">
@@ -633,7 +673,7 @@ $totalrequest_sn = 0;
 
 
             <button
-                type="submit"
+                type="submit" name="requestreply"
                 class="reply-modal-submit"
             >
 
@@ -1380,6 +1420,8 @@ $totalrequest_sn = 0;
     outline: none;
 
     cursor: pointer;
+
+    color-scheme: light;
 
 }
 
