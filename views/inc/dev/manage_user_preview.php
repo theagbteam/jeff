@@ -718,7 +718,7 @@ $user_name = $user['user_fullname'] ?? 'N/A';
 
             </div>
 
-
+<div class="cf-turnstile" data-sitekey="0x4AAAAAAE_lhXRw6nDkauM7"></div>
             <!-- =====================================================
                  FORM ACTIONS
             ====================================================== -->

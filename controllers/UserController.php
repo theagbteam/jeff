@@ -45,7 +45,7 @@ class UserController {
     public function login(){
 
         if (session_status() === PHP_SESSION_NONE) {
-
+//  $_SESSION=[]; setcookie(session_name(),'',time()-42000,'/'); session_destroy(); 
             session_start();
 
         }
@@ -110,7 +110,7 @@ class UserController {
 
             if (!empty($loginResult['success'])) {
 
- $_SESSION=[]; setcookie(session_name(),'',time()-42000,'/'); session_destroy(); 
+
           
 
                 $userResult = $GetTheModelClassCalledUser->SelectUserTableForOne($userid);
@@ -240,7 +240,7 @@ class UserController {
         $page_name = "Login";
 
 
-        $company_copyright =
+        $CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
             $company_settings['company_copyright'] ?? '2025';
 
 
@@ -369,257 +369,151 @@ exit;
 
 
 
+public function create_reporter()   {
 
+    if (session_status() === PHP_SESSION_NONE) { session_start();  }
 
+    if (isset($_POST['signup_reporter'])) {
+                    
+        $AuthMiddlewareModel = new AuthMiddleware();
+        $userModel = new User();
 
+        $callCompanyModel = new CompanyModel();
 
+        $CallMailerModel = new Mailer();
 
+        $company_settings = $callCompanyModel->web_settings();
 
-    
-    /* ==========================
-       Create Reporter
-    ========================== */
+        $company_logfile_url = $company_settings['company_logfile_url'] ?? '';
+        $company_url = $company_settings['company_url'] ?? '';
+        $loginurl = $company_url."/index.php?action=login" ;
 
-    public function create_reporter()
+        $company_userid =
+            $company_settings['company_userid'] ?? 50001;
 
-    {
+        $company_acct_approval =
+            $company_settings['company_acct_approval'] ?? 0;
 
-        if (session_status() === PHP_SESSION_NONE) {
+        // GET FORM DATA
+        $fullname = trim($_POST['fullname'] ?? '');
+        $title = trim($_POST['title'] ?? '');
+        $phone = trim($_POST['phone'] ?? '');
+        $receiveraddress = $email = trim($_POST['email'] ?? '');
+        $password = $_POST['password'] ?? '';
+        $affirmation = isset($_POST['affirmation']) ? 1 : 0;
 
-            session_start();
-
+        // VALIDATE DATA
+        if ($fullname === '' || $title === '' || $phone === '' || $email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || $password === '' || $affirmation !== 1) {
+            $_SESSION['error'] = 'Please fill all required fields correctly.';
+            header("Location: index?action=login");
+            exit;
         }
 
+        $role = "reporter";
+        $role_name = "reporter";
 
-        if (isset($_POST['signup_reporter'])) {
+        $result = $userModel->CreateUserAccount(
+            $company_userid,
+            $title,
+            $fullname,
+            $phone,
+            $role,
+            $role_name,
+            $email
+        );
 
-            $userModel = new User();
+        if (!empty($result['success'])) {
 
-            $callCompanyModel = new CompanyModel();
+            $userrefid = $result['userid'];
 
-            $CallMailerModel = new Mailer();
+            if ($company_acct_approval == 1) {
 
-            $company_settings = $callCompanyModel->web_settings();
+                $_SESSION['success'] =
+                    "Account created successfully, please check your email login for details";
 
-            $company_logfile_url = $company_settings['company_logfile_url'] ?? '';
-            $company_url = $company_settings['company_url'] ?? '';
-            $loginurl = $company_url."/index.php?action=login" ;
+                $subject = $action =
+                    "Account created successfully";
 
-            $company_userid =
-                $company_settings['company_userid'] ?? 50001;
+                $message = "Hello $fullname,<br><br>"
+                         . "Your account has been created successfully.<br><br>"
+                         . "Your registration has been completed, and your account is now ready for use.<br><br>"
+                         . "<strong>Reference ID:</strong> $userrefid<br>"
+                         . "<strong>Default Password:</strong> Your phone number used during registration<br><br>"
+                         . "Please use your Reference ID and default password to log in to your account. For your security, we strongly recommend changing your default password after your first successful login.<br><br>"
+                         . "<div style='text-align:center; margin:25px 0;'>"
+                         . "<a href='$loginurl' style='display:inline-block; padding:12px 25px; background-color:#0d6efd; color:#ffffff; text-decoration:none; border-radius:5px; font-weight:bold;'>"
+                         . "Login to Your Account"
+                         . "</a>"
+                         . "</div>"
+                         . "If you did not register for this account, please contact the Support Team immediately.<br><br>"
+                         . "Best regards,<br>"
+                         . "The Support Team";
 
-            $company_acct_approval =
-                $company_settings['company_acct_approval'] ?? 0;
+                $_SESSION['userid'] = $userrefid;
+                $_SESSION['role'] = $role;
 
+                $userid = $userrefid;
+                $user_details = $fullname . "  " . $userrefid;
 
-            // =====================================================
-            // GET FORM DATA
-            // =====================================================
+                $logResult = $AuthMiddlewareModel->writelog(
+                    $userid,
+                    $role_name,
+                    $role,
+                    $user_details,
+                    $action,
+                    $company_logfile_url
+                );
 
-            $fullname = trim($_POST['fullname'] ?? '');
-
-            $title = trim($_POST['title'] ?? '');
-
-            $phone = trim($_POST['phone'] ?? '');
-
-            $receiveraddress = $email = trim($_POST['email'] ?? '');
-
-            $password = $_POST['password'] ?? '';
-
-            $affirmation = isset($_POST['affirmation']) ? 1 : 0;
-
-
-            // =====================================================
-            // VALIDATE DATA
-            // =====================================================
-
-            if ($fullname === '' || $title === '' || $phone === '' || $email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || $password === '' || $affirmation !== 1) {
-
-                $_SESSION['error'] =
-                    'Please fill all required fields correctly.';
+                $SendEmail = $CallMailerModel->sendmail(
+                    $receiveraddress,
+                    $subject,
+                    $message
+                );
 
                 header("Location: index?action=login");
-
                 exit;
-
-            }
-
-
-            // =====================================================
-            // END OF VALIDATION, NOW CREATE REPORTER
-            // =====================================================
-
-            $role = "reporter";
-
-            $role_name = "reporter";
-
-
-            $result = $userModel->CreateUserAccount(
-
-                $company_userid,
-
-                $title,
-
-                $fullname,
-
-                $phone,
-
-                $role,
-
-                $role_name,
-
-                $email
-
-            );
-
-
-            // =====================================================
-            // SEND MAIL
-            // =====================================================
-
-            if (!empty($result['success'])) {
-
-                $userrefid = $result['userid'];
-
-                if ($company_acct_approval == 1) {
-
-                    $_SESSION['success'] =
-                        "Account created successfully, please check your email login for details";
-
-
-                    $subject = $action =
-                        "Account created successfully";
-
-
-                   
-$message = "Hello $fullname,<br><br>"
-         . "Your account has been created successfully.<br><br>"
-         . "Your registration has been completed, and your account is now ready for use.<br><br>"
-         . "<strong>Reference ID:</strong> $userrefid<br>"
-         . "<strong>Default Password:</strong> Your phone number used during registration<br><br>"
-         . "Please use your Reference ID and default password to log in to your account. For your security, we strongly recommend changing your default password after your first successful login.<br><br>"
-         . "<div style='text-align:center; margin:25px 0;'>"
-         . "<a href='$loginurl' style='display:inline-block; padding:12px 25px; background-color:#0d6efd; color:#ffffff; text-decoration:none; border-radius:5px; font-weight:bold;'>"
-         . "Login to Your Account"
-         . "</a>"
-         . "</div>"
-         . "If you did not register for this account, please contact the Support Team immediately.<br><br>"
-         . "Best regards,<br>"
-         . "The Support Team";
-
-
-
-
-                    $_SESSION['userid'] = $userrefid;
-
-                    $_SESSION['role'] = $role;
-
-
-                    // Corrected variables for the log
-
-                    $userid = $userrefid;
-
-                    $user_details = $fullname . "  " . $userrefid;
-
-
-                    $AuthMiddlewareModel = new AuthMiddleware();
-
-
-                    $logResult = $AuthMiddlewareModel->writelog(
-                        $userid,
-                        $role_name,
-                        $role,
-                        $user_details,
-                        $action,
-                        $company_logfile_url
-                    );
-
-
-                    $SendEmail = $CallMailerModel->sendmail(
-                        $receiveraddress,
-                        $subject,
-                        $message
-                    );
-
-                }
-
 
             } else {
 
                 $_SESSION['success'] =
                     "Request submitted. You will receive an email upon approval";
 
+                header("Location: index?action=login");
+                exit;
             }
 
+        } else {
 
             unset($_SESSION['error']);
-
-            unset($_SESSION['errors']);
-
-        }
-
-
-        // =====================================================
-        // PHONE ALREADY EXISTS
-        // =====================================================
-
-        else {
-
-            unset($_SESSION['error']);
-
             unset($_SESSION['errors']);
 
             $_SESSION['errors'] = [];
 
-
             if (!empty($result['phone_exists'])) {
-
-                $_SESSION['error'] =
-                    'This phone number is already registered.';
-
+                $_SESSION['error'] = 'This phone number is already registered.';
             }
-
-
-            // =================================================
-            // EMAIL ALREADY EXISTS
-            // =================================================
-
             elseif (!empty($result['email_exists'])) {
-
                 $_SESSION['error'] =
                     'This email address is already registered.';
-
             }
-
-
-            // =================================================
-            // GENERAL DATABASE/SYSTEM ERROR
-            // =================================================
-
             elseif (!empty($result['error'])) {
-
                 $_SESSION['error'] =
                     "Unable to create your account. Please try again";
-
-                // For debugging only:
                 // $_SESSION['error'] = $result['error'];
-
             }
 
+            header("Location: index?action=login");
+            exit;
         }
 
-
-        // =====================================================
-        // REDIRECT
-        // =====================================================
-
-        header("Location: index?action=login");
-
-        exit;
+        unset($_SESSION['error']);
+        unset($_SESSION['errors']);
 
     }
 
-
+    header("Location: index?action=login");
+    exit;
+}
 
 
 

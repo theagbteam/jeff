@@ -3,7 +3,12 @@
 <html lang="en">
 
 <head>
-
+<script
+  src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+  async
+  defer
+></script>
+       <link rel="preconnect" href="https://challenges.cloudflare.com">
     <meta charset="UTF-8">
 
     <meta
@@ -287,7 +292,7 @@ body {
             rgba(4, 48, 98, .50)
         ),
 
-        url("views/assets/img/loginbg2.png");
+        url("views/assets/img/loginbg2.PNG");
 }
 
 
@@ -2566,7 +2571,7 @@ if (isset($_SESSION['error'])) {
             <div class="brand-icon">
 
                 <img
-                    src="views/uploads/img/logo.png"
+                    src="views/uploads/img/<?= $company_logo ?>"
                     alt="AICSS Logo"
                 >
 
@@ -2700,7 +2705,7 @@ if (isset($_SESSION['error'])) {
 
 
                 <img
-                    src="views/uploads/img/logo.png"
+                    src="views/uploads/img/<?= $company_logo ?>"
                     alt="AICSS Logo"
                 >
 
@@ -2881,7 +2886,7 @@ if (isset($_SESSION['error'])) {
 
 
 
-
+ <div class="cf-turnstile" data-sitekey="<?= $CF_SiteKey ?>" data-size="flexible"></div>
 
                     <button
                         class="main-button"
@@ -3114,7 +3119,7 @@ if (isset($_SESSION['error'])) {
 
                     </div>
 
-
+<div class="cf-turnstile" data-sitekey="<?= $CF_SiteKey ?>" data-size="flexible"></div>
 
                     <button
                         class="main-button"
@@ -3284,7 +3289,7 @@ if (isset($_SESSION['error'])) {
                     >
 
                 </div>
-
+  <div class="cf-turnstile" data-sitekey="<?=  $CF_SiteKey  ?>">  </div>
                 <button
                     class="forgot-submit-button"
                     type="submit"
@@ -3967,11 +3972,11 @@ const incidentBackgrounds = [
 
     "views/assets/img/loginbg.png",
 
-    "views/assets/img/loginbg2.png",
+    "views/assets/img/loginbg2.PNG",
 
-    "views/assets/img/loginbg3.png",
+    "views/assets/img/loginbg3.PNG",
 
-    "views/assets/img/loginbg4.png"
+    "views/assets/img/loginbg4.PNG"
 
 ];
 

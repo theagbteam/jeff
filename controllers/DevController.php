@@ -42,9 +42,7 @@ class DevController {
 
 
 
-public function updateCompanyDetails(): array
-
-{
+public function updateCompanyDetails(): array{
 
     $CallDevModel = new ModelDev();
 
@@ -801,7 +799,7 @@ public function viewlog() {
   $callCompanyModel = new CompanyModel() ;
 
       $company_settings = $callCompanyModel ->web_settings();
-      
+          
       $company_logfile_url  = $company_settings['company_logfile_url'] ;
 
       $company_userid  = $company_settings['company_userid'] ;
@@ -1103,6 +1101,7 @@ if ($result['success']) {
      $callCompanyModel = new CompanyModel() ;
 
       $company_settings = $callCompanyModel ->web_settings();
+     $CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
 
       $company_logfile_url  = $company_settings['company_logfile_url'] ;
 
@@ -1481,6 +1480,7 @@ if ($result['success']) {
      $callCompanyModel = new CompanyModel() ;
 
       $company_settings = $callCompanyModel ->web_settings();
+          $company_logfile_url  = $company_settings['company_logfile_url'] ;
 
       $company_logfile_url  = $company_settings['company_logfile_url'] ;
 
@@ -1620,6 +1620,7 @@ if ($result['success']) {
      $callCompanyModel = new CompanyModel() ;
 
       $company_settings = $callCompanyModel ->web_settings();
+       $CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
 
       $company_logfile_url  = $company_settings['company_logfile_url'] ;
 
@@ -1969,6 +1970,7 @@ if ($result['success']) {
      $callCompanyModel = new CompanyModel() ;
 
       $company_settings = $callCompanyModel ->web_settings();
+      $CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
 
       $company_logfile_url  = $company_settings['company_logfile_url'] ;
 
@@ -2140,6 +2142,7 @@ if ($result['success']) {
      $CallMailerModel = new Mailer() ;
 
       $company_settings = $callCompanyModel ->web_settings();
+      $CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
 
       $ticketer_email  = $company_settings['company_email'] ;
       $company_logfile_url  = $company_settings['company_logfile_url'] ;
@@ -2354,7 +2357,7 @@ if ($result['success']) {
 }
 
 
-
+  $CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
       $company_logfile_url  = $company_settings['company_logfile_url'] ;
 
       $company_userid  = $company_settings['company_userid'] ;

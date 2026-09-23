@@ -450,7 +450,7 @@
                     </div>
 
                 </div>
-
+<div class="cf-turnstile" data-sitekey="<?= $CF_SiteKey ?>" data-size="flexible"></div>
                 <div class="modal-footer">
 
                     <button
@@ -546,7 +546,7 @@
                     </div>
 
                 </div>
-
+<div class="cf-turnstile" data-sitekey="<?= $CF_SiteKey ?>" data-size="flexible"></div>
                 <div class="modal-footer">
 
                     <button
@@ -682,7 +682,7 @@
                     </div>
 
                 </div>
-
+<div class="cf-turnstile" data-sitekey="<?= $CF_SiteKey ?>" data-size="flexible"></div>
                 <div class="modal-footer">
 
                     <button

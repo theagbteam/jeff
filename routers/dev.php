@@ -1,7 +1,7 @@
  <?php
  
  require_once ROOT_PATH . "/controllers/UserController.php";
-// require_once   ROOT_PATH ."/middleware/AuthMiddleware.php";
+require_once   ROOT_PATH ."/middleware/AuthMiddleware.php";
 $Usercontroller = new UserController();
 $Devcontroller = new DevController();
  $SearchForMiddleware = new AuthMiddleware();
@@ -12,6 +12,9 @@ $Devcontroller = new DevController();
 switch ($action) {
         case 'dashboard':
         $Devcontroller->dashboard();
+        break;
+        case 'create_reporter':
+          $Usercontroller->create_reporter();
         break;
         case 'create_admin_user':
         $Devcontroller->create_admin_user();

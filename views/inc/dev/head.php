@@ -29,7 +29,12 @@ $current_action = $page_name;
 <html lang="en">
 
 <head>
-
+<script
+  src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+  async
+  defer
+></script>
+       <link rel="preconnect" href="https://challenges.cloudflare.com">
     <meta charset="utf-8">
 
     <meta

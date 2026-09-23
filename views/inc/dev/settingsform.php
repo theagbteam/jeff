@@ -1088,7 +1088,7 @@ $company_logo_name = "../image_upload/" . ($company_logo ?? '');
 
                             </div>
 
-
+<div class="cf-turnstile" data-sitekey="<?= $CF_SiteKey ?>" style="width: 100%;"></div>
                             <!-- SUBMIT -->
                             <div class="mt-2">
 
@@ -1429,7 +1429,7 @@ $company_logo_name = "../image_upload/" . ($company_logo ?? '');
 
                             </div>
 
-
+<div class="cf-turnstile" data-sitekey="<?= $CF_SiteKey ?>" style="width: 100%;"></div>
                             <!-- SUBMIT -->
                             <div class="mt-2">
 
