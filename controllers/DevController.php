@@ -42,9 +42,9 @@ class DevController {
 
 
 
-public function updateCompanyDetails(): array{
+public function CompanyDetails(): array{
 
-    $CallDevModel = new ModelDev();
+   
 
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
@@ -56,6 +56,16 @@ public function updateCompanyDetails(): array{
 
     }
 
+ $CallDevModel = new ModelDev();
+ $AuthMiddlewareModel = new AuthMiddleware();
+  $company_settings = $CallDevModel->web_settings();
+  $CF_VerificationSiteUrl = $company_settings['cloudfare_verifyurl'] ?? '';
+ $CF_SecretKey = $company_settings['cloudfare_secretkey'] ?? '';
+$CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
+  $AuthMiddlewareModel->ValidateTurnstile(
+    $CF_SecretKey,
+    $CF_VerificationSiteUrl
+);  
     $data = [
 
         'company_url' => trim($_POST['company_url'] ?? ''),
@@ -552,12 +562,9 @@ public function updateCompanyDetails(): array{
 
 
 
-public function updateMailerDetails(): array
+public function updateMailerDetails(): array{
 
-{
-
-    $CallDevModel = new ModelDev();
-
+   
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
         $_SESSION['error'] = 'Invalid request method.';
@@ -567,6 +574,18 @@ public function updateMailerDetails(): array
         exit;
 
     }
+
+
+ $CallDevModel = new ModelDev();
+ $AuthMiddlewareModel = new AuthMiddleware();
+  $company_settings = $CallDevModel->web_settings();
+  $CF_VerificationSiteUrl = $company_settings['cloudfare_verifyurl'] ?? '';
+ $CF_SecretKey = $company_settings['cloudfare_secretkey'] ?? '';
+$CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
+  $AuthMiddlewareModel->ValidateTurnstile(
+    $CF_SecretKey,
+    $CF_VerificationSiteUrl
+); 
 
     $data = [
 
@@ -793,7 +812,7 @@ public function updateMailerDetails(): array
 }
 
 
-public function viewlog() {
+public function page_viewlog() {
   if (session_status() === PHP_SESSION_NONE) session_start();
 
   $callCompanyModel = new CompanyModel() ;
@@ -955,6 +974,13 @@ public function clearlog(){
              $callUserModel = new User;
 $CallDevModel = new ModelDev;
       $company_settings = $callCompanyModel ->web_settings();
+      $CF_VerificationSiteUrl = $company_settings['cloudfare_verifyurl'] ?? '';
+        $CF_SecretKey = $company_settings['cloudfare_secretkey'] ?? '';
+        $CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
+        $callAuthMiddlewareClass->ValidateTurnstile(
+    $CF_SecretKey,
+    $CF_VerificationSiteUrl
+);
 
       $company_logfile_url  = $company_settings['company_logfile_url'] ;
 
@@ -1024,7 +1050,7 @@ $AbrvName = !empty($first)? $first . (!empty($parts) ? ' ' . implode('.', array_
 
     ========================== */
 
-    public function totalrequest() {
+    public function page_totalrequest() {
 
   if (session_status() === PHP_SESSION_NONE) session_start();
 
@@ -1297,7 +1323,7 @@ $message = "Hello $ticketer_name,<br><br>"
 
 
 
-public function edit_user(){  
+public function page_edit_user(){  
   if (session_status() === PHP_SESSION_NONE) session_start();
   $token = $_GET['token'] ?? '';
     $user_id = base64_decode($token, true);
@@ -1306,9 +1332,20 @@ public function edit_user(){
    $callUserModel = new User();
 $callAuthMiddlewareClass = new AuthMiddleware;
     $CallDevModel = new ModelDev;
-
+     $callCompanyModel = new CompanyModel() ;
+      $company_settings = $callCompanyModel ->web_settings();
+ $CF_VerificationSiteUrl = $company_settings['cloudfare_verifyurl'] ?? '';
+        $CF_SecretKey = $company_settings['cloudfare_secretkey'] ?? '';
+        $CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
 //Update user record code starts here
 if (isset($_POST['dev_update_user'])) {
+   
+$callAuthMiddlewareClass->ValidateTurnstile(
+    $CF_SecretKey,
+    $CF_VerificationSiteUrl
+);
+
+
     $user_id =  trim($_POST['user_id']) ;
        $LoadUsersAndLoginTableForThisUser = $callUserModel->SelectUsersAndLoginTableforOnePerson($user_id);
     $data = [
@@ -1477,9 +1514,7 @@ if ($result['success']) {
 
 }
 
-     $callCompanyModel = new CompanyModel() ;
-
-      $company_settings = $callCompanyModel ->web_settings();
+    
           $company_logfile_url  = $company_settings['company_logfile_url'] ;
 
       $company_logfile_url  = $company_settings['company_logfile_url'] ;
@@ -1523,7 +1558,7 @@ if ($result['success']) {
 
 
 
-public function dashboard() {
+public function page_dashboard() {
 
   if (session_status() === PHP_SESSION_NONE) session_start();
 
@@ -1620,7 +1655,9 @@ if ($result['success']) {
      $callCompanyModel = new CompanyModel() ;
 
       $company_settings = $callCompanyModel ->web_settings();
-       $CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
+     $CF_VerificationSiteUrl = $company_settings['cloudfare_verifyurl'] ?? '';
+        $CF_SecretKey = $company_settings['cloudfare_secretkey'] ?? '';
+        $CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
 
       $company_logfile_url  = $company_settings['company_logfile_url'] ;
 
@@ -1688,21 +1725,27 @@ if ($result['success']) {
 
 
 public function create_admin_user() {
-
-if (isset($_POST['dev_create_admin'])) {
  if (session_status() === PHP_SESSION_NONE) session_start();
-   $userid =$_SESSION['userid']; 
-  $callUserModel = new User();
+     $callCompanyModel = new CompanyModel() ;
+      $callUserModel = new User();
     $callAuthMiddlewareClass = new AuthMiddleware;
     $CallMailerModel = new Mailer;
     $CallDevModel = new ModelDev;
+      $company_settings = $callCompanyModel ->web_settings();
+      $CF_VerificationSiteUrl = $company_settings['cloudfare_verifyurl'] ?? '';
+        $CF_SecretKey = $company_settings['cloudfare_secretkey'] ?? '';
+        $CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
+if (isset($_POST['dev_create_admin'])) {
+$callAuthMiddlewareClass->ValidateTurnstile(
+    $CF_SecretKey,
+    $CF_VerificationSiteUrl
+);
+
+   $userid =$_SESSION['userid']; 
+ 
  $role_name = $role = $_SESSION['role'] ;
  
-
-     $callCompanyModel = new CompanyModel() ;
-
-      $company_settings = $callCompanyModel ->web_settings();
-
+    
       $company_logfile_url  = $company_settings['company_logfile_url'] ;
 
       $company_userid  = $company_settings['company_userid'] ;
@@ -1713,7 +1756,7 @@ if (isset($_POST['dev_create_admin'])) {
 
        $company_copyrightlink  = $company_settings['company_copyrightlink'] ?? 'https://www.agbng.com';
 
-       $company_settings = $callCompanyModel->web_settings();
+    //    $company_settings = $callCompanyModel->web_settings();
 
       $company_online = $company_settings['company_online'] ?? 0;
 
@@ -1875,7 +1918,7 @@ header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php')); exit;
 
 
 
-public function users() {
+public function page_users() {
 
   if (session_status() === PHP_SESSION_NONE) session_start();
 
@@ -2009,7 +2052,7 @@ if ($result['success']) {
 
 
 
-public function corridorsAndItlikes() {
+public function page_corridorsAndItlikes() {
 
   if (session_status() === PHP_SESSION_NONE) session_start();
   
@@ -2286,18 +2329,16 @@ $LoadCorridorsAndItLikes = $CallDevModel->SelectCorridorsAndThoseSimilar($tb_nam
 
 
 
-public function settings() {
+public function page_settings() {
 
   if (session_status() === PHP_SESSION_NONE) session_start();
 
   $callCompanyModel = new CompanyModel() ;
 
       $company_settings = $callCompanyModel ->web_settings();
-
-//    $_SESSION['msg']  = "";
-
-//     $_SESSION['msg_notification']=0;
-
+ $CF_VerificationSiteUrl = $company_settings['cloudfare_verifyurl'] ?? '';
+        $CF_SecretKey = $company_settings['cloudfare_secretkey'] ?? '';
+        $CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
   $userid =$_SESSION['userid']; 
 
    $callUserModel = new User();
@@ -2357,7 +2398,7 @@ if ($result['success']) {
 }
 
 
-  $CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
+//   $CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
       $company_logfile_url  = $company_settings['company_logfile_url'] ;
 
       $company_userid  = $company_settings['company_userid'] ;
@@ -2368,7 +2409,7 @@ if ($result['success']) {
 
        $company_copyrightlink  = $company_settings['company_copyrightlink'] ?? 'https://www.agbng.com';
 
-       $company_settings = $callCompanyModel->web_settings();
+    //    $company_settings = $callCompanyModel->web_settings();
 
       $company_online = $company_settings['company_online'] ?? 0;
 

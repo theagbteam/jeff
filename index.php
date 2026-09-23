@@ -5,8 +5,8 @@ require_once ROOT_PATH . "/controllers/DevController.php";
 require_once ROOT_PATH . "/middleware/AuthMiddleware.php";
 $userid = $_SESSION['userid'] ?? null;
 $SearchForMiddleware = new AuthMiddleware();
-// $UserController = new UserController();
-  $entryroles = $_SESSION['role'] ?? 'guest';
+$UserController = new UserController();
+  $entryroles = $_SESSION['role'] ?? "guest";
 //  $action = $_GET['action'] ?? 'login';
 
 

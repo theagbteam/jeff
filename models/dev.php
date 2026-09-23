@@ -200,8 +200,7 @@ $date_created = date('Y-m-d H:i:s');
 
 
     
-    public function updateCompanyDetails(array $data): array
-{
+    public function updateCompanyDetails(array $data): array{
     $sn = 1;
 
     $sql = "UPDATE company SET

@@ -11,7 +11,7 @@ $Devcontroller = new DevController();
 
 switch ($action) {
         case 'dashboard':
-        $Devcontroller->dashboard();
+        $Devcontroller->page_dashboard();
         break;
         case 'create_reporter':
           $Usercontroller->create_reporter();
@@ -23,46 +23,46 @@ switch ($action) {
         $Devcontroller->EraseRecord();
         break;
         case 'create_corridor':
-        $Devcontroller->corridorsAndItlikes();
+        $Devcontroller->page_corridorsAndItlikes();
         break;
         case 'incidence_source':
-        $Devcontroller->corridorsAndItlikes();
+        $Devcontroller->page_corridorsAndItlikes();
         break;
         case 'pipelines':
-        $Devcontroller->corridorsAndItlikes();
+        $Devcontroller->page_corridorsAndItlikes();
         break;
         case 'pipeline_types':
-        $Devcontroller->corridorsAndItlikes();
+        $Devcontroller->page_corridorsAndItlikes();
         break;
         case 'zones':
-        $Devcontroller->corridorsAndItlikes();
+        $Devcontroller->page_corridorsAndItlikes();
         break;
         case 'wellhead_status':
-        $Devcontroller->corridorsAndItlikes();
+        $Devcontroller->page_corridorsAndItlikes();
         break;
         case 'report_types':
-        $Devcontroller->corridorsAndItlikes();
+        $Devcontroller->page_corridorsAndItlikes();
         break;
         case 'operator':
-        $Devcontroller->corridorsAndItlikes();
+        $Devcontroller->page_corridorsAndItlikes();
         break;
         case 'priority':
-        $Devcontroller->corridorsAndItlikes();
+        $Devcontroller->page_corridorsAndItlikes();
         break;
         case 'owners':
-        $Devcontroller->corridorsAndItlikes();
+        $Devcontroller->page_corridorsAndItlikes();
         break;
         case 'corridors':
-        $Devcontroller->corridorsAndItlikes();
+        $Devcontroller->page_corridorsAndItlikes();
         break;
          case 'viewlog':
-            $Devcontroller->viewlog();
+            $Devcontroller->page_viewlog();
             break;
          case 'clearlog':
             $Devcontroller->clearlog();
             break;
         case 'edit_user':
-            $Devcontroller->edit_user();
+            $Devcontroller->page_edit_user();
             break;
         $Usercontroller->updatepassword();
         break;
@@ -70,25 +70,25 @@ switch ($action) {
         $Usercontroller->restoreuser();
         break;
         case 'users':
-        $Devcontroller->users();
+        $Devcontroller->page_users();
         break;
         case 'updateCompanyDetails':
-        $Devcontroller->updateCompanyDetails();
+        $Devcontroller->CompanyDetails();
         break;
         case 'updateMailerDetails':
         $Devcontroller->updateMailerDetails();
         break;
         case 'settings':
-        $Devcontroller->settings();
+        $Devcontroller->page_settings();
         break;
         case 'totalrequest':
     //  $SearchForMiddleware->IsLoginSessionActive() ;
-        $Devcontroller->totalrequest();
+        $Devcontroller->page_totalrequest();
         break;
     case 'logout':
         $Usercontroller->logout();
         break;
     
     default:
-        $Usercontroller->login();
+        $Usercontroller->page_login();
 }

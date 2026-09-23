@@ -2773,10 +2773,10 @@ if (isset($_SESSION['error'])) {
 
                 <form
                     method="post"
-                    enctype="multipart/form-data" onsubmit="
+                    enctype="multipart/form-data" onsubmit="return checkTurnstile(event);
     const btn = this.querySelector('button[type=submit]');
     btn.disabled = true;
-    btn.innerHTML = 'Processing...';
+    btn.innerHTML = 'Processing...'; 
 "
                 >
 
@@ -2890,7 +2890,7 @@ if (isset($_SESSION['error'])) {
 
 
 
- <div class="cf-turnstile" data-sitekey="<?= $CF_SiteKey ?>" data-size="flexible"></div>
+ <div class="cf-turnstile" data-callback="turnstileSuccess" data-sitekey="<?= $CF_SiteKey ?>" data-size="flexible"></div>
 
                     <button
                         class="main-button"
@@ -2955,10 +2955,10 @@ if (isset($_SESSION['error'])) {
                     id="signupAccountForm"
                     action="index?action=create_reporter"
                     method="post"
-                    enctype="multipart/form-data" onsubmit="
+                    enctype="multipart/form-data" onsubmit="return checkTurnstile(event);
     const btn = this.querySelector('button[type=submit]');
     btn.disabled = true;
-    btn.innerHTML = 'Processing...';
+    btn.innerHTML = 'Processing...'; 
 "
                 >
 
@@ -3235,10 +3235,10 @@ if (isset($_SESSION['error'])) {
                 </span>
             </div>
 
-            <form id="forgotPasswordForm" method="post" enctype="multipart/form-data" action="index?action=login" onsubmit="
+            <form id="forgotPasswordForm" method="post" enctype="multipart/form-data" action="index?action=login" onsubmit="return checkTurnstile(event);
     const btn = this.querySelector('button[type=submit]');
     btn.disabled = true;
-    btn.innerHTML = 'Processing...';
+    btn.innerHTML = 'Processing...'; 
 " >
 
                 <div class="forgot-question-box">
@@ -3927,7 +3927,24 @@ if (isset($_SESSION['error'])) {
 
 </div>
 
+<script>
+   let turnstileVerified = false;
 
+function turnstileSuccess(token) {
+    turnstileVerified = true;
+}
+
+function checkTurnstile(event) {
+    if (!turnstileVerified) {
+        event.preventDefault();
+        alert('Please complete the human verification.');
+        return false;
+    }
+
+    return true;
+} 
+    
+</script>
 
 <!-- =============================================================
      JAVASCRIPT

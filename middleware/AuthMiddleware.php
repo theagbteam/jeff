@@ -9,13 +9,71 @@ class AuthMiddleware {
         $this->conn = $database->getConnection();
        
     }
-
-
-
-
-
-public function IsLoginSessionActive(): void
+    
+    
+    
+    
+ public function ValidateTurnstile($CF_SecretKey, $CF_VerificationSiteUrl)
 {
+    $turnstile_token = $_POST['cf-turnstile-response'] ?? '';
+
+    if (empty($turnstile_token)) {
+
+        $_SESSION['error'] = 'Please complete the human verification.';
+
+        header("Location: " . $_SERVER['HTTP_REFERER']);
+        exit;
+    }
+
+    try {
+
+        $ch = curl_init($CF_VerificationSiteUrl);
+
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => [
+                'secret'   => $CF_SecretKey,
+                'response' => $turnstile_token
+            ],
+            CURLOPT_TIMEOUT => 10
+        ]);
+
+        $response = curl_exec($ch);
+
+        if ($response === false) {
+            curl_close($ch);
+
+            $_SESSION['error'] = 'Human verification failed. Please try again.';
+
+            header("Location: " . $_SERVER['HTTP_REFERER']);
+            exit;
+        }
+
+        curl_close($ch);
+
+        $result = json_decode($response, true);
+
+        if (empty($result['success'])) {
+
+            $_SESSION['error'] = 'Human verification failed. Please try again.';
+
+            header("Location: " . $_SERVER['HTTP_REFERER']);
+            exit;
+        }
+
+        return true;
+
+    } catch (Exception $e) {
+
+        $_SESSION['error'] = 'Human verification failed. Please try again.';
+
+        header("Location: " . $_SERVER['HTTP_REFERER']);
+        exit;
+    }
+}
+
+public function IsLoginSessionActive(): void{
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }

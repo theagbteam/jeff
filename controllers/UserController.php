@@ -42,7 +42,7 @@ class UserController {
        LOGIN
     ========================== */
 
-    public function login(){
+    public function page_login(){
 
         if (session_status() === PHP_SESSION_NONE) {
 //  $_SESSION=[]; setcookie(session_name(),'',time()-42000,'/'); session_destroy(); 
@@ -51,16 +51,21 @@ class UserController {
         }
 
         $callCompanyModel = new CompanyModel();
-
-        $CallMailerModel = new Mailer;
-
-        $company_settings = $callCompanyModel->web_settings();
-
-        $company_logfile_url = $company_settings['company_logfile_url'] ?? '';
-
         $GetTheModelClassCalledUser = new User();
 
         $AuthMiddlewareModel = new AuthMiddleware();
+        $CallMailerModel = new Mailer;
+
+        $company_settings = $callCompanyModel->web_settings();
+        
+        $CF_VerificationSiteUrl = $company_settings['cloudfare_verifyurl'] ?? '';
+        $CF_SecretKey = $company_settings['cloudfare_secretkey'] ?? '';
+        $CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
+          
+
+        $company_logfile_url = $company_settings['company_logfile_url'] ?? '';
+
+        
 
         $userid = $_SESSION['userid'] ?? null;
 
@@ -73,7 +78,10 @@ class UserController {
         $role = "";
 
         if (isset($_POST['forgot_password'])) {
-
+$AuthMiddlewareModel->ValidateTurnstile(
+    $CF_SecretKey,
+    $CF_VerificationSiteUrl
+);
             $forgot_email = $_POST['forgot_email'] ?? '';
 
             $security_answer = $_POST['security_answer'] ?? '';
@@ -82,7 +90,11 @@ class UserController {
 
 
         if (isset($_POST['login'])) {
-
+            
+$AuthMiddlewareModel->ValidateTurnstile(
+    $CF_SecretKey,
+    $CF_VerificationSiteUrl
+);
             $action = "Login failed";
 
             $userid = trim($_POST['userid'] ?? '');
@@ -240,9 +252,7 @@ class UserController {
         $page_name = "Login";
 
 
-        $CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
-            $company_settings['company_copyright'] ?? '2025';
-
+  $company_settings['company_copyright'] ?? '2025';
 
         $company_poweredby =
             $company_settings['company_poweredby'] ?? 'AgbTeam';
@@ -290,7 +300,12 @@ $callusermodel = new User();
  $company_settings = $callCompanyModel->web_settings();
  $CallMailerModel = new Mailer;
   $company_logfile_url = $company_settings['company_logfile_url'] ?? '';
+   $CF_VerificationSiteUrl = $company_settings['cloudfare_verifyurl'] ?? '';
+        $CF_SecretKey = $company_settings['cloudfare_secretkey'] ?? '';
+        $CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
+  
 if (isset($_POST['update_user_password'])) {
+    $AuthMiddlewareModel->ValidateTurnstile($CF_SecretKey,$CF_VerificationSiteUrl);
 $userid = $_SESSION['userid'];
 $role_name = $role = $_SESSION['role'] ;
 $subject = $action = "Your Password was updated";
@@ -383,12 +398,14 @@ public function create_reporter()   {
         $CallMailerModel = new Mailer();
 
         $company_settings = $callCompanyModel->web_settings();
-
+        $CF_VerificationSiteUrl = $company_settings['cloudfare_verifyurl'] ?? '';
+        $CF_SecretKey = $company_settings['cloudfare_secretkey'] ?? '';
+        $CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
         $company_logfile_url = $company_settings['company_logfile_url'] ?? '';
         $company_url = $company_settings['company_url'] ?? '';
         $loginurl = $company_url."/index.php?action=login" ;
-
-        $company_userid =
+        $AuthMiddlewareModel->ValidateTurnstile($CF_SecretKey,$CF_VerificationSiteUrl);
+           $company_userid =
             $company_settings['company_userid'] ?? 50001;
 
         $company_acct_approval =
