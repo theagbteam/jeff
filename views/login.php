@@ -2773,7 +2773,11 @@ if (isset($_SESSION['error'])) {
 
                 <form
                     method="post"
-                    enctype="multipart/form-data"
+                    enctype="multipart/form-data" onsubmit="
+    const btn = this.querySelector('button[type=submit]');
+    btn.disabled = true;
+    btn.innerHTML = 'Processing...';
+"
                 >
 
 
@@ -2951,7 +2955,11 @@ if (isset($_SESSION['error'])) {
                     id="signupAccountForm"
                     action="index?action=create_reporter"
                     method="post"
-                    enctype="multipart/form-data"
+                    enctype="multipart/form-data" onsubmit="
+    const btn = this.querySelector('button[type=submit]');
+    btn.disabled = true;
+    btn.innerHTML = 'Processing...';
+"
                 >
 
 
@@ -3227,7 +3235,11 @@ if (isset($_SESSION['error'])) {
                 </span>
             </div>
 
-            <form id="forgotPasswordForm" method="post" enctype="multipart/form-data" action="index?action=login" >
+            <form id="forgotPasswordForm" method="post" enctype="multipart/form-data" action="index?action=login" onsubmit="
+    const btn = this.querySelector('button[type=submit]');
+    btn.disabled = true;
+    btn.innerHTML = 'Processing...';
+" >
 
                 <div class="forgot-question-box">
 
