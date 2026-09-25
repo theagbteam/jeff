@@ -11,6 +11,9 @@ $userid = $_SESSION['userid'] ?? null;
 
 
 switch ($action) {
+       case 'compulsory_cp':
+        $Usercontroller->updatepassword();
+        break;
       case 'login':
         //    $SearchForMiddleware->IsLoginSessionActive() ;
         $controller->page_login();

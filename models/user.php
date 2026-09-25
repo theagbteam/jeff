@@ -25,7 +25,7 @@ public function updateuserpwd($data){
         $new_password = $data['new_password'];
         $verify_password = $data['verify_password'];
 
-        if (empty($userid) || empty($old_password) || empty($new_password) || empty($verify_password)) {
+        if (empty($userid) || empty($new_password) || empty($verify_password)) {
             return "All password fields are required.";
         }
 
@@ -33,26 +33,34 @@ public function updateuserpwd($data){
             return "New password and verify password do not match.";
         }
 
-        $sql = "SELECT password FROM login WHERE userid = :userid LIMIT 1";
+        // Only check the old password if it was provided
+        if ($old_password !== "") {
 
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bindValue(':userid', $userid, PDO::PARAM_STR);
-        $stmt->execute();
+            $sql = "SELECT password FROM login WHERE userid = :userid LIMIT 1";
 
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bindValue(':userid', $userid, PDO::PARAM_STR);
+            $stmt->execute();
 
-        if (!$user) {
-            return "User account not found.";
-        }
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if (!password_verify($old_password, $user['password'])) {
-            return "Old password is incorrect.";
+            if (!$user) {
+                return "User account not found.";
+            }
+
+            if (!password_verify($old_password, $user['password'])) {
+                return "Old password is incorrect.";
+            }
         }
 
         $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
 
         $sql = "UPDATE login
-                SET password = :password
+                SET password = :password,
+                    login_counts = CASE
+                        WHEN login_counts = 0 THEN 1
+                        ELSE login_counts
+                    END
                 WHERE userid = :userid
                 LIMIT 1";
 
@@ -81,8 +89,24 @@ public function updateuserpwd($data){
 
 
 
+public function updateLoginCount($userid)
+{
+    try {
 
+        $sql = "UPDATE login 
+                SET login_counts = COALESCE(login_counts, 0) + 1 
+                WHERE userid = :userid";
 
+        $stmt = $this->conn->prepare($sql);
+
+        $stmt->bindParam(':userid', $userid, PDO::PARAM_STR);
+
+        return $stmt->execute();
+
+    } catch (PDOException $e) {
+        return false;
+    }
+}
 
 
 
@@ -314,8 +338,6 @@ public function clearMsgNotification($userid) {
 
 
 
-
-
 public function login($userid, $password) {
     $table_login = "login";
 
@@ -328,7 +350,6 @@ public function login($userid, $password) {
 
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    // User not found
     if (!$user) {
         return [
             'success' => false,
@@ -336,7 +357,6 @@ public function login($userid, $password) {
         ];
     }
 
-    // Wrong password
     if (!password_verify($password, $user['password'])) {
         return [
             'success' => false,
@@ -344,7 +364,6 @@ public function login($userid, $password) {
         ];
     }
 
-    // Account status
     if ($user['status'] == 0) {
         return [
             'success' => false,
@@ -353,21 +372,51 @@ public function login($userid, $password) {
     }
 
     if ($user['status'] == 1) {
-        // Account is active, proceed with login
+
+        $current_login_count = $user['login_counts'] ;
+
+        if ($current_login_count > 0) {
+
+            $new_login_count = $current_login_count + 1;
+
+            $updateStmt = $this->conn->prepare(
+                "UPDATE {$table_login}
+                 SET login_counts = :login_counts
+                 WHERE userid = :userid"
+            );
+
+            $updateStmt->execute([
+                ':login_counts' => $new_login_count,
+                ':userid'       => $userid
+            ]);
+
+            $user['login_counts'] = $new_login_count;
+        }
+
+        $lastLoginStmt = $this->conn->prepare(
+            "UPDATE {$table_login}
+             SET last_login = :last_login
+             WHERE userid = :userid"
+        );
+
+        $lastLoginStmt->execute([
+            ':last_login' => date('Y-m-d H:i:s'),
+            ':userid'     => $userid
+        ]);
+
+        $user['last_login'] = date('Y-m-d H:i:s');
+
         return [
             'success' => true,
             'user'    => $user
         ];
     }
 
-    // Any other status = deleted
     return [
         'success' => false,
         'error'   => 'This account has been archived and is currently unavailable'
     ];
 }
-
-
 
 
 
@@ -394,7 +443,6 @@ public function SelectUserTableForOne($userid){
         'user'    => $userData
     ];
 }
-
 
 
 

@@ -1549,20 +1549,21 @@ if ($result['success']) {
 public function page_dashboard() {
 
   if (session_status() === PHP_SESSION_NONE) session_start();
-
-//    $_SESSION['msg']  = "";
-
-//     $_SESSION['msg_notification']=0;
-
   $userid =$_SESSION['userid']; 
 
    $callUserModel = new User();
 
     $CallDevModel = new ModelDev;
+        $callAuthMiddlewareClass = new AuthMiddleware;
+   if ($callAuthMiddlewareClass->IsThisAfirstTimeLogin()) {
+header("Location: index?action=compulsory_cp");
+   }
+        $callAuthMiddlewareClass->IsThisAfirstTimeLogin();
+            $isConnected = $callAuthMiddlewareClass->checkConnection();
 
    $LoadUsersAndLoginTableForAdmin = $callUserModel->SelectUsersAndLoginTable($userid);
 
-      $callAuthMiddlewareClass = new AuthMiddleware;
+  
 
    $roleCounts = $CallDevModel->getRoleCounts();
 

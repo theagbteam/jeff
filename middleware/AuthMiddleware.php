@@ -246,6 +246,27 @@ public function IsLoginSessionActive(){
 
 
 
+
+public function IsThisAfirstTimeLogin(): bool
+{
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    if (!isset($_SESSION['userid'], $_SESSION['role'])) {
+        return false;
+    }
+
+    $sql = "SELECT login_counts FROM login WHERE userid = :userid LIMIT 1";
+    $stmt = $this->conn->prepare($sql);
+    $stmt->bindParam(':userid', $_SESSION['userid']);
+    $stmt->execute();
+
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    return $row && (int)$row['login_counts'] < 1;
+}
+
+
     
     public function SelectloginTableForOne($userid){
     $stmt = $this->conn->prepare(

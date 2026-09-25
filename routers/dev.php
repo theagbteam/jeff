@@ -10,6 +10,9 @@ $Devcontroller = new DevController();
 
 
 switch ($action) {
+        case 'compulsory_cp':
+        $Usercontroller->updatepassword();
+        break;
         case 'dashboard':
         $Devcontroller->page_dashboard();
         break;

@@ -39,6 +39,8 @@ class UserController {
 
 
 
+
+
  public function page_otp(){
     if (session_status() === PHP_SESSION_NONE) {session_start();}
 // if ($_SERVER['REQUEST_METHOD'] !== 'POST') {header("Location: " . ($_SERVER['HTTP_REFERER'] ?? 'index.php?action=login'));exit;}
@@ -313,6 +315,7 @@ exit;
 
         if ($loginResult['success']) {
 
+// $GetTheModelClassCalledUser->updateLoginCount($userid);
             $user = $loginResult['user'];
 
             $role_name = $role = $loginResult['user']['role'] ?? '';
@@ -452,95 +455,137 @@ exit;
     /* ==========================
        UPDATE PASSWORD
     ========================== */
-
 public function updatepassword(){
-$callusermodel = new User();
- $AuthMiddlewareModel = new AuthMiddleware();
- $callCompanyModel = new CompanyModel();
- $company_settings = $callCompanyModel->web_settings();
- $CallMailerModel = new Mailer;
-  $company_logfile_url = $company_settings['company_logfile_url'] ?? '';
-   $CF_VerificationSiteUrl = $company_settings['cloudfare_verifyurl'] ?? '';
-        $CF_SecretKey = $company_settings['cloudfare_secretkey'] ?? '';
-        $CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
-  
-if (isset($_POST['update_user_password'])) {
-//     $AuthMiddlewareModel->ValidateTurnstile(
-//     $CF_SecretKey,
-//     $CF_VerificationSiteUrl
-// );
-$userid = $_SESSION['userid'];
-$role_name = $role = $_SESSION['role'] ;
-$subject = $action = "Your Password was updated";
-$data = [
-'userid' => $userid,
-'old_password' => trim($_POST['old_password'] ?? ''),
-'new_password' => trim($_POST['new_password'] ?? ''),
-'verify_password' => trim($_POST['verify_password'] ?? '')
-];
 
+    $callusermodel = new User();
+    $AuthMiddlewareModel = new AuthMiddleware();
+    $callCompanyModel = new CompanyModel();
+    $company_settings = $callCompanyModel->web_settings();
+    $CallMailerModel = new Mailer;
 
-if (
-    $data['old_password'] === '' ||
-    $data['new_password'] === '' ||
-    $data['verify_password'] === ''
-) {
-    $_SESSION['error'] = "Empty fields are not allowed";
-    header("Location: " . ($_SERVER['HTTP_REFERER'] ?? 'index.php?action=index'));
-    exit;
-}
+    $company_logfile_url = $company_settings['company_logfile_url'] ?? '';
+    $CF_VerificationSiteUrl = $company_settings['cloudfare_verifyurl'] ?? '';
+    $CF_SecretKey = $company_settings['cloudfare_secretkey'] ?? '';
+    $CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
 
-$result = $callusermodel->updateuserpwd($data);
+    if (isset($_POST['update_user_password'])) {
 
-if ($result === "Password updated successfully.") {
+        $userid = $_SESSION['userid'];
+        $role_name = $role = $_SESSION['role'];
 
-    $_SESSION['success'] = $result;
+        $subject = $action = "Your Password was updated";
 
- $userResult = $callusermodel->SelectUserTableForOne($userid);
+        $data = [
+            'userid' => $userid,
+            'old_password' => trim($_POST['old_password'] ?? ''),
+            'new_password' => trim($_POST['new_password'] ?? ''),
+            'verify_password' => trim($_POST['verify_password'] ?? '')
+        ];
 
-                if (!empty($userResult['success']) && !empty($userResult['user'])) {
+        if (
+            $data['new_password'] === '' ||
+            $data['verify_password'] === ''
+        ) {
+            $_SESSION['error'] = "Empty fields are not allowed";
 
-                    $user = $userResult['user'];
+            header(
+                "Location: " .
+                ($_SERVER['HTTP_REFERER'] ?? 'index.php?action=index')
+            );
 
-                    $user_fullname =  $user['fullname'] ?? 'User';
-   $parts = explode(' ', trim($user_fullname));
-$first = array_shift($parts);
-$AbrvName = !empty($first)? $first . (!empty($parts) ? ' ' . implode('.', array_map(fn($p) => strtoupper($p[0]), $parts)) : '') : 'User';
-  
-                    $receiveraddress = $user['email'] ?? '';
-    $user_details = $AbrvName . "  " . $userid;
-  
-                }
+            exit;
+        }
 
+        $result = $callusermodel->updateuserpwd($data);
 
+        if ($result === "Password updated successfully.") {
 
-$message = "Hello $user_fullname,<br><br>"
-. "Your account password has been changed successfully.<br><br>"
-. "<strong>Reference ID:</strong> $userid<br><br>"
-. "If you made this change, no further action is required.<br><br>"
-. "If you did not change your password, please contact the Support Team immediately.<br><br>"
-. "Best regards,<br>"
-. "The Support Team";
-$logResult = $AuthMiddlewareModel->writelog($userid,$role_name,$role,$user_details,$action,$company_logfile_url);
- $SendEmail = $CallMailerModel->sendmail(
-                    $receiveraddress,
-                    $subject,
-                    $message
-                );
-  header("Location: " . ($_SERVER['HTTP_REFERER'] ?? 'index.php?action=index'));
-  exit;
-} else {
+            $_SESSION['success'] = $result;
 
-    $_SESSION['error'] = $result;
-      header("Location: " . ($_SERVER['HTTP_REFERER'] ?? 'index.php?action=index'));
-exit;
-}
+            $userResult = $callusermodel->SelectUserTableForOne($userid);
 
-header("Location: " . ($_SERVER['HTTP_REFERER'] ?? 'index.php?action=index'));
-exit;
+            if (
+                !empty($userResult['success']) &&
+                !empty($userResult['user'])
+            ) {
 
+                $user = $userResult['user'];
 
-}
+                $user_fullname = $user['fullname'] ?? 'User';
+
+                $parts = explode(' ', trim($user_fullname));
+
+                $first = array_shift($parts);
+
+                $AbrvName = !empty($first)
+                    ? $first .
+                        (!empty($parts)
+                            ? ' ' .
+                                implode(
+                                    '.',
+                                    array_map(
+                                        fn($p) => strtoupper($p[0]),
+                                        $parts
+                                    )
+                                )
+                            : '')
+                    : 'User';
+
+                $receiveraddress = $user['email'] ?? '';
+
+                $user_details = $AbrvName . "  " . $userid;
+            }
+
+            $message =
+                "Hello $user_fullname,<br><br>" .
+                "Your account password has been changed successfully.<br><br>" .
+                "<strong>Reference ID:</strong> $userid<br><br>" .
+                "If you made this change, no further action is required.<br><br>" .
+                "If you did not change your password, please contact the Support Team immediately.<br><br>" .
+                "Best regards,<br>" .
+                "The Support Team";
+
+            $logResult = $AuthMiddlewareModel->writelog(
+                $userid,
+                $role_name,
+                $role,
+                $user_details,
+                $action,
+                $company_logfile_url
+            );
+
+            $SendEmail = $CallMailerModel->sendmail(
+                $receiveraddress,
+                $subject,
+                $message
+            );
+
+            header("Location: index?action=dashboard");
+
+            exit;
+
+        } else {
+
+            $_SESSION['error'] = $result;
+
+           header("Location: index?action=dashboard");
+            exit;
+        }
+    }
+
+    if ($AuthMiddlewareModel->IsThisAfirstTimeLogin()) {
+
+        require ROOT_PATH . "/views/compulsory_changepassword.php";
+
+    } else {
+
+        // header(
+        //     "Location: " .
+        //     ($_SERVER['HTTP_REFERER'] ?? 'index.php?action=dashboard')
+        // );
+
+        // exit;
+    }
 }
 
 
