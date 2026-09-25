@@ -265,9 +265,9 @@ $Ltable_sn = $corridor_sn = 0;
         <form
             method="POST"
             enctype="multipart/form-data"
-            action="index.php?action=create_corridor"
+            action="index.php?action=create_corridor"  onsubmit="return checkTurnstile(event); return disableSubmitButton(this);"
         >
-
+<input type="hidden" name="action_token" value="<?= htmlspecialchars($_SESSION['action_token']) ?>">
             <div class="create-corridor-form-group">
 
                 <label for="corridor_name">
@@ -287,7 +287,7 @@ $Ltable_sn = $corridor_sn = 0;
                 >
 
             </div>
-
+<!-- <div class="cf-turnstile" data-sitekey="<?= $CF_SiteKey ?>" data-callback="turnstileSuccess" data-size="flexible"></div> -->
             <button
                 type="submit"
                 name="create_corridor"
@@ -301,7 +301,18 @@ $Ltable_sn = $corridor_sn = 0;
     </div>
 
 </div>
+<script>
+function disableSubmitButton(form) {
+    const button = form.querySelector('button[type="submit"]');
 
+    if (button) {
+        button.disabled = true;
+        button.innerHTML = 'Processing...';
+    }
+
+    return true;
+}
+</script>
 
 <!-- =========================================================
      DELETE CONFIRMATION MODAL
@@ -1199,3 +1210,22 @@ document.addEventListener(
 );
 
 </script>
+
+<!-- <script>
+   let turnstileVerified = false;
+
+function turnstileSuccess(token) {
+    turnstileVerified = true;
+}
+
+function checkTurnstile(event) {
+    if (!turnstileVerified) {
+        event.preventDefault();
+        alert('Please complete the human verification.');
+        return false;
+    }
+
+    return true;
+} 
+    
+</script> -->

@@ -1,10 +1,10 @@
  <?php
-// session_start();
-// define('ROOT_PATH', 'C:\\xampp\\htdocs\\jeff');
 require_once ROOT_PATH ."/controllers/UserController.php";
+require_once ROOT_PATH ."/controllers/ReporterController.php";
 require_once   ROOT_PATH ."/middleware/AuthMiddleware.php";
 
-$controller = new UserController();
+// $Controller = new UserController();
+$Reportercontroller = new ReporterController();
  $SearchForMiddleware = new AuthMiddleware();
 $userid = $_SESSION['userid'] ?? null;
  $action = $_GET['action'] ?? 'login';
@@ -12,74 +12,19 @@ $userid = $_SESSION['userid'] ?? null;
 
 switch ($action) {
       case 'login':
-        //    $SearchForMiddleware->IsLoginSessionActive() ;
-        $controller->login();
+       $UserController->page_login();
         break;
-
- case 'create_report':
-        $controller->create_report();
-      
-      
+case 'dashboard':
+        $Reportercontroller->page_dashboard(); 
         break;
- case 'dashboard':
-
-    //  $SearchForMiddleware->IsLoginSessionActive() ;
-        $controller->dashboard();
-      
-      
+  case 'create_reporter':
+          $Usercontroller->create_reporter();
         break;
-
-
-    case 'getLGAs':
-
-       $controller->getLGAs();
-      
-      
-        break;
-    case 'update_password':
-
-   $controller->updatePassword();
-      
-      
-        break;
-    case 'update_photo':
-
-       $controller->updatePhoto();
-      
-      
-        break;
-
-    case 'staffdisposition':
-         $SearchForMiddleware->IsLoginSessionActive() ;
-       $controller->staffdisposition();
-      
-      
-        break;
-
-   
-    case 'monthlyreport_view':
-
-     $SearchForMiddleware->IsLoginSessionActive() ;
-        $controller->viewmonthlyreport();
-      
-        break;
-    
- case 'newpersonnel':
-     $SearchForMiddleware->IsLoginSessionActive() ;
-        $controller->newpersonnel();
-      
-        break;
- case 'norminalrole':
-     $SearchForMiddleware->IsLoginSessionActive() ;
-        $controller->norminalrole();
-      
-        break;
-
   
     case 'logout':
-        $controller->logout();
+        $UserController->logout();
         break;
     
     default:
-         $controller->pagenotfound();
+         $UserController->pagenotfound();
 }

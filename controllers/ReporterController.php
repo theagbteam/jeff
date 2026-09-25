@@ -14,7 +14,7 @@ require_once ROOT_PATH . '/middleware/AuthMiddleware.php';
 
 require_once ROOT_PATH . '/services/mailer.php';
 
-class DevController {
+class ReporterController {
 
     private $db;
 
@@ -35,6 +35,155 @@ class DevController {
         $this->photoPasswordModel = new PhotoPassword_Update($this->db);
 
     }
+
+
+
+
+
+
+public function page_dashboard() {
+
+  if (session_status() === PHP_SESSION_NONE) session_start();
+
+//    $_SESSION['msg']  = "";
+
+//     $_SESSION['msg_notification']=0;
+
+  $userid =$_SESSION['userid']; 
+
+   $callUserModel = new User();
+
+    $CallDevModel = new ModelDev;
+
+   $LoadUsersAndLoginTableForAdmin = $callUserModel->SelectUsersAndLoginTable($userid);
+
+      $callAuthMiddlewareClass = new AuthMiddleware;
+
+   $roleCounts = $CallDevModel->getRoleCounts();
+
+   $CountTickets = $CallDevModel->TicketCount();
+
+  $totalrequests = $CallDevModel->GetRequestSum();
+
+
+
+// $totaldev = $roleCounts['developers'];
+
+$totalreporters = $roleCounts['reporters'];
+
+$totaladmin = $roleCounts['administrators'];
+
+$totalsupervisor = $roleCounts['supervisors'];
+
+// $Ticket = $CallDevModel->TicketCount();
+
+ $counttickets = $CountTickets['total'];
+
+// $ticketCounts['status_0']
+
+// $ticketCounts['status_1']
+
+// $ticketCounts['status_2']
+
+ $result = $callUserModel->SelectUserTableForOne($userid);
+
+        if ($result['success']) {
+
+            $user = $result['user'];
+
+            $AbrvName = $user['fullname'];
+
+            if ($user['msg_notification']==1){
+
+                $_SESSION['msg_notification'] = 1;
+
+                 $_SESSION['msg'] = $user['msg'];
+
+              $callUserModel->clearMsgNotification($userid);
+
+            }
+
+
+
+     $user_image = ($user['user_image'] ?? "") === "" ? "noimage2.png" : $user['user_image'];
+
+        } else {
+
+            echo $result['error'];
+
+        }
+
+$parts = explode(' ', trim($AbrvName));
+
+$first = array_shift($parts);
+
+$AbrvName = !empty($first)? $first . (!empty($parts) ? ' ' . implode('.', array_map(fn($p) => strtoupper($p[0]), $parts)) : '') : 'User';
+
+  $page_name = "dashboard";
+
+  $role_name = $role = $_SESSION['role'] ;
+
+$result = $callAuthMiddlewareClass->SelectloginTableForOne($userid);
+
+if ($result['success']) {
+
+    $user = $result['user'];
+
+    $role_name = $user['role_name'];
+
+
+
+}
+
+     $callCompanyModel = new CompanyModel() ;
+
+      $company_settings = $callCompanyModel ->web_settings();
+     $CF_VerificationSiteUrl = $company_settings['cloudfare_verifyurl'] ?? '';
+        $CF_SecretKey = $company_settings['cloudfare_secretkey'] ?? '';
+        $CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
+
+      $company_logfile_url  = $company_settings['company_logfile_url'] ;
+
+      $company_userid  = $company_settings['company_userid'] ;
+
+       $company_copyright  = $company_settings['company_copyright'] ?? '2025';
+
+       $company_poweredby  = $company_settings['company_poweredby'] ?? 'AgbTeam';
+
+       $company_copyrightlink  = $company_settings['company_copyrightlink'] ?? 'https://www.agbng.com';
+
+       $company_settings = $callCompanyModel->web_settings();
+
+      $company_online = $company_settings['company_online'] ?? 0;
+
+      $company_Allow_signup = $company_settings['company_signup'] ?? 0;
+
+      $company_alias = $company_settings['company_alias'] ?? 'Page';
+
+       $company_logo = $company_settings['company_logo'] ?? '';
+
+       $company_favicon = $company_settings['company_favicon'] ?? '';
+
+         $company_url = $company_settings['company_url'] ?? '';
+
+            $loginurl = $company_url."/index.php?action=login" ;
+
+
+
+       require ROOT_PATH . "/views/users/reporter/dashboard.php";
+
+  }
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1535,147 +1684,6 @@ if ($result['success']) {
         $page_name = "Manage user";
 
        require ROOT_PATH . "/views/users/dev/manage_user.php";
-
-  }
-
-
-
-
-
-
-
-
-
-public function page_dashboard() {
-
-  if (session_status() === PHP_SESSION_NONE) session_start();
-
-//    $_SESSION['msg']  = "";
-
-//     $_SESSION['msg_notification']=0;
-
-  $userid =$_SESSION['userid']; 
-
-   $callUserModel = new User();
-
-    $CallDevModel = new ModelDev;
-
-   $LoadUsersAndLoginTableForAdmin = $callUserModel->SelectUsersAndLoginTable($userid);
-
-      $callAuthMiddlewareClass = new AuthMiddleware;
-
-   $roleCounts = $CallDevModel->getRoleCounts();
-
-   $CountTickets = $CallDevModel->TicketCount();
-
-  $totalrequests = $CallDevModel->GetRequestSum();
-
-
-
-// $totaldev = $roleCounts['developers'];
-
-$totalreporters = $roleCounts['reporters'];
-
-$totaladmin = $roleCounts['administrators'];
-
-$totalsupervisor = $roleCounts['supervisors'];
-
-// $Ticket = $CallDevModel->TicketCount();
-
- $counttickets = $CountTickets['total'];
-
-// $ticketCounts['status_0']
-
-// $ticketCounts['status_1']
-
-// $ticketCounts['status_2']
-
- $result = $callUserModel->SelectUserTableForOne($userid);
-
-        if ($result['success']) {
-
-            $user = $result['user'];
-
-            $AbrvName = $user['fullname'];
-
-            if ($user['msg_notification']==1){
-
-                $_SESSION['msg_notification'] = 1;
-
-                 $_SESSION['msg'] = $user['msg'];
-
-              $callUserModel->clearMsgNotification($userid);
-
-            }
-
-
-
-     $user_image = ($user['user_image'] ?? "") === "" ? "noimage2.png" : $user['user_image'];
-
-        } else {
-
-            echo $result['error'];
-
-        }
-
-$parts = explode(' ', trim($AbrvName));
-
-$first = array_shift($parts);
-
-$AbrvName = !empty($first)? $first . (!empty($parts) ? ' ' . implode('.', array_map(fn($p) => strtoupper($p[0]), $parts)) : '') : 'User';
-
-  $page_name = "dashboard";
-
-  $role_name = $role = $_SESSION['role'] ;
-
-$result = $callAuthMiddlewareClass->SelectloginTableForOne($userid);
-
-if ($result['success']) {
-
-    $user = $result['user'];
-
-    $role_name = $user['role_name'];
-
-
-
-}
-
-     $callCompanyModel = new CompanyModel() ;
-
-      $company_settings = $callCompanyModel ->web_settings();
-     $CF_VerificationSiteUrl = $company_settings['cloudfare_verifyurl'] ?? '';
-        $CF_SecretKey = $company_settings['cloudfare_secretkey'] ?? '';
-        $CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
-
-      $company_logfile_url  = $company_settings['company_logfile_url'] ;
-
-      $company_userid  = $company_settings['company_userid'] ;
-
-       $company_copyright  = $company_settings['company_copyright'] ?? '2025';
-
-       $company_poweredby  = $company_settings['company_poweredby'] ?? 'AgbTeam';
-
-       $company_copyrightlink  = $company_settings['company_copyrightlink'] ?? 'https://www.agbng.com';
-
-       $company_settings = $callCompanyModel->web_settings();
-
-      $company_online = $company_settings['company_online'] ?? 0;
-
-      $company_Allow_signup = $company_settings['company_signup'] ?? 0;
-
-      $company_alias = $company_settings['company_alias'] ?? 'Page';
-
-       $company_logo = $company_settings['company_logo'] ?? '';
-
-       $company_favicon = $company_settings['company_favicon'] ?? '';
-
-         $company_url = $company_settings['company_url'] ?? '';
-
-            $loginurl = $company_url."/index.php?action=login" ;
-
-
-
-       require ROOT_PATH . "/views/users/dev/dashboard.php";
 
   }
 

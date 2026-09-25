@@ -1048,3 +1048,21 @@ window.addEventListener("load", function () {
 });
 
 </script>
+<!-- <script>
+   let turnstileVerified = false;
+
+function turnstileSuccess(token) {
+    turnstileVerified = true;
+}
+
+function checkTurnstile(event) {
+    if (!turnstileVerified) {
+        event.preventDefault();
+        alert('Please complete the human verification.');
+        return false;
+    }
+
+    return true;
+} 
+    
+</script> -->

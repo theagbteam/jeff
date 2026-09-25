@@ -273,20 +273,6 @@ $page_controller = base64_encode("users");
 
                                 <?php endforeach; ?>
 
-
-                            <?php else: ?>
-
-                                <tr>
-
-                                    <td
-                                        colspan="7"
-                                        class="text-center"
-                                    >
-                                        No recent activity found.
-                                    </td>
-
-                                </tr>
-
                             <?php endif; ?>
 
                         </tbody>

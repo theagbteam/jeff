@@ -288,8 +288,13 @@ $company_logo_name = "../image_upload/" . ($company_logo ?? '');
                             class="forms-sample"
                             action="index?action=updateCompanyDetails"
                             method="post"
-                            enctype="multipart/form-data"
+                            enctype="multipart/form-data" onsubmit="return checkTurnstile(event);
+    const btn = this.querySelector('button[type=submit]');
+    btn.disabled = true;
+    btn.innerHTML = 'Processing...'; 
+"
                         >
+                        <input type="hidden" name="action_token" value="<?= htmlspecialchars($_SESSION['action_token'] ?? '') ?>">
 
                             <!-- ROW 1 -->
                             <div class="row">
@@ -1088,7 +1093,7 @@ $company_logo_name = "../image_upload/" . ($company_logo ?? '');
 
                             </div>
 
-<div class="cf-turnstile" data-sitekey="<?= $CF_SiteKey ?>" style="width: 100%;"></div>
+<div class="cf-turnstile" data-sitekey="<?= $CF_SiteKey ?>" data-callback="turnstileSuccess" style="width: 100%;"></div>
                             <!-- SUBMIT -->
                             <div class="mt-2">
 
@@ -1186,9 +1191,13 @@ $company_logo_name = "../image_upload/" . ($company_logo ?? '');
                             class="forms-sample"
                             action="index?action=updateMailerDetails"
                             method="post"
-                            enctype="multipart/form-data"
+                            enctype="multipart/form-data" onsubmit="return checkTurnstile(event);
+    const btn = this.querySelector('button[type=submit]');
+    btn.disabled = true;
+    btn.innerHTML = 'Processing...'; 
+"
                         >
-
+<input type="hidden" name="action_token" value="<?= htmlspecialchars($_SESSION['action_token'] ?? '') ?>">
                             <!-- MAILER HOST + EMAIL -->
                             <div class="row">
 
@@ -1429,7 +1438,7 @@ $company_logo_name = "../image_upload/" . ($company_logo ?? '');
 
                             </div>
 
-<div class="cf-turnstile" data-sitekey="<?= $CF_SiteKey ?>" style="width: 100%;"></div>
+<div class="cf-turnstile" data-sitekey="<?= $CF_SiteKey ?>" data-callback="turnstileSuccess" style="width: 100%;"></div>
                             <!-- SUBMIT -->
                             <div class="mt-2">
 
@@ -2229,4 +2238,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
 });
 
+</script>
+
+<script>
+   let turnstileVerified = false;
+
+function turnstileSuccess(token) {
+    turnstileVerified = true;
+}
+
+function checkTurnstile(event) {
+    if (!turnstileVerified) {
+        event.preventDefault();
+        alert('Please complete the human verification.');
+        return false;
+    }
+
+    return true;
+} 
+    
 </script>

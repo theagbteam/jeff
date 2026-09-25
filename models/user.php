@@ -17,8 +17,7 @@ class User {
     }
 
 
-public function updateuserpwd($data)
-{
+public function updateuserpwd($data){
     try {
 
         $userid = $data['userid'];
@@ -168,6 +167,7 @@ public function SelectUsersAndLoginTableforOnePerson($user_id) {
                     users.title AS user_title,
                     users.user_image AS user_image,
                     users.userid AS user_userid,
+                    users.otp_request AS user_otp_request,
                     users.email AS user_email,
                     users.phone AS user_phone,
                     users.msg AS user_msg,
@@ -179,7 +179,7 @@ public function SelectUsersAndLoginTableforOnePerson($user_id) {
                     login.userid AS login_userid,
                     login.password AS login_password,
                     login.last_login AS login_last_login,
-                    login.level AS login_level,
+                    login.login_counts AS login_counts,
                     login.role AS login_role,
                     login.role_name AS login_role_name,
                     login.Role_edit_user AS login_edit_user,
@@ -240,6 +240,7 @@ public function SelectUsersAndLoginTable($userid) {
                         users.date AS user_date,
                         users.title AS user_title,
                         users.user_image AS user_image,
+                        users.otp_request AS user_otp_request,
                         users.userid AS user_userid,
                         users.email AS user_email,
                         users.phone AS user_phone,
@@ -252,7 +253,6 @@ public function SelectUsersAndLoginTable($userid) {
                         login.userid AS login_userid,
                         login.password AS login_password,
                         login.last_login AS login_last_login,
-                        login.level AS login_level,
                         login.role AS login_role,
                         login.role_name AS login_role_name,
                         login.Role_edit_user AS login_edit_user,
@@ -305,9 +305,6 @@ public function clearMsgNotification($userid) {
     $stmt->bindParam(":userid", $userid);
     return $stmt->execute();
 }
-
-
-
 
 
 
@@ -373,7 +370,8 @@ public function login($userid, $password) {
 
 
 
-   public function SelectUserTableForOne($userid){
+
+public function SelectUserTableForOne($userid){
     $stmt = $this->conn->prepare(
         "SELECT * FROM users WHERE userid = :userid LIMIT 1"
     );
@@ -396,6 +394,7 @@ public function login($userid, $password) {
         'user'    => $userData
     ];
 }
+
 
 
 

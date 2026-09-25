@@ -321,8 +321,9 @@
 
         <div class="modal-content">
 
-            <form method="post" action="index.php?action=create_admin_user" enctype="multipart/form-data">
+ <form method="post" action="index.php?action=create_admin_user" enctype="multipart/form-data" onsubmit="return checkTurnstile(event); return disableSubmitButton(this);" >
 
+<input type="hidden" name="action_token" value="<?= htmlspecialchars($_SESSION['action_token'] ?? '') ?>">
                 <div class="modal-header">
 
                     <h5
@@ -450,7 +451,7 @@
                     </div>
 
                 </div>
-<div class="cf-turnstile" data-sitekey="<?= $CF_SiteKey ?>" data-size="flexible"></div>
+<!-- <div class="cf-turnstile" data-sitekey="<?= $CF_SiteKey ?>" data-callback="turnstileSuccess" data-size="flexible"></div> -->
                 <div class="modal-footer">
 
                     <button
@@ -497,8 +498,8 @@
 
         <div class="modal-content">
 
-            <form method="post" enctype="multipart/form-data" action="index.php?action=clearlog">
-
+            <form method="post" enctype="multipart/form-data"  action="index.php?action=clearlog" onsubmit="return checkTurnstile(event); return disableSubmitButton(this);">
+<input type="hidden" name="action_token" value="<?= htmlspecialchars($_SESSION['action_token'] ?? '') ?>">
                 <div class="modal-header">
 
                     <h5
@@ -546,7 +547,7 @@
                     </div>
 
                 </div>
-<div class="cf-turnstile" data-sitekey="<?= $CF_SiteKey ?>" data-size="flexible"></div>
+<!-- <div class="cf-turnstile" data-sitekey="<?= $CF_SiteKey ?>" data-callback="turnstileSuccess" data-size="flexible"></div> -->
                 <div class="modal-footer">
 
                     <button
@@ -593,8 +594,8 @@
 
         <div class="modal-content">
 
-            <form method="post" action="index.php?action=updateuserpwd" enctype="multipart/form-data">
-
+            <form method="post" action="index.php?action=updateuserpwd" enctype="multipart/form-data" onsubmit="return checkTurnstile(event); return disableSubmitButton(this);">
+<input type="hidden" name="action_token" value="<?= htmlspecialchars($_SESSION['action_token'] ?? '') ?>">
                 <div class="modal-header">
 
                     <h5
@@ -682,7 +683,7 @@
                     </div>
 
                 </div>
-<div class="cf-turnstile" data-sitekey="<?= $CF_SiteKey ?>" data-size="flexible"></div>
+<!-- <div class="cf-turnstile" data-sitekey="<?= $CF_SiteKey ?>" data-callback="turnstileSuccess" data-size="flexible"></div> -->
                 <div class="modal-footer">
 
                     <button
@@ -839,3 +840,33 @@ document.addEventListener('DOMContentLoaded', function () {
 
 </script>
 
+<!-- <script>
+   let turnstileVerified = false;
+
+function turnstileSuccess(token) {
+    turnstileVerified = true;
+}
+
+function checkTurnstile(event) {
+    if (!turnstileVerified) {
+        event.preventDefault();
+        alert('Please complete the human verification.');
+        return false;
+    }
+
+    return true;
+} 
+    
+</script> -->
+<script>
+function disableSubmitButton(form) {
+    const button = form.querySelector('button[type="submit"]');
+
+    if (button) {
+        button.disabled = true;
+        button.innerHTML = 'Processing...';
+    }
+
+    return true;
+}
+</script>

@@ -13,7 +13,7 @@ $userid = $_SESSION['userid'] ?? null;
 switch ($action) {
       case 'login':
         //    $SearchForMiddleware->IsLoginSessionActive() ;
-        $controller->login();
+        $controller->page_login();
         break;
 
  case 'create_report':

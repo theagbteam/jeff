@@ -11,7 +11,161 @@ class AuthMiddleware {
     }
     
     
-    
+
+public function RequestOTP(string $email, string $ref_id): array{
+    try {
+
+        $email = trim($email);
+        $ref_id = trim($ref_id);
+
+        // Ref ID is always required
+        if (empty($ref_id)) {
+            return [
+                'status' => false,
+                'message' => 'Ref ID is required.'
+            ];
+        }
+
+        /*
+         * If both Email and Ref ID are provided,
+         * make sure they belong to the same user.
+         *
+         * If only Ref ID is provided,
+         * search by Ref ID only.
+         */
+        if (!empty($email)) {
+
+            $sql = "SELECT userid, email, fullname
+                    FROM users 
+                    WHERE email = :email 
+                    AND userid = :userid 
+                    LIMIT 1";
+
+            $stmt = $this->conn->prepare($sql);
+
+            $stmt->execute([
+                ':email' => $email,
+                ':userid' => $ref_id
+            ]);
+
+        } else {
+
+            $sql = "SELECT userid, email, fullname
+                    FROM users 
+                    WHERE userid = :userid 
+                    LIMIT 1";
+
+            $stmt = $this->conn->prepare($sql);
+
+            $stmt->execute([
+                ':userid' => $ref_id
+            ]);
+        }
+
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$user) {
+            return [
+                'status' => false,
+                'message' => !empty($email)
+                    ? 'Invalid email or Ref ID.'
+                    : 'Invalid Ref ID.'
+            ];
+        }
+
+        // Generate a secure six-digit OTP
+        $otp = (string) random_int(100000, 999999);
+
+        // Save the OTP in the user's record
+        $updateSql = "UPDATE users 
+                      SET otp_request = :otp 
+                      WHERE userid = :userid";
+
+        $updateStmt = $this->conn->prepare($updateSql);
+
+        $updateStmt->execute([
+            ':otp' => $otp,
+            ':userid' => $user['userid']
+        ]);
+
+        return [
+            'status' => true,
+            'message' => 'OTP generated successfully.',
+            'otp' => $otp,
+            'email' => $user['email'],
+            'user_name' => $user['fullname'],
+            'userid' => $user['userid']
+        ];
+
+    } catch (PDOException $e) {
+
+        error_log("OTP Request Error: " . $e->getMessage());
+
+        return [
+            'status' => false,
+            'message' => 'An error occurred while generating the OTP.'
+        ];
+    }
+}
+
+
+
+
+public function ValidateAndConsumeActionToken()
+{
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    if (
+        !isset($_POST['action_token']) ||
+        !isset($_SESSION['action_token'])
+    ) {
+        return false;
+    }
+
+    if (!hash_equals($_SESSION['action_token'], $_POST['action_token'])) {
+        return false;
+    }
+
+    // Consume the token immediately.
+    unset($_SESSION['action_token']);
+
+    // Generate a new token for the next form submission.
+    $_SESSION['action_token'] = bin2hex(random_bytes(32));
+
+    return true;
+}
+
+
+
+
+
+
+
+
+
+
+    public function checkConnection(): bool    {
+        $ch = curl_init('https://www.google.com/');
+
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_NOBODY => true,
+            CURLOPT_TIMEOUT => 5,
+            CURLOPT_CONNECTTIMEOUT => 3,
+        ]);
+
+        curl_exec($ch);
+
+        $connected = !curl_errno($ch);
+
+        curl_close($ch);
+
+        return $connected;
+    }
+
+
     
  public function ValidateTurnstile($CF_SecretKey, $CF_VerificationSiteUrl)
 {
@@ -72,39 +226,21 @@ class AuthMiddleware {
         exit;
     }
 }
+public function IsLoginSessionActive(){
 
-public function IsLoginSessionActive(): void{
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
 
     if (isset($_SESSION['userid']) && isset($_SESSION['role'])) {
+
         header("Location: index.php?action=dashboard");
         exit;
-    } else {
-        $_SESSION = [];
 
-        if (ini_get("session.use_cookies")) {
-            $params = session_get_cookie_params();
-
-            setcookie(
-                session_name(),
-                '',
-                time() - 42000,
-                $params["path"],
-                $params["domain"],
-                $params["secure"],
-                $params["httponly"]
-            );
-        }
-
-        session_destroy();
-
-        header("Location: index.php");
-        exit;
     }
-} 
 
+    return false;
+}
 
 
 

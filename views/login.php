@@ -1,3 +1,23 @@
+<?php
+$password_generated = chr(rand(65, 90)) . str_pad(rand(0, 99999), 5, '0', STR_PAD_LEFT);
+
+if (isset($_SESSION['success'])) {
+    $msgtext = $_SESSION['success'];
+    $url = "#";
+    $showAlert = true;
+    $alertType = 'success';
+    unset($_SESSION['success']);
+}
+
+if (isset($_SESSION['error'])) {
+    $msgtext = $_SESSION['error'];
+    $url = "#";
+    $showAlert = true;
+    $alertType = 'error';
+    unset($_SESSION['error']);
+}
+?>
+
 <!DOCTYPE html>
 
 <html lang="en">
@@ -37,12 +57,12 @@
     <title><?php echo $company_alias . "  -  " . $page_name; ?></title>
 
 
-    <script src="views/inc/dev/sweetalert/sweetalert2@11.js"></script>
-    <script src="views/inc/dev/sweetalert/jquery-3.6.4.min.js"></script>
+    <script src="views/inc/sweetalert/sweetalert2@11.js"></script>
+    <script src="views/inc/sweetalert/jquery-3.6.4.min.js"></script>
 
     <link
         rel="stylesheet"
-        href="views/inc/dev/sweetalert/sweetalert2.min.css"
+        href="views/inc//sweetalert/sweetalert2.min.css"
     >
 
   
@@ -2264,6 +2284,7 @@ body.terms-open {
 }
 
 
+
 /* =========================
    PAGE LOADER
 ========================= */
@@ -2498,44 +2519,15 @@ body.terms-open {
 
 <body>
    <!-- PAGE LOADER -->
-<div id="pageLoader">
+<!-- <div id="pageLoader">
     <div class="loader-content">
         <div class="spinner"></div>
         <div class="loader-text">Loading...</div>
     </div>
-</div>
+</div> -->
 
 
-<?php
-$password_generated = chr(rand(65, 90)) . str_pad(rand(0, 99999), 5, '0', STR_PAD_LEFT);
 
-
-if (isset($_SESSION['success'])) {
-
-    $msgtext = $_SESSION['success'];
-
-    $url = "#";
-
-    $showAlert = true;
-
-    unset($_SESSION['success']);
-
-}
-
-
-if (isset($_SESSION['error'])) {
-
-    $msgtext = $_SESSION['error'];
-
-    $url = "#";
-
-    $showAlert = false;
-
-    unset($_SESSION['error']);
-
-}
-
-?>
 
 
 <div class="page-container">
@@ -2772,14 +2764,8 @@ if (isset($_SESSION['error'])) {
 
 
                 <form
-                    method="post"
-                    enctype="multipart/form-data" onsubmit="return checkTurnstile(event);
-    const btn = this.querySelector('button[type=submit]');
-    btn.disabled = true;
-    btn.innerHTML = 'Processing...'; 
-"
-                >
-
+                    method="post"  enctype="multipart/form-data" onsubmit="return checkTurnstile(event) && disableSubmitButton(this);">
+<input type="hidden" name="action_token" value="<?= htmlspecialchars($_SESSION['action_token'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
 
                     <label class="form-label">
 
@@ -2955,13 +2941,9 @@ if (isset($_SESSION['error'])) {
                     id="signupAccountForm"
                     action="index?action=create_reporter"
                     method="post"
-                    enctype="multipart/form-data" onsubmit="return checkTurnstile(event);
-    const btn = this.querySelector('button[type=submit]');
-    btn.disabled = true;
-    btn.innerHTML = 'Processing...'; 
-"
-                >
+                    enctype="multipart/form-data" onsubmit="return disableSubmitButton(this);"  >
 
+ <input type="hidden" name="action_token" value="<?= htmlspecialchars($_SESSION['action_token'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
 
                     <label class="form-label">
     Title
@@ -3127,7 +3109,7 @@ if (isset($_SESSION['error'])) {
 
                     </div>
 
-<div class="cf-turnstile" data-sitekey="<?= $CF_SiteKey ?>" data-size="flexible"></div>
+ <div class="cf-turnstile" data-callback="turnstileSuccess" data-sitekey="<?= $CF_SiteKey ?>" data-size="flexible"></div>
 
                     <button
                         class="main-button"
@@ -3217,11 +3199,11 @@ if (isset($_SESSION['error'])) {
                 class="forgot-modal-title"
                 id="forgotPasswordModalTitle"
             >
-                Reset your password
+                Temporary account access
             </h4>
 
             <p class="forgot-modal-subtitle">
-                Answer the security question and enter your registered email to reset your password.
+                Enter your registered email and Ref ID to get OTP.
             </p>
 
         </div>
@@ -3231,96 +3213,73 @@ if (isset($_SESSION['error'])) {
             <div class="forgot-security-note">
                 <i class="bi bi-info-circle-fill"></i>
                 <span>
-                    Enter the email address associated with your account and provide the correct answer to your security question.
+                    Please note that the email and Ref ID must be associated with your account to get OTP.
                 </span>
             </div>
+<form id="forgotPasswordForm" method="post" enctype="multipart/form-data"  onsubmit="return checkTurnstile(event) && disableSubmitButton(this);">
 
-            <form id="forgotPasswordForm" method="post" enctype="multipart/form-data" action="index?action=login" onsubmit="return checkTurnstile(event);
-    const btn = this.querySelector('button[type=submit]');
-    btn.disabled = true;
-    btn.innerHTML = 'Processing...'; 
-" >
+    <input type="hidden" name="action_token" value="<?= htmlspecialchars($_SESSION['action_token'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
 
-                <div class="forgot-question-box">
+    <label class="form-label">
+        Reference ID
+    </label>
 
-                    <span class="forgot-question-label">
-                        Security Question
-                    </span>
+    <div class="input-group-custom">
 
-                    <div class="forgot-question">
-                        <i class="bi bi-question-circle-fill"></i>
-                        <span>
-                            What is the answer to your registered security question?
-                        </span>
-                    </div>
+        <i class="bi bi-person-badge input-icon"></i>
 
-                </div>
+        <input
+            type="text"
+            maxlength="50"
+            name="forgot_refid"
+            class="form-control-custom"
+            placeholder="Enter your Reference ID"
+            autocomplete="off"
+            required
+        >
 
+    </div>
 
-                <label class="form-label">
-                    Your Answer
-                </label>
+    <label class="form-label">
+        Email Address
+    </label>
 
-                <div class="input-group-custom">
+    <div class="input-group-custom">
 
-                    <i
-                        class="bi bi-key input-icon"
-                    ></i>
+        <i class="bi bi-envelope input-icon"></i>
 
-                    <input
-                        type="text"
-                        maxlength="100"
-                        name="security_answer"
-                        class="form-control-custom"
-                        placeholder="Enter your answer"
-                        autocomplete="off"
-                        required
-                    >
+        <input
+            type="email"
+            maxlength="50"
+            name="forgot_email"
+            class="form-control-custom"
+            placeholder="Enter your registered email"
+            autocomplete="email"
+            required
+        >
 
-                </div>
+    </div>
 
-                
-                <label class="form-label">
-                    Email Address
-                </label>
+    <div class="cf-turnstile" data-sitekey="<?= $CF_SiteKey ?>" data-size="flexible"></div>
 
-                <div class="input-group-custom">
+    <button
+        class="forgot-submit-button"
+        type="submit"
+        name="forgot_password"
+    >
+        <i class="bi bi-arrow-repeat me-2"></i>
+        Request Otp
+    </button>
 
-                    <i
-                        class="bi bi-envelope input-icon"
-                    ></i>
+    <button
+        type="button"
+        class="forgot-cancel-button"
+        id="closeForgotPasswordButton"
+    >
+        Cancel
+    </button>
 
-                    <input
-                        type="email"
-                        maxlength="50"
-                        name="forgot_email"
-                        class="form-control-custom"
-                        placeholder="Enter your registered email"
-                        autocomplete="email"
-                        required
-                    >
-
-                </div>
-  <div class="cf-turnstile" data-sitekey="<?=  $CF_SiteKey  ?>">  </div>
-                <button
-                    class="forgot-submit-button"
-                    type="submit"
-                    name="forgot_password"
-                >
-                    <i class="bi bi-arrow-repeat me-2"></i>
-                    Reset Password
-                </button>
-
-                <button
-                    type="button"
-                    class="forgot-cancel-button"
-                    id="closeForgotPasswordButton"
-                >
-                    Cancel
-                </button>
-
-            </form>
-
+</form>
         </div>
 
     </div>
@@ -3927,7 +3886,9 @@ if (isset($_SESSION['error'])) {
 
 </div>
 
-<script>
+<!-- check cloudfare bot -->
+
+<!-- <script>
    let turnstileVerified = false;
 
 function turnstileSuccess(token) {
@@ -3942,7 +3903,7 @@ function checkTurnstile(event) {
     }
 
     return true;
-} 
+}  -->
     
 </script>
 
@@ -5327,98 +5288,69 @@ termsCheckbox.addEventListener(
 
 
 <script>
+document.addEventListener('DOMContentLoaded', function() {
 
-document.addEventListener(
-    'DOMContentLoaded',
-    function() {
+<?php if (isset($showAlert) && $showAlert && isset($alertType) && $alertType === 'success'): ?>
 
+    Swal.fire({
+        title: 'Successful!',
+        text:
+            '<?= htmlspecialchars(
+                $msgtext,
+                ENT_QUOTES,
+                'UTF-8'
+            ); ?>',
+        icon: 'success',
+        confirmButtonText: 'OK',
+        allowOutsideClick: true,
+        allowEscapeKey: true
+    }).then((result) => {
 
-        <?php if ($showAlert): ?>
+        if (
+            result.isConfirmed ||
+            result.dismiss
+        ) {
+            window.location.href =
+                '<?= htmlspecialchars(
+                    $url,
+                    ENT_QUOTES,
+                    'UTF-8'
+                ); ?>';
+        }
+    });
 
+<?php elseif (isset($showAlert) && $showAlert && isset($alertType) && $alertType === 'error'): ?>
 
-        Swal.fire({
+    Swal.fire({
+        title: 'Error',
+        text:
+            '<?= htmlspecialchars(
+                $msgtext,
+                ENT_QUOTES,
+                'UTF-8'
+            ); ?>',
+        icon: 'error',
+        confirmButtonText: 'OK',
+        allowOutsideClick: true,
+        allowEscapeKey: true
+    }).then((result) => {
 
-            title:
-                'Successful!',
+        if (
+            result.isConfirmed ||
+            result.dismiss
+        ) {
+            window.location.href =
+                '<?= htmlspecialchars(
+                    $url,
+                    ENT_QUOTES,
+                    'UTF-8'
+                ); ?>';
+        }
+    });
 
-            text:
-                '<?php echo htmlspecialchars($msgtext, ENT_QUOTES, 'UTF-8'); ?>',
+<?php endif; ?>
 
-            icon:
-                'info',
-
-            confirmButtonText:
-                'OK',
-
-            allowOutsideClick:
-                true,
-
-            allowEscapeKey:
-                true
-
-        }).then(
-            (result) => {
-
-                if (
-                    result.isConfirmed ||
-                    result.dismiss
-                ) {
-
-                    window.location.href =
-                        '<?php echo htmlspecialchars($url, ENT_QUOTES, 'UTF-8'); ?>';
-
-                }
-
-            }
-        );
-
-
-        <?php else: ?>
-
-
-        Swal.fire({
-
-            title:
-                'Error',
-
-            text:
-                '<?php echo htmlspecialchars($msgtext, ENT_QUOTES, 'UTF-8'); ?>',
-
-            icon:
-                'error',
-
-            confirmButtonText:
-                'OK',
-
-            allowOutsideClick:
-                true,
-
-            allowEscapeKey:
-                true
-
-        }).then(
-            (result) => {
-
-                if (
-                    result.isConfirmed ||
-                    result.dismiss
-                ) {
-
-                    window.location.href =
-                        '<?php echo htmlspecialchars($url, ENT_QUOTES, 'UTF-8'); ?>';
-
-                }
-
-            }
-        );
-
-
-        <?php endif; ?>
-
-    }
-
-);
-
+});
 </script>
 <script>
 
@@ -5438,7 +5370,24 @@ window.addEventListener("load", function () {
 });
 
 </script>
+<script>
+function disableSubmitButton(form) {
+    const button = form.querySelector('button[type="submit"]');
 
+    if (button) {
+        // Defer disabling until AFTER the browser has started submitting.
+        // Disabling synchronously here can cancel the form submission
+        // in some browsers (Chrome, Safari) because the submitter is disabled.
+        setTimeout(function () {
+            button.disabled = true;
+            button.dataset.originalText = button.innerHTML;
+            button.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Processing...';
+        }, 0);
+    }
+
+    return true;
+}
+</script>
 </body>
 
 </html>

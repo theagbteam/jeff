@@ -64,6 +64,7 @@ switch ($action) {
         case 'edit_user':
             $Devcontroller->page_edit_user();
             break;
+         case 'updateuserpwd':
         $Usercontroller->updatepassword();
         break;
         case 'restore_user':
@@ -90,5 +91,6 @@ switch ($action) {
         break;
     
     default:
+           
         $Usercontroller->page_login();
 }
