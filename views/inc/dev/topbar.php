@@ -1,4 +1,3 @@
-
 <nav class="navbar p-0 fixed-top d-flex flex-row">
 
     <div
@@ -165,11 +164,15 @@
 
                     <div class="dropdown-divider"></div>
 
+                    <!-- ========================================================= -->
+                    <!-- MERGED: CLEAR LOG + RESET DATABASE -> DATABASE RESET      -->
+                    <!-- ========================================================= -->
+
                     <a
                         href="#"
                         class="dropdown-item account-menu-item"
                         data-bs-toggle="modal"
-                        data-bs-target="#clearLogModal"
+                        data-bs-target="#databaseResetModal"
                     >
 
                         <div class="account-menu-icon bg-dark">
@@ -182,12 +185,16 @@
 
                             <p class="preview-subject text-small">
 
-                               Clear Log
+                               Database Reset
                             </p>
 
                         </div>
 
                     </a>
+
+                    <!-- ========================================================= -->
+                    <!-- END DATABASE RESET MENU ITEM                              -->
+                    <!-- ========================================================= -->
 
                     <div class="dropdown-divider"></div>
 
@@ -215,14 +222,20 @@
 
                     </a>
 
-                    <!-- <a
+                    <!-- ========================================================= -->
+                    <!-- NEW: ASSIGN ADMIN MENU ITEM                               -->
+                    <!-- ========================================================= -->
+
+                    <a
                         href="#"
                         class="dropdown-item account-menu-item"
+                        data-bs-toggle="modal"
+                        data-bs-target="#assignAdminModal"
                     >
 
                         <div class="account-menu-icon bg-dark">
 
-                            <i class="mdi mdi-delete text-success"></i>
+                            <i class="mdi mdi-account-plus text-info"></i>
 
                         </div>
 
@@ -230,13 +243,16 @@
 
                             <p class="preview-subject text-small">
 
-                                Recycle Bin
-
+                                Assign chief admin 👑
                             </p>
 
                         </div>
 
-                    </a> -->
+                    </a>
+
+                    <!-- ========================================================= -->
+                    <!-- END ASSIGN ADMIN MENU ITEM                                -->
+                    <!-- ========================================================= -->
 
                     <a
                         href="index.php?action=settings"
@@ -388,6 +404,37 @@
 
                     </div>
 
+ <div class="mb-3">
+
+                        <label
+                            for="adminTitle"
+                            class="form-label"
+                        >
+                            Corridor
+                        </label></select>
+
+ <select
+                            class="form-control"
+                            id="adminTitle"
+                            name="user_corridor"
+                            required
+                        >
+                       <option value="" selected disabled>
+        Select corridor
+    </option>
+    <?php foreach ($loadSelectOption_corridors as $corridor): ?>
+        <option value="<?= htmlspecialchars($corridor['name'], ENT_QUOTES, 'UTF-8') ?>">
+            <?= htmlspecialchars($corridor['name'], ENT_QUOTES, 'UTF-8') ?>
+        </option>
+    <?php endforeach; ?>
+                    
+                    
+                    </select>
+
+</div>
+
+
+
                     <div class="mb-3">
 
                         <label
@@ -483,14 +530,14 @@
 
 
 <!-- ========================================================= -->
-<!-- CLEAR LOG PASSWORD MODAL                                  -->
+<!-- DATABASE RESET MODAL (MERGED CLEAR LOG + RESET DATABASE)  -->
 <!-- ========================================================= -->
 
 <div
     class="modal fade"
-    id="clearLogModal"
+    id="databaseResetModal"
     tabindex="-1"
-    aria-labelledby="clearLogModalLabel"
+    aria-labelledby="databaseResetModalLabel"
     aria-hidden="true"
 >
 
@@ -498,15 +545,17 @@
 
         <div class="modal-content">
 
-            <form method="post" enctype="multipart/form-data"  action="index.php?action=clearlog" onsubmit="return checkTurnstile(event); return disableSubmitButton(this);">
-<input type="hidden" name="action_token" value="<?= htmlspecialchars($_SESSION['action_token'] ?? '') ?>">
+            <form method="post" enctype="multipart/form-data" action="index.php?action=clearlog" onsubmit="return checkTurnstile(event); return disableSubmitButton(this);">
+
+                <input type="hidden" name="action_token" value="<?= htmlspecialchars($_SESSION['action_token'] ?? '') ?>">
+
                 <div class="modal-header">
 
                     <h5
                         class="modal-title"
-                        id="clearLogModalLabel"
+                        id="databaseResetModalLabel"
                     >
-                        Clear Log
+                         Please select a reset command
                     </h5>
 
                     <button
@@ -526,10 +575,50 @@
                         value="<?= $userid ?>"
                     >
 
+                    <!-- ========================================================= -->
+                    <!-- NEW: RESET TYPE SELECT                                    -->
+                    <!-- ========================================================= -->
+
                     <div class="mb-3">
 
                         <label
-                            for="clearLogPassword"
+                            for="resetType"
+                            class="form-label"
+                        >
+                            Reset Type
+                        </label>
+
+                        <select
+                            class="form-control"
+                            id="resetType"
+                            name="reset_type"
+                            required
+                        >
+
+                            <option value="" selected disabled>
+                                Select reset type
+                            </option>
+
+                            <option value="clear_log">
+                                Reet log & audit trail
+                            </option>
+
+                            <option value="reset_database">
+                                Reset database
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <!-- ========================================================= -->
+                    <!-- END RESET TYPE SELECT                                     -->
+                    <!-- ========================================================= -->
+
+                    <div class="mb-3">
+
+                        <label
+                            for="databaseResetPassword"
                             class="form-label"
                         >
                             Password
@@ -538,7 +627,7 @@
                         <input
                             type="password"
                             class="form-control"
-                            id="clearLogPassword"
+                            id="databaseResetPassword"
                             name="password"
                             placeholder="Enter password"
                             required
@@ -560,11 +649,11 @@
 
                     <button
                         type="submit"
-                        name="clear_log"
+                        name="database_reset"
                         value="1"
                         class="btn btn-success"
                     >
-                        Clear Log
+                        Submit
                     </button>
 
                 </div>
@@ -701,6 +790,121 @@
                         class="btn btn-success"
                     >
                         Update Password
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ========================================================= -->
+<!-- ASSIGN ADMIN MODAL                                        -->
+<!-- ========================================================= -->
+
+<div
+    class="modal fade"
+    id="assignAdminModal"
+    tabindex="-1"
+    aria-labelledby="assignAdminModalLabel"
+    aria-hidden="true"
+>
+
+    <div class="modal-dialog modal-dialog-centered">
+
+        <div class="modal-content">
+
+            <form method="post" action="index.php?action=assignadmin" enctype="multipart/form-data">
+
+                <input type="hidden" name="action_token" value="<?= htmlspecialchars($_SESSION['action_token'] ?? '') ?>">
+
+                <div class="modal-header">
+
+                    <h5
+                        class="modal-title"
+                        id="assignAdminModalLabel"
+                    >
+                        Assign Chief Admin👑
+                    </h5>
+
+                    <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"
+                    ></button>
+
+                </div>
+
+                <div class="modal-body">
+
+                    <div class="mb-3">
+
+                        <label
+                            for="assignAdminSelect"
+                            class="form-label"
+                        >
+                            Select User
+                        </label>
+
+                        <select
+                            class="form-control"
+                            id="assignAdminSelect"
+                            name="assign_admin_value"
+                            required
+                        >
+                           
+
+<!-- 
+<option value="<?= htmlspecialchars($LoadCompanyAdminSeniorManDetails['fullname']); ?>">
+            <?= htmlspecialchars($LoadCompanyAdminSeniorManDetails['userid']); ?>
+        </option> -->
+
+
+                     <?php if (!empty($LoadUsersAndLoginTableForAdmin['administrator'])): ?>
+    <?php foreach ($LoadUsersAndLoginTableForAdmin['administrator'] as $admin): ?>
+        <?php
+            $administrator_userid = $admin['user_userid'];
+            $administrator_name   = $admin['user_fullname'] . " - " . $admin['user_userid'];
+
+            if (isset($company_adminseniorman) && $company_adminseniorman == $admin['user_userid']) {
+                $administrator_name .= " 👑";
+            }
+        ?>
+        
+        <option value="<?= htmlspecialchars($administrator_userid); ?>">
+            <?= htmlspecialchars($administrator_name); ?>
+        </option>
+    <?php endforeach; ?>
+<?php endif; ?>
+                        </select>
+
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal"
+                    >
+                        Cancel
+                    </button>
+
+                    <button
+                        type="submit"
+                        name="assign_admin"
+                        value="1"
+                        class="btn btn-success"
+                    >
+                        Assign Admin
                     </button>
 
                 </div>

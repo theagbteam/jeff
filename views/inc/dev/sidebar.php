@@ -191,6 +191,42 @@
         </li>
 
 
+        <li class="nav-item menu-items <?= $tb_name === 'ticket_category' ? 'active' : '' ?>">
+
+            <a
+                class="nav-link"
+                href="index.php?action=ticket_category"
+                style="<?= $tb_name === 'ticket_category' ? 'color:lawngreen !important;' : '' ?>"
+            >
+
+                <span
+                    class="menu-icon"
+                    style="<?= $tb_name === 'ticket_category' ? 'color:lawngreen !important;' : '' ?>"
+                >
+
+                    <i
+                        class="mdi mdi-account-multiple"
+                        style="<?= $tb_name === 'ticket_category' ? 'color:green !important;' : '' ?>"
+                    ></i>
+
+                </span>
+
+                <span
+                    class="menu-title"
+                    style="<?= $tb_name === 'ticket_category' ? 'color:lawngreen !important;' : '' ?>"
+                >
+
+                    Ticket Categories
+
+                </span>
+
+            </a>
+
+        </li>
+
+
+
+
         <li class="nav-item menu-items <?= $tb_name === 'corridor' ? 'active' : '' ?>">
 
             <a
@@ -488,7 +524,7 @@
                     style="<?= $tb_name === 'wellhead_status' ? 'color:lawngreen !important;' : '' ?>"
                 >
 
-                    Wellhead Status
+                    Incidence Status
 
                 </span>
 

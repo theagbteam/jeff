@@ -19,6 +19,9 @@ switch ($action) {
         case 'create_reporter':
           $Usercontroller->create_reporter();
         break;
+        case 'assignadmin':
+        $Devcontroller->assignadmin();
+        break;
         case 'create_admin_user':
         $Devcontroller->create_admin_user();
         break;
@@ -29,6 +32,9 @@ switch ($action) {
         $Devcontroller->page_corridorsAndItlikes();
         break;
         case 'incidence_source':
+        $Devcontroller->page_corridorsAndItlikes();
+        break;
+        case 'ticket_category':
         $Devcontroller->page_corridorsAndItlikes();
         break;
         case 'pipelines':

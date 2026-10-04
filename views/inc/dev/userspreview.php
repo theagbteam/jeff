@@ -69,11 +69,11 @@ $page_controller = base64_encode("users");
 
                         <tbody>
 
-                            <?php if (!empty($LoadUsersAndLoginTableForAdmin)): ?>
+                            <?php if (!empty($LoadUsersAndLoginTableForAdmin['all'])): ?>
 
                                 <?php $sn = 1; ?>
 
-                                <?php foreach ($LoadUsersAndLoginTableForAdmin as $user): ?>
+                                <?php foreach ($LoadUsersAndLoginTableForAdmin['all'] as $user): ?>
 
                                     <?php
 
@@ -156,9 +156,14 @@ $page_controller = base64_encode("users");
 
                                                 <?= ucfirst(
                                                     htmlspecialchars(
-                                                        $user['login_role_name'] ?? 'N/A'
+                                                        $user['login_role'] ?? 'N/A'
                                                     )
                                                 ); ?>
+                                               <!-- Call crown to show chief Admin -->
+                                                <?php  if ($company_adminseniorman==$user_id )  :  ?>
+                                                👑
+                                                 <?php endif; ?>
+
 
                                             </span>
 

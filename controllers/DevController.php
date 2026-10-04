@@ -17,23 +17,71 @@ require_once ROOT_PATH . '/services/mailer.php';
 class DevController {
 
     private $db;
-
     private $photoPasswordModel;
-
     private $userid;
 
-    public string $deviceType = 'pc'; // default
+    private $companyModel;
+    private $devModel;
+    private $authMiddleware;
+    private $userModel;
 
+    private $company_settings;
 
+    private $company_adminseniorman;
+    private $CF_VerificationSiteUrl;
+    private $CF_SecretKey;
+    private $CF_SiteKey;
+    private $company_logfile_url;
+    private $company_userid;
+    private $company_copyright;
+    private $company_poweredby;
+    private $company_copyrightlink;
+    private $company_online;
+    private $company_Allow_signup;
+    private $company_alias;
+    private $company_logo;
+    private $company_favicon;
+    private $company_url;
+    private $loginurl;
+
+    public string $deviceType = 'pc';
 
     public function __construct() {
 
-        $this->userid= $_SESSION['userid'] ?? $_SESSION['userid'] ?? null;
+        $this->userid = $_SESSION['userid'] ?? null;
 
         $this->db = (new Database())->getConnection();
 
         $this->photoPasswordModel = new PhotoPassword_Update($this->db);
 
+        $this->companyModel = new CompanyModel();
+        $this->devModel = new ModelDev();
+        $this->authMiddleware = new AuthMiddleware();
+        $this->userModel = new User();
+
+        $this->company_settings = $this->companyModel->web_settings();
+
+        $this->company_adminseniorman = $this->company_settings['company_adminseniorman'] ?? '';
+        $this->CF_VerificationSiteUrl = $this->company_settings['cloudfare_verifyurl'] ?? '';
+        $this->CF_SecretKey = $this->company_settings['cloudfare_secretkey'] ?? '';
+        $this->CF_SiteKey = $this->company_settings['cloudfare_sitekey'] ?? '';
+
+        $this->company_logfile_url = $this->company_settings['company_logfile_url'] ?? '';
+        $this->company_userid = $this->company_settings['company_userid'] ?? '';
+
+        $this->company_copyright = $this->company_settings['company_copyright'] ?? '2025';
+        $this->company_poweredby = $this->company_settings['company_poweredby'] ?? 'AgbTeam';
+        $this->company_copyrightlink = $this->company_settings['company_copyrightlink'] ?? 'https://www.agbng.com';
+
+        $this->company_online = $this->company_settings['company_online'] ?? 0;
+        $this->company_Allow_signup = $this->company_settings['company_signup'] ?? 0;
+
+        $this->company_alias = $this->company_settings['company_alias'] ?? 'Page';
+        $this->company_logo = $this->company_settings['company_logo'] ?? '';
+        $this->company_favicon = $this->company_settings['company_favicon'] ?? '';
+        $this->company_url = $this->company_settings['company_url'] ?? '';
+
+        $this->loginurl = $this->company_url . "/index.php?action=login";
     }
 
 
@@ -808,10 +856,16 @@ $CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
 
 public function page_viewlog() {
   if (session_status() === PHP_SESSION_NONE) session_start();
-
-  $callCompanyModel = new CompanyModel() ;
-
-      $company_settings = $callCompanyModel ->web_settings();
+  $userid =$_SESSION['userid']; 
+    $CallDevModel = new ModelDev;
+   $callUserModel = new User();
+     $callAuthMiddlewareClass = new AuthMiddleware;
+      $callCompanyModel = new CompanyModel() ;
+        $company_settings = $callCompanyModel ->web_settings();
+       $company_adminseniorman  = $company_settings['company_adminseniorman'] ;
+     $LoadUsersAndLoginTableForAdmin = $CallDevModel->SelectAllCategoryOfUsersAndLoginTableForDev($userid);
+ 
+    $callAuthMiddlewareClass->IfSessionDeactiveAutologout();
           
       $company_logfile_url  = $company_settings['company_logfile_url'] ;
 
@@ -823,9 +877,7 @@ public function page_viewlog() {
 
        $company_copyrightlink  = $company_settings['company_copyrightlink'] ?? 'https://www.agbng.com';
 
-       $company_settings = $callCompanyModel->web_settings();
-
-      $company_online = $company_settings['company_online'] ?? 0;
+        $company_online = $company_settings['company_online'] ?? 0;
 
       $company_Allow_signup = $company_settings['company_signup'] ?? 0;
 
@@ -854,15 +906,14 @@ if (file_exists($company_logfile_url)) {
 
 //     $_SESSION['msg_notification']=0;
 
-  $userid =$_SESSION['userid']; 
+  
+$search_tb_name ="corridor";
+  $loadSelectOption_corridors = $callUserModel->GeneralSelectAnyTable($search_tb_name);
 
-   $callUserModel = new User();
 
-    $CallDevModel = new ModelDev;
+//    $LoadUsersAndLoginTable = $CallDevModel->SelectAllCategoryOfUsersAndLoginTableForDev($userid);
 
-   $LoadUsersAndLoginTable = $callUserModel->SelectUsersAndLoginTable($userid);
-
-      $callAuthMiddlewareClass = new AuthMiddleware;
+   
 
  $result = $callUserModel->SelectUserTableForOne($userid);
 
@@ -962,7 +1013,7 @@ public function EraseRecord()
 
 
 public function clearlog(){
-  if (isset($_POST['clear_log'])) {
+  if (isset($_POST['database_reset'])) {
           $callCompanyModel = new CompanyModel() ;
              $callAuthMiddlewareClass = new AuthMiddleware;
              $callUserModel = new User;
@@ -976,7 +1027,10 @@ $CallDevModel = new ModelDev;
       $company_logfile_url  = $company_settings['company_logfile_url'] ;
 
         $userid = trim($_POST['userid'] ?? '');
+         $password = trim($_POST['password'] ?? '');
+         $reset_type = trim($_POST['reset_type'] ?? '');
         $role_name = $role = $_SESSION['role'] ;
+
  $result = $callUserModel->SelectUserTableForOne($userid);
 
         if ($result['success']) {
@@ -990,8 +1044,7 @@ $AbrvName = !empty($first)? $first . (!empty($parts) ? ' ' . implode('.', array_
 
         }
 
-
-        $password = trim($_POST['password'] ?? '');
+     
 
 
   $action = "Cleared all users Logfile and Audit trail";
@@ -1007,19 +1060,28 @@ $AbrvName = !empty($first)? $first . (!empty($parts) ? ' ' . implode('.', array_
             exit;
         }
 
-        $result = $CallDevModel->clearlog(
-            $userid,
-            $password,
-            $company_logfile_url
-        );
 
-        if ($result === "Audit trail cleared successfully.") {
-            $_SESSION['success'] = $result;
+
+if ($reset_type=="clear_log"){
+     
+        $result = $CallDevModel->clearlog($userid,$password,$company_logfile_url);
+         $_SESSION['success'] = "Log file and Audit trail cleared successfully";
+}
+if ($reset_type=="reset_database"){
+ 
+        $result = $CallDevModel->WipeDevDatabaseWithExceptions();
+           $_SESSION['success'] = "Database wipe was successful";
+}
+
+        if ($result) {
+          
              $logResult = $callAuthMiddlewareClass->writelog($userid, $role_name,$role, $user_details, $action,$company_logfile_url);
 
         } else {
             $_SESSION['error'] = $result;
         }
+
+        
 
         header("Location: " . $_SERVER['HTTP_REFERER']);
         exit;
@@ -1055,6 +1117,7 @@ $AbrvName = !empty($first)? $first . (!empty($parts) ? ' ' . implode('.', array_
 
     $CallDevModel = new ModelDev;
 
+   $LoadUsersAndLoginTableForAdmin = $CallDevModel->SelectAllCategoryOfUsersAndLoginTableForDev($userid);
    $callAuthMiddlewareClass = new AuthMiddleware;
 
      $CallMailerModel = new Mailer;
@@ -1062,9 +1125,6 @@ $AbrvName = !empty($first)? $first . (!empty($parts) ? ' ' . implode('.', array_
 
 
  $LoadUsersAndRequestTable  = $CallDevModel->SelectUsersAndrequestTable();
-
-
-
 
 
  $result = $callUserModel->SelectUserTableForOne($userid);
@@ -1118,6 +1178,11 @@ if ($result['success']) {
      $callCompanyModel = new CompanyModel() ;
 
       $company_settings = $callCompanyModel ->web_settings();
+      
+          $company_adminseniorman  = $company_settings['company_adminseniorman'] ;
+          $the_tablename="users"; $column_name="userid"; $column_value="";
+           $LoadCompanyAdminSeniorManDetails = $callUserModel->GeneralSelectAnyTableWhereColumnValueEquals($the_tablename, $column_name, $company_adminseniorman);
+
      $CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
 
       $company_logfile_url  = $company_settings['company_logfile_url'] ;
@@ -1321,8 +1386,12 @@ public function page_edit_user(){
     $userid =$_SESSION['userid']; 
 
    $callUserModel = new User();
+    $search_tb_name ="corridor";
+  $loadSelectOption_corridors = $callUserModel->GeneralSelectAnyTable($search_tb_name);
 $callAuthMiddlewareClass = new AuthMiddleware;
+ $callAuthMiddlewareClass->IfSessionDeactiveAutologout();
     $CallDevModel = new ModelDev;
+    $loadadministrator = $CallDevModel->SelectAllCategoryOfUsersAndLoginTableForDev($userid);
      $callCompanyModel = new CompanyModel() ;
       $company_settings = $callCompanyModel ->web_settings();
  $CF_VerificationSiteUrl = $company_settings['cloudfare_verifyurl'] ?? '';
@@ -1335,7 +1404,7 @@ if (isset($_POST['dev_update_user'])) {
 
 
     $user_id =  trim($_POST['user_id']) ;
-       $LoadUsersAndLoginTableForThisUser = $callUserModel->SelectUsersAndLoginTableforOnePerson($user_id);
+       $LoadUsersAndLoginTableForThisUser = $callUserModel->SelectUsersAndLoginTableforOnePersonAfterLogin($user_id);
     $data = [
         'userid' => trim($_POST['user_id'] ?? ''),
         'title' => trim($_POST['title'] ?? ''),
@@ -1449,10 +1518,10 @@ if (isset($_POST['dev_update_user'])) {
 
   
 
-$result = $callUserModel->SelectUsersAndLoginTableforOnePerson($user_id);
+$result = $callUserModel->SelectUsersAndLoginTableforOnePersonAfterLogin($user_id);
 
 
-//  $result = $callUserModel->SelectUsersAndLoginTableforOnePerson($user_id);
+//  $result = $callUserModel->SelectUsersAndLoginTableforOnePersonAfterLogin($user_id);
 
         if ($result['success']) {
 
@@ -1547,109 +1616,20 @@ if ($result['success']) {
 
 
 public function page_dashboard() {
-
+  $page_name = "dashboard";
   if (session_status() === PHP_SESSION_NONE) session_start();
   $userid =$_SESSION['userid']; 
-
-   $callUserModel = new User();
-
-    $CallDevModel = new ModelDev;
-        $callAuthMiddlewareClass = new AuthMiddleware;
-   if ($callAuthMiddlewareClass->IsThisAfirstTimeLogin()) {
-header("Location: index?action=compulsory_cp");
-   }
-        $callAuthMiddlewareClass->IsThisAfirstTimeLogin();
-            $isConnected = $callAuthMiddlewareClass->checkConnection();
-
-   $LoadUsersAndLoginTableForAdmin = $callUserModel->SelectUsersAndLoginTable($userid);
-
-  
-
-   $roleCounts = $CallDevModel->getRoleCounts();
-
-   $CountTickets = $CallDevModel->TicketCount();
-
-  $totalrequests = $CallDevModel->GetRequestSum();
-
-
-
-// $totaldev = $roleCounts['developers'];
-
-$totalreporters = $roleCounts['reporters'];
-
-$totaladmin = $roleCounts['administrators'];
-
-$totalsupervisor = $roleCounts['supervisors'];
-
-// $Ticket = $CallDevModel->TicketCount();
-
- $counttickets = $CountTickets['total'];
-
-// $ticketCounts['status_0']
-
-// $ticketCounts['status_1']
-
-// $ticketCounts['status_2']
-
- $result = $callUserModel->SelectUserTableForOne($userid);
-
-        if ($result['success']) {
-
-            $user = $result['user'];
-
-            $AbrvName = $user['fullname'];
-
-            if ($user['msg_notification']==1){
-
-                $_SESSION['msg_notification'] = 1;
-
-                 $_SESSION['msg'] = $user['msg'];
-
-              $callUserModel->clearMsgNotification($userid);
-
-            }
-
-
-
-     $user_image = ($user['user_image'] ?? "") === "" ? "noimage2.png" : $user['user_image'];
-
-        } else {
-
-            echo $result['error'];
-
-        }
-
-$parts = explode(' ', trim($AbrvName));
-
-$first = array_shift($parts);
-
-$AbrvName = !empty($first)? $first . (!empty($parts) ? ' ' . implode('.', array_map(fn($p) => strtoupper($p[0]), $parts)) : '') : 'User';
-
-  $page_name = "dashboard";
-
   $role_name = $role = $_SESSION['role'] ;
 
-$result = $callAuthMiddlewareClass->SelectloginTableForOne($userid);
-
-if ($result['success']) {
-
-    $user = $result['user'];
-
-    $role_name = $user['role_name'];
-
-
-
-}
-
-     $callCompanyModel = new CompanyModel() ;
-
-      $company_settings = $callCompanyModel ->web_settings();
+   $callCompanyModel = new CompanyModel() ;$CallDevModel = new ModelDev; $callAuthMiddlewareClass = new AuthMiddleware; $callUserModel = new User();
+      $company_settings = $callCompanyModel ->web_settings(); $company_adminseniorman  = $company_settings['company_adminseniorman'] ;
+     
+     $company_allownotification = $company_settings['company_allownotification'] ?? '0';
      $CF_VerificationSiteUrl = $company_settings['cloudfare_verifyurl'] ?? '';
         $CF_SecretKey = $company_settings['cloudfare_secretkey'] ?? '';
         $CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
-
+   
       $company_logfile_url  = $company_settings['company_logfile_url'] ;
-
       $company_userid  = $company_settings['company_userid'] ;
 
        $company_copyright  = $company_settings['company_copyright'] ?? '2025';
@@ -1658,9 +1638,7 @@ if ($result['success']) {
 
        $company_copyrightlink  = $company_settings['company_copyrightlink'] ?? 'https://www.agbng.com';
 
-       $company_settings = $callCompanyModel->web_settings();
-
-      $company_online = $company_settings['company_online'] ?? 0;
+          $company_online = $company_settings['company_online'] ?? 0;
 
       $company_Allow_signup = $company_settings['company_signup'] ?? 0;
 
@@ -1673,9 +1651,44 @@ if ($result['success']) {
          $company_url = $company_settings['company_url'] ?? '';
 
             $loginurl = $company_url."/index.php?action=login" ;
+      $callAuthMiddlewareClass->IfSessionDeactiveAutologout();
+   if ($callAuthMiddlewareClass->IsThisAfirstTimeLogin()) {
+header("Location: index?action=compulsory_cp");
+exit;
+   }        // $callAuthMiddlewareClass->IsThisAfirstTimeLogin();
+            $isConnected = $callAuthMiddlewareClass->checkConnection($company_allownotification);
+  
+$search_tb_name ="corridor"; $loadSelectOption_corridors = $callUserModel->GeneralSelectAnyTable($search_tb_name);
+   
+        
 
+   $LoadUsersAndLoginTableForAdmin = $CallDevModel->SelectAllCategoryOfUsersAndLoginTableForDev($userid);
+// Counting codes
+   $roleCounts = $CallDevModel->getRoleCounts(); 
+   $CountTickets = $CallDevModel->TicketCount();
+    $totalrequests = $CallDevModel->GetRequestSum();
+$totalreporters = $roleCounts['reporters'];$totaladmin = $roleCounts['administrators'];$totalsupervisor = $roleCounts['supervisors'];
+$counttickets = $CountTickets['total'];
+ $result = $callUserModel->SelectUsersAndLoginTableforOnePersonAfterLogin($userid);
+         if ($result['success']) {
+            $user = $result['user'];
 
+           $fullname = $user['user_fullname']; 
+           $role = $_SESSION['role'] = $user['login_role']; 
+           $role_name  = $user['login_role_name']; 
+           $AbrvName = $user['AbrvName'];
+            $user_image = ($user['user_image'] ?? "") === "" ? "noimage2.png" : $user['user_image'];
+if ($user['user_msg_notification']==1){
+    $_SESSION['msg_notification'] = 1;
+$_SESSION['msg'] = $user['user_msg'];
+$callUserModel->clearMsgNotification($userid);
+}
+             } else {
 
+            $_SESSION['error'] = $result['error'];
+              header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php')); exit;
+
+        }
        require ROOT_PATH . "/views/users/dev/dashboard.php";
 
   }
@@ -1713,6 +1726,7 @@ public function create_admin_user() {
  if (session_status() === PHP_SESSION_NONE) session_start();
      $callCompanyModel = new CompanyModel() ;
       $callUserModel = new User();
+      
     $callAuthMiddlewareClass = new AuthMiddleware;
     $CallMailerModel = new Mailer;
     $CallDevModel = new ModelDev;
@@ -1768,11 +1782,12 @@ if (isset($_POST['dev_create_admin'])) {
         }
     
 
-   $LoadUsersAndLoginTableForAdmin = $callUserModel->SelectUsersAndLoginTable($userid);
+   $LoadUsersAndLoginTableForAdmin = $CallDevModel->SelectAllCategoryOfUsersAndLoginTableForDev($userid);
 
     
 
     $title= trim($_POST['title'] ?? '');
+    $user_corridor= trim($_POST['user_corridor'] ?? '');
 
     $fullname = trim($_POST['name'] ?? '');
     $parts = explode(' ', trim($AbrvName));
@@ -1784,30 +1799,24 @@ $AbrvName = !empty($first)? $first . (!empty($parts) ? ' ' . implode('.', array_
 
     $phone    = trim($_POST['phone'] ?? '');
 
-   $receiveraddress =  $email    = trim($_POST['email'] ?? '');
+    $email    = trim($_POST['email'] ?? '');
 
     
 
 //    $result = $CallDevModel->CreateAdministrator($company_userid, $fullname, $phone, $email);
-
-$result = $callUserModel->CreateUserAccount(
-
-            $company_userid,
-
-            $title,
-
-            $fullname,
-
-            $phone,
-
-            $role,
-
-            $role_name,
-
-            $email
-
-        );
-
+ $role = "administrator";
+    $role_name = "administrator";
+// CALL CreateUserAccount WITH ARRAY
+$result = $callUserModel->CreateUserAccount([
+    'company_userid' => $company_userid,
+    'title'          => $title,
+    'fullname'       => $fullname,
+    'phone'          => $phone,
+    'role'           => $role,
+    'role_name'      => $role_name,
+    'email'          => $email,
+    'user_corridor'  => $user_corridor
+]);
     if (!empty($result['success'])) {
 
           $userrefid = $result['userid'];
@@ -1854,15 +1863,7 @@ $message = "Hello $fullname,<br><br>"
 
          . "The Support Team";
 
-      $SendEmail = $CallMailerModel->sendmail(
-
-                        $receiveraddress,
-
-                        $subject,
-
-                        $message
-
-                    );
+      $SendEmail = $CallMailerModel->sendmail($email,$subject,$message);
 
 
 
@@ -1897,7 +1898,89 @@ header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php')); exit;
 
 
 
+public function assignadmin() {
 
+if (!isset($_POST['assign_admin'])){
+ header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php'));
+exit;
+ }
+    
+  if (session_status() === PHP_SESSION_NONE) session_start();
+  $userid = $_SESSION['userid']; 
+ $callAuthMiddlewareClass = new AuthMiddleware;
+ $callUserModel = new User();
+ $CallDevModel = new ModelDev;
+      $callCompanyModel = new CompanyModel() ;
+      $company_settings = $callCompanyModel ->web_settings();
+        $company_name = $company_settings['company_name'] ?? 'Web Application';
+        $company_url = $company_settings['company_url'] ?? '';
+            $loginurl = $company_url."/index.php?action=login" ;
+            $company_logfile_url  = $company_settings['company_logfile_url'] ;
+            
+       $CallMailerModel = new Mailer() ;
+
+
+$NewAdminSeniorManValue = $_POST['assign_admin_value'];
+if ($NewAdminSeniorManValue ==""){
+ $_SESSION['error'] = "Please select an admin user for email receipts";
+  header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php'));
+exit;
+ }
+$data = [
+    'the_tablename' => 'company',
+    'column_name'   => 'company_adminseniorman',
+    'column_value'  => $NewAdminSeniorManValue,
+    'where_column'  => 'sn',
+    'where_value'   => '1',
+];
+         
+
+$result = $callUserModel->GeneralUpdateAnyTableColumnWithThisValue($data);
+if ($result) { $_SESSION['success'] = "Updated successfully."; 
+$_SESSION['success'] = "New chief admin assigned successfully";
+  $LoadUsersAndLoginTableForThisUser = $callUserModel->SelectUsersAndLoginTableforOnePersonAfterLogin($NewAdminSeniorManValue);
+  if ($LoadUsersAndLoginTableForThisUser['success']) {
+
+            $user = $LoadUsersAndLoginTableForThisUser['user'];
+
+            $username = $user['user_fullname'];
+            $receiever_email = $user['user_email'];
+            $user_details = $user['AbrvName'] . "  " . $userid;;
+            $role = $user['login_role'];
+            $role_name = $user['login_role_name'];
+            $subject = "Welcome as the New Chief Administrator";
+            $action = "Assigned ". $username . " as new chief administrator";
+
+$message = "Dear $username,<br><br>"
+. "We are pleased to officially welcome you as the new <strong>Chief Administrator</strong> of the $company_name web application.<br><br>"
+
+. "As Chief Administrator, you will be responsible for receiving and overseeing all emails and notifications relating to activities carried out by users on the site.<br><br>"
+
+. "We trust that you will effectively monitor these activities and help ensure the smooth and proper administration of the platform.<br><br>"
+
+. "<div style='text-align:center; margin:25px 0;'>"
+. "<a href='$loginurl' style='display:inline-block; padding:12px 25px; background-color:#0d6efd; color:#ffffff; text-decoration:none; border-radius:5px; font-weight:bold;'>"
+. "Access Web Application"
+. "</a>"
+. "</div>"
+
+. "We welcome you to your new role and look forward to your contribution to the continued success and effective management of the platform.<br><br>"
+
+. "Best regards,<br>"
+. "The I.T Support Team";
+
+
+ $SendEmail = $CallMailerModel->sendmail($receiever_email,$subject,$message);
+ $logResult = $callAuthMiddlewareClass->writelog($userid, $role_name,$role, $user_details, $action,$company_logfile_url);
+ 
+ }
+} else { 
+   $_SESSION['error']  = $errors[] = "Update failed."; 
+
+}
+ header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php'));
+exit;
+}
 
 
 public function page_users() {
@@ -1905,15 +1988,20 @@ public function page_users() {
   if (session_status() === PHP_SESSION_NONE) session_start();
   $userid =$_SESSION['userid']; 
  $callAuthMiddlewareClass = new AuthMiddleware;
+  $callAuthMiddlewareClass->IfSessionDeactiveAutologout();
  $callUserModel = new User();
-
-    $CallDevModel = new ModelDev;
+$search_tb_name ="corridor";
+  $loadSelectOption_corridors = $callUserModel->GeneralSelectAnyTable($search_tb_name);
+ $CallDevModel = new ModelDev;
       $callCompanyModel = new CompanyModel() ;
+      
 
       $company_settings = $callCompanyModel ->web_settings();
-//    $_SESSION['msg']  = "";
+          $company_adminseniorman  = $company_settings['company_adminseniorman'] ;
+          $the_tablename="users"; $column_name="userid"; $column_value="";
+           $LoadCompanyAdminSeniorManDetails = $callUserModel->GeneralSelectAnyTableWhereColumnValueEquals($the_tablename, $column_name, $company_adminseniorman);
 
-//     $_SESSION['msg_notification']=0;
+           
 
   
 
@@ -1922,7 +2010,8 @@ public function page_users() {
         $CF_SecretKey = $company_settings['cloudfare_secretkey'] ?? '';
         $CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
 
-   $LoadUsersAndLoginTableForAdmin = $callUserModel->SelectUsersAndLoginTable($userid);
+//    $LoadUsersAndLoginTableForAdmin = $CallDevModel->SelectAllCategoryOfUsersAndLoginTableForDev($userid);
+   $LoadUsersAndLoginTableForAdmin = $CallDevModel->SelectAllCategoryOfUsersAndLoginTableForDev($userid);
 
      
 
@@ -1933,24 +2022,13 @@ public function page_users() {
   $totalrequests = $CallDevModel->GetRequestSum();
 
 
-
-// $totaldev = $roleCounts['developers'];
-
 $totalreporters = $roleCounts['reporters'];
 
 $totaladmin = $roleCounts['administrators'];
 
 $totalsupervisor = $roleCounts['supervisors'];
 
-// $Ticket = $CallDevModel->TicketCount();
-
  $counttickets = $CountTickets['total'];
-
-// $ticketCounts['status_0']
-
-// $ticketCounts['status_1']
-
-// $ticketCounts['status_2']
 
  $result = $callUserModel->SelectUserTableForOne($userid);
 
@@ -2046,12 +2124,18 @@ public function page_corridorsAndItlikes() {
    $userid =$_SESSION['userid']; 
 
    $callUserModel = new User();
-
+   
+  
+$search_tb_name ="corridor";
+  $loadSelectOption_corridors = $callUserModel->GeneralSelectAnyTable($search_tb_name);
     $CallDevModel = new ModelDev;
+    $loadadministrator = $CallDevModel->SelectAllCategoryOfUsersAndLoginTableForDev($userid);
      $callCompanyModel = new CompanyModel() ;
      $CallMailerModel = new Mailer() ;
       $callAuthMiddlewareClass = new AuthMiddleware;
+       $callAuthMiddlewareClass->IfSessionDeactiveAutologout();
       $company_settings = $callCompanyModel ->web_settings();
+         $company_adminseniorman  = $company_settings['company_adminseniorman'] ;
        $CF_VerificationSiteUrl = $company_settings['cloudfare_verifyurl'] ?? '';
         $CF_SecretKey = $company_settings['cloudfare_secretkey'] ?? '';
         $CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
@@ -2063,9 +2147,13 @@ header('Location: index.php');
     }
 
 
-
+$maxrecords  = 28;
 if ($tb_name == "corridors") {
+     $maxrecords  = 8;
        $page_name = $tb_name = "corridor";
+     } elseif ($tb_name == "ticket_category") {
+        $maxrecords  = 28;
+    $page_name = "Ticket Category";
      } elseif ($tb_name == "owners") {
     $tb_name = $page_name = "owner";
 } elseif ($tb_name == "incidence_source") {
@@ -2077,7 +2165,8 @@ if ($tb_name == "corridors") {
     $tb_name = "report_type";
   
 } elseif ($tb_name == "wellhead_status") {
-    $page_name = "wellhead status";
+    $maxrecords  = 6;
+    $page_name = "Incidence status";
 } elseif ($tb_name == "priority") {
     $page_name = "priority";
 
@@ -2089,7 +2178,10 @@ if ($tb_name == "corridors") {
    $page_name = "pipeline type";
     $tb_name = "pipeline_type";
 }
-
+// else{
+//     header('Location: index.php');
+//     exit;
+// }
     
 
 //    $_SESSION['msg']  = "";
@@ -2098,7 +2190,7 @@ if ($tb_name == "corridors") {
 
  
 
-   $LoadUsersAndLoginTableForAdmin = $callUserModel->SelectUsersAndLoginTable($userid);
+   $LoadUsersAndLoginTableForAdmin = $CallDevModel->SelectAllCategoryOfUsersAndLoginTableForDev($userid);
 
      
 
@@ -2208,9 +2300,34 @@ if ($result['success']) {
 if (isset($_POST['create_corridor'])) {
     // $callAuthMiddlewareClass->ValidateTurnstile($CF_SecretKey,$CF_VerificationSiteUrl); 
    $the_tb= trim($_POST['tb'] ?? '');
-   $corridor_name= trim($_POST['corridor_name'] ?? '');
-   $corridor_name = trim($_POST['corridor_name'] ?? ''); if ($corridor_name === '') { $_SESSION['error'] = 'Corridor name is required'; header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php')); exit; }
-   $create_corridors_result = $CallDevModel->CreateCorridorAndThoseSimilar($corridor_name, $userid,$role,$the_tb);
+
+   $color= trim($_POST['corridor_color'] ?? '');
+ if ($tb_name =="priority" || $tb_name =="wellhead_status" ) { 
+    if ($color === '') { 
+    $_SESSION['error'] = 'Color is required'; 
+   header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php'));
+    exit;
+     }
+   }
+
+   $corridor_name = trim($_POST['corridor_name'] ?? '');
+    if ($corridor_name === '') { 
+    $_SESSION['error'] = 'Name is required'; 
+   header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php'));
+    exit;
+     }
+
+ $data = [
+        'corridor_name' => $corridor_name,     
+        'userid' => $userid,     
+        'role' => $role,     
+        'the_tb' => $the_tb,     
+        'color' => $color,     
+        'maxrecords' => $maxrecords    
+           ];
+
+     
+   $create_corridors_result = $CallDevModel->CreateCorridorAndThoseSimilar($data);
 
 if ($create_corridors_result['status']) {
  $action = "Created a new " . $page_name . " module";
@@ -2333,10 +2450,11 @@ public function page_settings() {
   $userid =$_SESSION['userid']; 
 
    $callUserModel = new User();
-
+ $search_tb_name ="corridor";
+  $loadSelectOption_corridors = $callUserModel->GeneralSelectAnyTable($search_tb_name);
     $CallDevModel = new ModelDev;
-
-   $LoadUsersAndLoginTable = $callUserModel->SelectUsersAndLoginTable($userid);
+// $loadadministrator = $CallDevModel->SelectAllCategoryOfUsersAndLoginTableForDev($userid);
+   $LoadUsersAndLoginTable = $CallDevModel->SelectAllCategoryOfUsersAndLoginTableForDev($userid);
 
       $callAuthMiddlewareClass = new AuthMiddleware;
 

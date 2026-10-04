@@ -519,7 +519,6 @@ $ticket_status = '';
     </div>
 
 </div>
-```
 
 </div>
 

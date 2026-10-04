@@ -116,6 +116,9 @@ $Ltable_sn = $corridor_sn = 0;
                                             (string)$corridor_sn
                                         );
 
+                                    $corridor_color =
+                                        $corridor['color'] ?? '';
+
                             ?>
 
                                     <tr>
@@ -167,13 +170,25 @@ $Ltable_sn = $corridor_sn = 0;
                                         </td>
 
                                         <td>
-                                            <?= htmlspecialchars(
-                                                ucfirst(
-                                                    $corridor_name
-                                                ),
-                                                ENT_QUOTES,
-                                                'UTF-8'
-                                            ); ?>
+                                            <?php if (!empty($corridor_color)) : ?>
+                                                <strong style="color: <?= htmlspecialchars($corridor_color, ENT_QUOTES, 'UTF-8'); ?>;">
+                                                    <?= htmlspecialchars(
+                                                        ucfirst(
+                                                            $corridor_name
+                                                        ),
+                                                        ENT_QUOTES,
+                                                        'UTF-8'
+                                                    ); ?>
+                                                </strong>
+                                            <?php else : ?>
+                                                <?= htmlspecialchars(
+                                                    ucfirst(
+                                                        $corridor_name
+                                                    ),
+                                                    ENT_QUOTES,
+                                                    'UTF-8'
+                                                ); ?>
+                                            <?php endif; ?>
                                         </td>
 
                                         <td>
@@ -189,7 +204,7 @@ $Ltable_sn = $corridor_sn = 0;
                                                         'UTF-8'
                                                     ); ?>',
                                                     '<?= htmlspecialchars(
-                                                        $corridor_name,
+                                                        ucfirst($corridor_name),
                                                         ENT_QUOTES,
                                                         'UTF-8'
                                                     ); ?>',
@@ -262,10 +277,12 @@ $Ltable_sn = $corridor_sn = 0;
             Create New <?= $page_name  ?>
         </h3>
 
-        <form
+       
+<form
             method="POST"
             enctype="multipart/form-data"
-            action="index.php?action=create_corridor"  onsubmit="return checkTurnstile(event); return disableSubmitButton(this);"
+            action="index.php?action=create_corridor"
+            onsubmit="if (!checkTurnstile(event)) { return false; } return disableSubmitButton(this);"
         >
 <input type="hidden" name="action_token" value="<?= htmlspecialchars($_SESSION['action_token']) ?>">
             <div class="create-corridor-form-group">
@@ -287,6 +304,31 @@ $Ltable_sn = $corridor_sn = 0;
                 >
 
             </div>
+<?php if ($tb_name =="priority" || $tb_name =="wellhead_status" ) : ?>
+            <div class="create-corridor-form-group">
+
+                <label for="corridor_color">
+                    <?= $page_name  ?> Color
+                </label>
+
+                <select class="create-corridor-input" id="corridor_color" name="corridor_color" <?php if ($tb_name =="priority" || $tb_name =="wellhead_status" ) { echo 'required';} ?>>
+                    <option value="">Select Color</option>
+                    <option value="red">Red</option>
+                    <option value="blue">Blue</option>
+                    <option value="green">Green</option>
+                    <option value="yellow">Yellow</option>
+                    <option value="orange">Orange</option>
+                    <option value="purple">Purple</option>
+                    <option value="pink">Pink</option>
+                    <option value="black">Black</option>
+                    <option value="white">White</option>
+                    <option value="gray">Gray</option>
+                    <option value="brown">Brown</option>
+                    <option value="teal">Teal</option>
+                </select>
+
+            </div>
+<?php endif; ?>
 <!-- <div class="cf-turnstile" data-sitekey="<?= $CF_SiteKey ?>" data-callback="turnstileSuccess" data-size="flexible"></div> -->
             <button
                 type="submit"

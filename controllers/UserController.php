@@ -17,7 +17,7 @@ class UserController {
 
     private $db;
 
-    private $photoPasswordModel;
+    // private $photoPasswordModel;
 
     private $userid;
 
@@ -27,13 +27,9 @@ class UserController {
 
     public function __construct() {
 
-        $this->userid = $_SESSION['userid'] ?? null;
+            //   $this->db = (new Database())->getConnection();
 
-        $this->userid = $_SESSION['userid'] ?? $this->userid;
-
-        $this->db = (new Database())->getConnection();
-
-        $this->photoPasswordModel = new PhotoPassword_Update($this->db);
+        // $this->photoPasswordModel = new PhotoPassword_Update($this->db);
 
     }
 
@@ -51,6 +47,8 @@ $CallMailerModel = new Mailer;
  $callCompanyModel = new CompanyModel();
     $company_settings = $callCompanyModel->web_settings();
      $company_logfile_url = $company_settings['company_logfile_url'] ?? '';
+     $company_adminseniorman = $company_settings['company_adminseniorman'] ?? '';
+
   $AuthMiddlewareModel = new AuthMiddleware();
    $isConnected = $AuthMiddlewareModel->checkConnection();
 
@@ -60,7 +58,7 @@ $CallMailerModel = new Mailer;
         $IsThereNetwork = "no";
     }
     $GetTheModelClassCalledUser = new User();
-  $userResult = $GetTheModelClassCalledUser->SelectUsersAndLoginTableforOnePerson($user_id);
+  $userResult = $GetTheModelClassCalledUser->SelectUsersAndLoginTableforOnePersonAfterLogin($user_id);
  if ($userResult['success']) {
    $role_name = $role = $userResult['user']['login_role'];
     $otp =$current_otp = $userResult['user']['user_otp_request'] ?? '';
@@ -114,9 +112,15 @@ $AbrvName = !empty($first)? $first . (!empty($parts) ? ' ' . implode('.', array_
             }
 
 
+
+//  $themessage = "IT/Support: Hi, Please change your password now that you are logged in.";
+//     $data = [
+//     'userid' => $_SESSION['otp_refid'],
+//     'themessage' => $themessage
+// ];
+
+// $UpdateUserMessage = $GetTheModelClassCalledUser->UpdateUserMessage($data);
 unset($_SESSION['otp_refid']);
-
-
             header("Location: index?action=dashboard");
             
     }else{
@@ -161,20 +165,18 @@ exit;
       
     $callCompanyModel = new CompanyModel();
     $GetTheModelClassCalledUser = new User();
-    $AuthMiddlewareModel = new AuthMiddleware();
-   $AuthMiddlewareModel->IsLoginSessionActive();
-    $isConnected = $AuthMiddlewareModel->checkConnection();
-
-    if ($isConnected) {
-        $IsThereNetwork = "yes";
-    } else {
-        $IsThereNetwork = "no";
-    }
+        $AuthMiddlewareModel = new AuthMiddleware();
+   $AuthMiddlewareModel->IfSessionActiveAutologin();
+  
 
     $CallMailerModel = new Mailer;
 
-    $company_settings = $callCompanyModel->web_settings();
+    $company_settings = $callCompanyModel->web_settings();  
+     $company_allownotification = $company_settings['company_allownotification'] ?? '0';
 
+      $isConnected = $AuthMiddlewareModel->checkConnection($company_allownotification);
+    // if ($isConnected===true) {$IsThereNetwork = "yes";} else {$IsThereNetwork = "no";}
+  $company_adminseniorman = $company_settings['company_adminseniorman'] ?? '';
     // Corrected: actually assign the copyright value
     $company_copyright =
         $company_settings['company_copyright'] ?? '2025';
@@ -267,7 +269,7 @@ exit;
       $resend_otp = $_POST['resend_otp'];
      if ($resend_otp == '38299') {
          $otp_refid =  $_SESSION['otp_refid'] ;
-          $userResult = $GetTheModelClassCalledUser->SelectUsersAndLoginTableforOnePerson($otp_refid);
+          $userResult = $GetTheModelClassCalledUser->SelectUsersAndLoginTableforOnePersonAfterLogin($otp_refid);
   if ($userResult['success']) {
    $role_name = $role = $userResult['user']['login_role'];
     $otp =$current_otp = $userResult['user']['user_otp_request'] ?? '';
@@ -290,18 +292,10 @@ $SendEmail = $CallMailerModel->sendmail(
     $subject,
     $message
 );
-
-
 header("Location: index?action=verify_otp");
 exit;
-
-
-
  }
  }
-
-
-
 
     if (isset($_POST['login'])) {
 
@@ -315,75 +309,40 @@ exit;
 
         if ($loginResult['success']) {
 
-// $GetTheModelClassCalledUser->updateLoginCount($userid);
             $user = $loginResult['user'];
+            $role_name = $loginResult['user']['role_name'] ?? '';
+            $role = $loginResult['user']['role'] ?? '';
+            if ($company_adminseniorman==$userid ){
+            $_SESSION['success'] ="Welcome, you are logged in as the chief " . ucfirst($role_name);
+        }else{
+             $_SESSION['success'] ="Welcome, you are logged in as " . ucfirst($role_name);
+        }
 
-            $role_name = $role = $loginResult['user']['role'] ?? '';
-
-            $_SESSION['success'] ="Welcome, you are logged in as a " . ucfirst($role);
+            
            $_SESSION['action_token'] = bin2hex(random_bytes(32));
 
-            $userResult =
-                $GetTheModelClassCalledUser->SelectUserTableForOne($userid);
-
-            if (
-                !empty($userResult['success']) &&
-                !empty($userResult['user'])
-            ) {
+            $userResult =  $GetTheModelClassCalledUser->SelectUsersAndLoginTableforOnePersonAfterLogin($userid);
+ if ($userResult['success']) {
+            $user = $userResult['user'];
 
                 $user = $userResult['user'];
+                $AbrvName = $userResult['AbrvName'];
 
                 $user_fullname =
-                    $AbrvName = $user['fullname'] ?? 'User';
+                    $AbrvName = $user['user_fullname'] ?? 'User';
 
                 $receiveraddress =
-                    $user['email'] ?? '';
+                    $user['user_email'] ?? '';
 
-                $parts = preg_split(
-                    '/\s+/',
-                    trim($AbrvName)
-                );
-
-                $first = array_shift($parts);
-
-                if (!empty($first)) {
-
-                    $initials = [];
-
-                    foreach ($parts as $part) {
-
-                        if ($part !== '') {
-
-                            $initials[] =
-                                strtoupper($part[0]);
-                        }
-                    }
-
-                    $AbrvName = $first;
-
-                    if (!empty($initials)) {
-
-                        $AbrvName .=
-                            ' ' . implode('.', $initials);
-                    }
-
-                } else {
-
-                    $AbrvName = '';
-                }
-
+                
                 $user_details =
                     $AbrvName . "  " . $userid;
 
-            } else {
+            } else{
+                   $_SESSION['error'] = $userResult['error'];
+              header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php')); exit;
 
-                $user_details = "  " . $userid;
-
-                $user_fullname = 'User';
-
-                $receiveraddress = '';
             }
-
 
             $subject = $action = "Login successful";
 
@@ -402,29 +361,13 @@ exit;
                 . "Best regards,<br>"
                 . "The Support Team";
 
-
             $_SESSION['userid'] = $userid;
 
             $_SESSION['role'] = $role;
-
-            $logResult = $AuthMiddlewareModel->writelog(
-                $userid,
-                $role_name,
-                $role,
-                $user_details,
-                $action,
-                $company_logfile_url
-            );
+$logResult = $AuthMiddlewareModel->writelog($userid,$role_name,$role,$user_details,$action,$company_logfile_url);
 
             // Send email
-            if ($IsThereNetwork == "yes") {
-
-                $SendEmail = $CallMailerModel->sendmail(
-                    $receiveraddress,
-                    $subject,
-                    $message
-                );
-            }
+if ($isConnected) {$SendEmail = $CallMailerModel->sendmail($receiveraddress,$subject,$message);}
 
 
             header("Location: index?action=dashboard");
@@ -441,8 +384,8 @@ exit;
             // Removed exit so the login page can be displayed
         }
     }
-
-
+$tb_name ="corridor";
+  $loadSelectOption_corridors = $GetTheModelClassCalledUser->GeneralSelectAnyTable($tb_name);
     $page_name = "Login";
 
     require ROOT_PATH . "/views/login.php";
@@ -462,7 +405,7 @@ public function updatepassword(){
     $callCompanyModel = new CompanyModel();
     $company_settings = $callCompanyModel->web_settings();
     $CallMailerModel = new Mailer;
-
+ $AuthMiddlewareModel->IfSessionDeactiveAutologout();
     $company_logfile_url = $company_settings['company_logfile_url'] ?? '';
     $CF_VerificationSiteUrl = $company_settings['cloudfare_verifyurl'] ?? '';
     $CF_SecretKey = $company_settings['cloudfare_secretkey'] ?? '';
@@ -560,16 +503,13 @@ public function updatepassword(){
                 $message
             );
 
-            header("Location: index?action=dashboard");
-
-            exit;
+  
+             header("Location: " .($_SERVER['HTTP_REFERER'] ?? 'index.php?action=index'));exit;
 
         } else {
 
             $_SESSION['error'] = $result;
-
-           header("Location: index?action=dashboard");
-            exit;
+  header("Location: " .($_SERVER['HTTP_REFERER'] ?? 'index.php?action=index'));exit;
         }
     }
 
@@ -598,6 +538,7 @@ if (session_status() === PHP_SESSION_NONE) { session_start();  }
 if (isset($_POST['signup_reporter'])) {
                 
     $AuthMiddlewareModel = new AuthMiddleware();
+   
     $userModel = new User();
 
     // PREVENT MULTIPLE FORM SUBMISSIONS
@@ -612,6 +553,9 @@ if (isset($_POST['signup_reporter'])) {
     $CallMailerModel = new Mailer();
 
     $company_settings = $callCompanyModel->web_settings();
+       $company_allownotification = $company_settings['company_allownotification'] ?? '0';
+      $isConnected = $AuthMiddlewareModel->checkConnection($company_allownotification);
+    if ($isConnected) {$IsThereNetwork = "yes";} else {$IsThereNetwork = "no"; }
     $CF_VerificationSiteUrl = $company_settings['cloudfare_verifyurl'] ?? '';
     $CF_SecretKey = $company_settings['cloudfare_secretkey'] ?? '';
     $CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
@@ -626,33 +570,59 @@ if (isset($_POST['signup_reporter'])) {
         $company_settings['company_acct_approval'] ?? 0;
 
     // GET FORM DATA
-    $fullname = trim($_POST['fullname'] ?? '');
-    $title = trim($_POST['title'] ?? '');
-    $phone = trim($_POST['phone'] ?? '');
-    $receiveraddress = $email = trim($_POST['email'] ?? '');
-    $password = $_POST['password'] ?? '';
-    $affirmation = isset($_POST['affirmation']) ? 1 : 0;
+  $fullname = trim($_POST['fullname'] ?? '');
+$title = trim($_POST['title'] ?? '');
+$phone = trim($_POST['phone'] ?? '');
+$email = trim($_POST['email'] ?? '');
+$password = $_POST['password'] ?? '';
+$user_corridor = trim($_POST['user_corridor'] ?? '');
+$affirmation = isset($_POST['affirmation']) ? 1 : 0;
 
-    // VALIDATE DATA
-    if ($fullname === '' || $title === '' || $phone === '' || $email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || $password === '' || $affirmation !== 1) {
-        $_SESSION['error'] = 'Please fill all required fields correctly.';
-        header("Location: index?action=login");
-        exit;
-    }
+$allowed_titles = ['Mr', 'Mrs', 'Miss', 'Ms', 'Dr', 'Prof'];
+
+$errors = [];
+
+if ($fullname === '' || strlen($fullname) > 30) {
+    $errors[] = 'Full name is required (max 30 chars).';
+}
+if (!in_array($title, $allowed_titles, true)) {
+    $errors[] = 'Please select a valid title.';
+}
+if ($email === '' || strlen($email) > 40 || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    $errors[] = 'A valid email is required.';
+}
+if ($phone === '' || strlen($phone) > 15 || !preg_match('/^\+?[0-9]+$/', $phone)) {
+    $errors[] = 'A valid phone number is required.';
+}
+if ($password === '') {
+    $errors[] = 'Password is required.';
+}
+if ($user_corridor === '') {
+    $errors[] = 'Please select a corridor.';
+}
+if ($affirmation !== 1) {
+    $errors[] = 'You must accept the terms.';
+}
+
+if ($errors) {
+    $_SESSION['error'] = implode(' ', $errors);
+    header("Location: index?action=login"); // redirect back to signup, not login
+    exit;
+}
 
     $role = "reporter";
     $role_name = "reporter";
-
-    $result = $userModel->CreateUserAccount(
-        $company_userid,
-        $title,
-        $fullname,
-        $phone,
-        $role,
-        $role_name,
-        $email
-    );
-
+// CALL CreateUserAccount WITH ARRAY
+$result = $userModel->CreateUserAccount([
+    'company_userid' => $company_userid,
+    'title'          => $title,
+    'fullname'       => $fullname,
+    'phone'          => $phone,
+    'role'           => $role,
+    'role_name'      => $role_name,
+    'email'          => $email,
+    'user_corridor'  => $user_corridor
+]);
     if (!empty($result['success'])) {
 
         $userrefid = $result['userid'];
@@ -695,14 +665,13 @@ if (isset($_POST['signup_reporter'])) {
                 $company_logfile_url
             );
 
-            $SendEmail = $CallMailerModel->sendmail(
-                $receiveraddress,
-                $subject,
-                $message
-            );
+            
+           if ($IsThereNetwork == "yes") {
+                $SendEmail = $CallMailerModel->sendmail($email,$subject,$message);
+           
+           }
 
-            header("Location: index?action=login");
-            exit;
+        header("Location: index?action=login"); exit;
 
         } else {
 
@@ -728,8 +697,7 @@ if (isset($_POST['signup_reporter'])) {
                 'This email address is already registered.';
         }
         elseif (!empty($result['error'])) {
-            $_SESSION['error'] =
-                "Unable to create your account. Please try again";
+            $_SESSION['error'] = "Unable to create your account. Please try again";
             // $_SESSION['error'] = $result['error'];
         }
 
@@ -755,6 +723,7 @@ exit;
 public function restoreuser(){
     $CallUserModel = new User();
         $callAuthMiddlewareClass = new AuthMiddleware;
+         $callAuthMiddlewareClass->IfSessionDeactiveAutologout();
              $callCompanyModel = new CompanyModel() ;
       $company_settings = $callCompanyModel ->web_settings();
       $company_logfile_url  = $company_settings['company_logfile_url'] ;

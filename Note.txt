@@ -1,4 +1,14 @@
 
+CHECK THE REAL ERROR A VARIABLE IS OUTPUTTING :
+ echo '<pre>';
+var_dump($ThevariableName);
+exit;
+
+
+
+
+
+
 newguard
 newguard7584
 https://incidence.operationplugaction.com/admin/admin_ticket.php?track=7P5-R7H-D92U&Refresh=20654

@@ -145,28 +145,31 @@ public function ValidateAndConsumeActionToken()
 
 
 
+public function checkConnection($company_allownotification): bool{
+    $allow = (int)($company_allownotification ?? 0);
 
-    public function checkConnection(): bool    {
-        $ch = curl_init('https://www.google.com/');
-
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_NOBODY => true,
-            CURLOPT_TIMEOUT => 5,
-            CURLOPT_CONNECTTIMEOUT => 3,
-        ]);
-
-        curl_exec($ch);
-
-        $connected = !curl_errno($ch);
-
-        curl_close($ch);
-
-        return $connected;
+    if ($allow === 0) {
+        return false;
     }
 
+    $ch = curl_init('https://www.google.com/');
 
-    
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_NOBODY         => true,
+        CURLOPT_TIMEOUT        => 5,
+        CURLOPT_CONNECTTIMEOUT => 3,
+    ]);
+
+    curl_exec($ch);
+    $connected = !curl_errno($ch);
+    curl_close($ch);
+
+    return $connected;
+}
+
+
+
  public function ValidateTurnstile($CF_SecretKey, $CF_VerificationSiteUrl)
 {
     $turnstile_token = $_POST['cf-turnstile-response'] ?? '';
@@ -226,7 +229,7 @@ public function ValidateAndConsumeActionToken()
         exit;
     }
 }
-public function IsLoginSessionActive(){
+public function IfSessionActiveAutologin(){
 
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
@@ -239,6 +242,51 @@ public function IsLoginSessionActive(){
 
     }
 
+   
+
+    return false;
+}
+
+
+
+
+
+public function IfSessionDeactiveAutologout(){
+
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    if (!isset($_SESSION['userid']) || !isset($_SESSION['role'])) {
+
+        // Destroy all session data
+        $_SESSION = [];
+
+        // Destroy the session cookie
+        if (ini_get("session.use_cookies")) {
+            $params = session_get_cookie_params();
+
+            setcookie(
+                session_name(),
+                '',
+                time() - 42000,
+                $params['path'],
+                $params['domain'],
+                $params['secure'],
+                $params['httponly']
+            );
+        }
+
+        // Destroy the session
+        session_destroy();
+
+        // Redirect to the previous page or index.php
+        $redirect = $_SERVER['HTTP_REFERER'] ?? 'index.php';
+
+        header("Location: " . $redirect);
+        exit;
+    }
+ 
     return false;
 }
 

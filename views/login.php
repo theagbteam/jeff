@@ -2936,8 +2936,7 @@ body.terms-open {
                 id="signupForm"
             >
 
-
-                <form
+<form
                     id="signupAccountForm"
                     action="index?action=create_reporter"
                     method="post"
@@ -2973,6 +2972,24 @@ body.terms-open {
     </select>
 
 </div>
+
+                    <label class="form-label">
+                        Corridor
+                    </label>
+
+                    <div class="input-group-custom">
+                        <i class="bi bi-geo-alt input-icon"></i>
+                      <select  name="user_corridor" class="form-control-custom" required>
+    <option value="" selected disabled>
+        Select corridor
+    </option>
+    <?php foreach ($loadSelectOption_corridors as $corridor): ?>
+        <option value="<?= htmlspecialchars($corridor['name'], ENT_QUOTES, 'UTF-8') ?>">
+            <?= htmlspecialchars($corridor['name'], ENT_QUOTES, 'UTF-8') ?>
+        </option>
+    <?php endforeach; ?>
+</select>
+                    </div>
 
                     <label class="form-label">
 
