@@ -18,7 +18,19 @@ class User {
 
 
 
+public function CountAllTickets()
+{
+    try {
+        $sql = "SELECT COUNT(*) AS total FROM tickets";
 
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute();
+
+        return $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+    } catch (PDOException $e) {
+        return 0;
+    }
+}
 
 
 
@@ -310,91 +322,120 @@ public function restorerecord()
 
 
 
-public function SelectUsersAndLoginTableforOnePersonAfterLogin($user_id) {
-try {
-$sql = "SELECT
-users.sn AS user_sn,
-users.date AS user_date,
-users.title AS user_title,
-users.user_image AS user_image,
-users.userid AS user_userid,
-users.otp_request AS user_otp_request,
-users.email AS user_email,
-users.phone AS user_phone,
-users.msg AS user_msg,
-users.fullname AS user_fullname,
-users.status AS user_status,
-users.msg_notification AS user_msg_notification,
-                login.sn AS login_sn,
-                login.userid AS login_userid,
-                login.password AS login_password,
-                login.last_login AS login_last_login,
-                login.login_counts AS login_counts,
-                login.role AS login_role,
-                login.role_name AS login_role_name,
-                login.Role_edit_user AS login_edit_user,
-                login.Role_create_user AS login_create_user,
-                login.Role_delete_user AS login_delete_user,
-                login.Role_approve_user AS login_approve_user,
-                login.Role_create_report AS login_create_report,
-                login.Role_approve_report AS login_approve_report,
-                login.Role_edit_report AS login_edit_report,
-                login.Role_delete_report AS login_delete_report,
-                login.Role_comment AS login_comment,
-                login.status AS login_status
+public function SelectUsersAndLoginTableforOnePersonAfterLogin($user_id)
+{
+    try {
 
-            FROM users
+        $sql = "SELECT
+            users.sn AS user_sn,
+            users.date AS user_date,
+            users.title AS user_title,
+            users.user_image AS user_image,
+            users.userid AS user_userid,
+            users.otp_request AS user_otp_request,
+            users.email AS user_email,
+            users.phone AS user_phone,
+            users.msg AS user_msg,
+            users.fullname AS user_fullname,
+            users.status AS user_status,
+            users.msg_notification AS user_msg_notification,
 
-            LEFT JOIN login
-                ON users.userid = login.userid
+            login.sn AS login_sn,
+            login.userid AS login_userid,
+            login.password AS login_password,
+            login.last_login AS login_last_login,
+            login.login_counts AS login_counts,
+            login.role AS login_role,
+            login.role_name AS login_role_name,
+            login.Role_edit_user AS login_edit_user,
+            login.Role_create_user AS login_create_user,
+            login.Role_delete_user AS login_delete_user,
+            login.Role_approve_user AS login_approve_user,
+            login.Role_create_report AS login_create_report,
+            login.Role_approve_report AS login_approve_report,
+            login.Role_edit_report AS login_edit_report,
+            login.Role_delete_report AS login_delete_report,
+            login.Role_comment AS login_comment,
+            login.status AS login_status
 
-            WHERE users.userid = :userid
+        FROM users
 
-            ORDER BY users.sn DESC";
+        LEFT JOIN login
+            ON users.userid = login.userid
 
-    $stmt = $this->conn->prepare($sql);
+        WHERE users.userid = :userid
 
-    $stmt->execute([
-        ':userid' => $user_id
-    ]);
+        ORDER BY users.sn DESC";
 
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stmt = $this->conn->prepare($sql);
 
-    if ($user) {
+        $stmt->execute([
+            ':userid' => $user_id
+        ]);
 
-        $parts = explode(' ', trim($user['user_fullname']));
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        $first = array_shift($parts);
+        if ($user) {
 
-        $AbrvName = !empty($first)
-            ? $first . (!empty($parts)
-                ? ' ' . implode('.', array_map(fn($p) => strtoupper($p[0]), $parts))
-                : '')
-            : 'User';
+            /*
+             * Safely create abbreviated name.
+             *
+             * preg_split() removes empty elements, so names
+             * containing multiple spaces will not cause
+             * "Uninitialized string offset 0".
+             */
+            $user_fullname = trim($user['user_fullname'] ?? '');
 
-        $user['AbrvName'] = $AbrvName;
+            if ($user_fullname === '') {
+
+                $AbrvName = 'User';
+
+            } else {
+
+                $parts = preg_split(
+                    '/\s+/',
+                    $user_fullname,
+                    -1,
+                    PREG_SPLIT_NO_EMPTY
+                );
+
+                $first = array_shift($parts);
+
+                $AbrvName = $first ?: 'User';
+
+                if (!empty($parts)) {
+
+                    $initials = array_map(
+                        fn($p) => strtoupper(mb_substr($p, 0, 1)),
+                        $parts
+                    );
+
+                    $AbrvName .= ' ' . implode('.', $initials);
+                }
+            }
+
+            $user['AbrvName'] = $AbrvName;
+
+            return [
+                'success' => true,
+                'user' => $user
+            ];
+        }
 
         return [
-            'success' => true,
-            'user' => $user
+            'success' => false,
+            'user' => [],
+            'error' => 'User not found.'
+        ];
+
+    } catch (PDOException $e) {
+
+        return [
+            'success' => false,
+            'user' => [],
+            'error' => $e->getMessage()
         ];
     }
-
-    return [
-        'success' => false,
-        'user' => [],
-        'error' => 'User not found.'
-    ];
-
-} catch (PDOException $e) {
-    return [
-        'success' => false,
-        'user' => [],
-        'error' => $e->getMessage()
-    ];
-}
-
-
 }
 
 

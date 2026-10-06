@@ -519,7 +519,7 @@ public function updatepassword(){
 
     if ($AuthMiddlewareModel->IsThisAfirstTimeLogin()) {
 
-        require ROOT_PATH . "/views/compulsory_changepassword.php";
+        require ROOT_PATH . "/views//users/compulsory_changepassword.php";
 
     } else {
 

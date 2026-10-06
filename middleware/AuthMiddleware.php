@@ -144,8 +144,8 @@ public function ValidateAndConsumeActionToken()
 
 
 
-
-public function checkConnection($company_allownotification): bool{
+public function checkConnection($company_allownotification): bool
+{
     $allow = (int)($company_allownotification ?? 0);
 
     if ($allow === 0) {

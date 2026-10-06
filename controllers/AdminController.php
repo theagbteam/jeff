@@ -1,6 +1,6 @@
 <?php
 
-require_once ROOT_PATH . '/models/dev.php';
+require_once ROOT_PATH . '/models/admin.php';
 
 require_once ROOT_PATH . '/models/company.php';
 
@@ -1547,108 +1547,67 @@ if ($result['success']) {
 
 
 public function page_dashboard() {
-
   if (session_status() === PHP_SESSION_NONE) session_start();
   $userid =$_SESSION['userid']; 
-
+   $role_name = $role = $_SESSION['role'] ;
    $callUserModel = new User();
-
-    $CallDevModel = new ModelDev;
+    $CallModelAdmin = new ModelAdmin;
         $callAuthMiddlewareClass = new AuthMiddleware;
-        
-// $LoadCorridorsAndItLikes = $callUserModel->SelecttableForSelectOptionsFormField($tb_name);
+        $callCompanyModel = new CompanyModel() ;
+         $company_settings = $callCompanyModel->web_settings();
+         $company_adminseniorman  = $company_settings['company_adminseniorman'] ;
+          $CF_VerificationSiteUrl = $company_settings['cloudfare_verifyurl'] ?? '';
+        $CF_SecretKey = $company_settings['cloudfare_secretkey'] ?? '';
+        $CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
+           // $LoadCorridorsAndItLikes = $callUserModel->SelecttableForSelectOptionsFormField($tb_name);
          $callAuthMiddlewareClass->IfSessionDeactiveAutologout();
    if ($callAuthMiddlewareClass->IsThisAfirstTimeLogin()) {
 header("Location: index?action=compulsory_cp");
    }
-            $isConnected = $callAuthMiddlewareClass->checkConnection();
+   $search_tb_name ="ticket_category";
+  $LoadTicketcategories= $callUserModel->GeneralSelectAnyTable($search_tb_name);
+   $wellhead_status_counts = $CallModelAdmin->GetWellheadStatusCounts();
+   $TotalNoTickets = $callUserModel->CountAllTickets();
+            // $isConnected = $callAuthMiddlewareClass->checkConnection();
+//    $roleCounts = $CallModelAdmin->getRoleCounts();
 
-   $LoadUsersAndLoginTableForAdmin = $callUserModel->SelectUsersAndLoginTable($userid);
+//    $CountTickets = $CallModelAdmin->TicketCount();
 
-  
-
-   $roleCounts = $CallDevModel->getRoleCounts();
-
-   $CountTickets = $CallDevModel->TicketCount();
-
-  $totalrequests = $CallDevModel->GetRequestSum();
-
-
-
-// $totaldev = $roleCounts['developers'];
-
-$totalreporters = $roleCounts['reporters'];
-
-$totaladmin = $roleCounts['administrators'];
-
-$totalsupervisor = $roleCounts['supervisors'];
+//   $totalrequests = $CallModelAdmin->GetRequestSum();
+// $totalreporters = $roleCounts['reporters'];$totaladmin = $roleCounts['administrators'];$totalsupervisor = $roleCounts['supervisors'];
 
 // $Ticket = $CallDevModel->TicketCount();
 
- $counttickets = $CountTickets['total'];
+//  $counttickets = $CountTickets['total'];
 
 // $ticketCounts['status_0']
 
 // $ticketCounts['status_1']
 
 // $ticketCounts['status_2']
+ $LoadUsersAndLoginTableForAdmin = $callUserModel->SelectUsersAndLoginTableforOnePersonAfterLogin($userid);
+         if ($LoadUsersAndLoginTableForAdmin['success']) {
+            $user = $LoadUsersAndLoginTableForAdmin['user'];
+           $fullname = $user['user_fullname']; 
+           $role = $_SESSION['role'] = $user['login_role']; 
+           $role_name  = $user['login_role_name']; 
+           $AbrvName = $user['AbrvName'];
+           $last_login = $user['login_last_login'];
+            $user_image = ($user['user_image'] ?? "") === "" ? "noimage2.png" : $user['user_image'];
+if ($user['user_msg_notification']==1){
+    $_SESSION['msg_notification'] = 1;
+$_SESSION['msg'] = $user['user_msg'];
+$callUserModel->clearMsgNotification($userid);
+}
+             } else {
 
- $result = $callUserModel->SelectUserTableForOne($userid);
-
-        if ($result['success']) {
-
-            $user = $result['user'];
-
-            $AbrvName = $user['fullname'];
-
-            if ($user['msg_notification']==1){
-
-                $_SESSION['msg_notification'] = 1;
-
-                 $_SESSION['msg'] = $user['msg'];
-
-              $callUserModel->clearMsgNotification($userid);
-
-            }
-
-
-
-     $user_image = ($user['user_image'] ?? "") === "" ? "noimage2.png" : $user['user_image'];
-
-        } else {
-
-            echo $result['error'];
+            $_SESSION['error'] = $LoadUsersAndLoginTableForAdmin['error'];
+              header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php')); exit;
 
         }
 
-$parts = explode(' ', trim($AbrvName));
-
-$first = array_shift($parts);
-
-$AbrvName = !empty($first)? $first . (!empty($parts) ? ' ' . implode('.', array_map(fn($p) => strtoupper($p[0]), $parts)) : '') : 'User';
-
-  $page_name = "dashboard";
-
-  $role_name = $role = $_SESSION['role'] ;
-
-$result = $callAuthMiddlewareClass->SelectloginTableForOne($userid);
-
-if ($result['success']) {
-
-    $user = $result['user'];
-
-    $role_name = $user['role_name'];
-
-
-
-}
-
-     $callCompanyModel = new CompanyModel() ;
-
-      $company_settings = $callCompanyModel ->web_settings();
-     $CF_VerificationSiteUrl = $company_settings['cloudfare_verifyurl'] ?? '';
-        $CF_SecretKey = $company_settings['cloudfare_secretkey'] ?? '';
-        $CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
+  
+    
 
       $company_logfile_url  = $company_settings['company_logfile_url'] ;
 
@@ -1660,7 +1619,7 @@ if ($result['success']) {
 
        $company_copyrightlink  = $company_settings['company_copyrightlink'] ?? 'https://www.agbng.com';
 
-       $company_settings = $callCompanyModel->web_settings();
+      
 
       $company_online = $company_settings['company_online'] ?? 0;
 
@@ -1676,7 +1635,7 @@ if ($result['success']) {
 
             $loginurl = $company_url."/index.php?action=login" ;
 
-
+ $page_name = "dashboard";
 
        require ROOT_PATH . "/views/users/admin/dashboard.php";
 

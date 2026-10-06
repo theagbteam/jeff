@@ -116,9 +116,6 @@ $Ltable_sn = $corridor_sn = 0;
                                             (string)$corridor_sn
                                         );
 
-                                    $corridor_color =
-                                        $corridor['color'] ?? '';
-
                             ?>
 
                                     <tr>
@@ -170,25 +167,13 @@ $Ltable_sn = $corridor_sn = 0;
                                         </td>
 
                                         <td>
-                                            <?php if (!empty($corridor_color)) : ?>
-                                                <strong style="color: <?= htmlspecialchars($corridor_color, ENT_QUOTES, 'UTF-8'); ?>;">
-                                                    <?= htmlspecialchars(
-                                                        ucfirst(
-                                                            $corridor_name
-                                                        ),
-                                                        ENT_QUOTES,
-                                                        'UTF-8'
-                                                    ); ?>
-                                                </strong>
-                                            <?php else : ?>
-                                                <?= htmlspecialchars(
-                                                    ucfirst(
-                                                        $corridor_name
-                                                    ),
-                                                    ENT_QUOTES,
-                                                    'UTF-8'
-                                                ); ?>
-                                            <?php endif; ?>
+                                            <?= htmlspecialchars(
+                                                ucfirst(
+                                                    $corridor_name
+                                                ),
+                                                ENT_QUOTES,
+                                                'UTF-8'
+                                            ); ?>
                                         </td>
 
                                         <td>
@@ -204,7 +189,7 @@ $Ltable_sn = $corridor_sn = 0;
                                                         'UTF-8'
                                                     ); ?>',
                                                     '<?= htmlspecialchars(
-                                                        ucfirst($corridor_name),
+                                                        $corridor_name,
                                                         ENT_QUOTES,
                                                         'UTF-8'
                                                     ); ?>',
@@ -281,8 +266,7 @@ $Ltable_sn = $corridor_sn = 0;
 <form
             method="POST"
             enctype="multipart/form-data"
-            action="index.php?action=create_corridor"
-            onsubmit="if (!checkTurnstile(event)) { return false; } return disableSubmitButton(this);"
+            action="index.php?action=create_corridor"  onsubmit="return checkTurnstile(event); return disableSubmitButton(this);"
         >
 <input type="hidden" name="action_token" value="<?= htmlspecialchars($_SESSION['action_token']) ?>">
             <div class="create-corridor-form-group">
@@ -1271,3 +1255,33 @@ function checkTurnstile(event) {
 } 
     
 </script> -->
+
+<!-- =========================================================
+     DATATABLE INITIALIZATION
+========================================================= -->
+
+<script>
+    $(document).ready(function() {
+        $('#corridorDataTable').DataTable({
+            "pageLength": 10,
+            "lengthMenu": [10, 25, 50, 100],
+            "order": [[0, "asc"]],
+            "columnDefs": [
+                { "orderable": false, "targets": [4] }
+            ],
+            "language": {
+                "search": "Search:",
+                "lengthMenu": "Show _MENU_ entries",
+                "info": "Showing _START_ to _END_ of _TOTAL_ entries",
+                "infoEmpty": "Showing 0 to 0 of 0 entries",
+                "infoFiltered": "(filtered from _MAX_ total entries)",
+                "paginate": {
+                    "first": "First",
+                    "last": "Last",
+                    "next": "Next",
+                    "previous": "Previous"
+                }
+            }
+        });
+    });
+</script>

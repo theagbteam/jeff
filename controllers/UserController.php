@@ -348,18 +348,20 @@ exit;
 
             $device = $AuthMiddlewareModel->WhatDeviceIsThis();
 
-            $message =
-                "Hello $user_fullname,<br><br>"
-                . "You successfully logged in to your account on "
-                . date('l, F j, Y')
-                . " at "
-                . date('h:i A')
-                . ".<br><br>"
-                . "<strong>Device:</strong> $device<br><br>"
-                . "If this was you, no further action is required.<br><br>"
-                . "If you did not perform this login, please let your supervisor know so we can secure your account immediately.<br><br>"
-                . "Best regards,<br>"
-                . "The Support Team";
+           date_default_timezone_set('Africa/Lagos');
+
+$message =
+    "Hello $user_fullname,<br><br>"
+    . "You successfully logged in to your account on "
+    . date('l, F j, Y')
+    . " at "
+    . date('h:i A')
+    . ".<br><br>"
+    . "<strong>Device:</strong> $device<br><br>"
+    . "If this was you, no further action is required.<br><br>"
+    . "If you did not perform this login, please let your supervisor know so we can secure your account immediately.<br><br>"
+    . "Best regards,<br>"
+    . "The Support Team";
 
             $_SESSION['userid'] = $userid;
 
@@ -445,7 +447,7 @@ public function updatepassword(){
 
             $_SESSION['success'] = $result;
 
-            $userResult = $callusermodel->SelectUserTableForOne($userid);
+            $userResult = $callusermodel->SelectUsersAndLoginTableforOnePersonAfterLogin($userid);
 
             if (
                 !empty($userResult['success']) &&
@@ -454,27 +456,9 @@ public function updatepassword(){
 
                 $user = $userResult['user'];
 
-                $user_fullname = $user['fullname'] ?? 'User';
-
-                $parts = explode(' ', trim($user_fullname));
-
-                $first = array_shift($parts);
-
-                $AbrvName = !empty($first)
-                    ? $first .
-                        (!empty($parts)
-                            ? ' ' .
-                                implode(
-                                    '.',
-                                    array_map(
-                                        fn($p) => strtoupper($p[0]),
-                                        $parts
-                                    )
-                                )
-                            : '')
-                    : 'User';
-
-                $receiveraddress = $user['email'] ?? '';
+                $user_fullname = $user['user_fullname'] ?? 'User';
+                $AbrvName = $user['AbrvName'] ?? 'User';
+                $receiveraddress = $user['user_email'] ?? '';
 
                 $user_details = $AbrvName . "  " . $userid;
             }
@@ -488,23 +472,12 @@ public function updatepassword(){
                 "Best regards,<br>" .
                 "The Support Team";
 
-            $logResult = $AuthMiddlewareModel->writelog(
-                $userid,
-                $role_name,
-                $role,
-                $user_details,
-                $action,
-                $company_logfile_url
-            );
+            $logResult = $AuthMiddlewareModel->writelog($userid,$role_name,$role,$user_details,$action,$company_logfile_url);
 
-            $SendEmail = $CallMailerModel->sendmail(
-                $receiveraddress,
-                $subject,
-                $message
-            );
+            $SendEmail = $CallMailerModel->sendmail($receiveraddress,$subject,$message);
 
   
-             header("Location: " .($_SERVER['HTTP_REFERER'] ?? 'index.php?action=index'));exit;
+             header("Location: index.php?action=dashboard");exit;
 
         } else {
 
@@ -515,17 +488,13 @@ public function updatepassword(){
 
     if ($AuthMiddlewareModel->IsThisAfirstTimeLogin()) {
 
-        require ROOT_PATH . "/views/compulsory_changepassword.php";
+        require ROOT_PATH . "/views/users/compulsory_changepassword.php";
 
     } else {
 
-        // header(
-        //     "Location: " .
-        //     ($_SERVER['HTTP_REFERER'] ?? 'index.php?action=dashboard')
-        // );
-
-        // exit;
+      header("Location: " .($_SERVER['HTTP_REFERER'] ?? 'index.php?action=dashboard'));exit;
     }
+    
 }
 
 
