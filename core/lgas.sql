@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 28, 2026 at 12:44 PM
+-- Generation Time: Oct 09, 2026 at 08:10 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -813,6 +813,37 @@ INSERT INTO `lgas` (`id`, `state_id`, `name`, `created_at`) VALUES
 (772, 37, 'Gwagwalada', '2026-02-26 13:32:13'),
 (773, 37, 'Kuje', '2026-02-26 13:32:13'),
 (774, 37, 'Kwali', '2026-02-26 13:32:13');
+
+--
+-- Indexes for dumped tables
+--
+
+--
+-- Indexes for table `lgas`
+--
+ALTER TABLE `lgas`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_state_id` (`state_id`);
+
+--
+-- AUTO_INCREMENT for dumped tables
+--
+
+--
+-- AUTO_INCREMENT for table `lgas`
+--
+ALTER TABLE `lgas`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=775;
+
+--
+-- Constraints for dumped tables
+--
+
+--
+-- Constraints for table `lgas`
+--
+ALTER TABLE `lgas`
+  ADD CONSTRAINT `lgas_ibfk_1` FOREIGN KEY (`state_id`) REFERENCES `states` (`id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

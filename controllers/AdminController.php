@@ -5,6 +5,9 @@ require_once ROOT_PATH . '/models/admin.php';
 require_once ROOT_PATH . '/models/company.php';
 
 require_once ROOT_PATH . '/models/User.php';
+require_once ROOT_PATH . '/models/State.php';
+
+require_once ROOT_PATH . '/models/Lga.php';
 
 // require_once ROOT_PATH . '/models/StateModel.php';
 
@@ -17,7 +20,8 @@ require_once ROOT_PATH . '/services/mailer.php';
 class Admincontroller {
 
     private $db;
-
+    private $stateModel;
+    private $lgaModel;
     private $photoPasswordModel;
 
     private $userid;
@@ -28,13 +32,327 @@ class Admincontroller {
 
     public function __construct() {
 
-        $this->userid= $_SESSION['userid'] ?? $_SESSION['userid'] ?? null;
+        // $this->userid= $_SESSION['userid'] ?? $_SESSION['userid'] ?? null;
 
         $this->db = (new Database())->getConnection();
-
-        $this->photoPasswordModel = new PhotoPassword_Update($this->db);
+        $this->stateModel = new State();
+        $this->lgaModel   = new Lga();
+        // $this->photoPasswordModel = new PhotoPassword_Update($this->db);
 
     }
+
+ public function getLgas() {
+        header('Content-Type: application/json');
+
+        $stateId = isset($_GET['state_id']) ? (int)$_GET['state_id'] : 0;
+
+        if ($stateId <= 0) {
+            echo json_encode(['success' => false, 'data' => []]);
+            return;
+        }
+
+        $lgas = $this->lgaModel->getByState($stateId);
+        echo json_encode(['success' => true, 'data' => $lgas]);
+    }
+
+
+
+
+
+public function page_dashboard() {
+  if (session_status() === PHP_SESSION_NONE) session_start();
+  $userid =$_SESSION['userid']; 
+   $role_name = $role = $_SESSION['role'] ;
+    $LoadAllNigeriaStates = $this->stateModel->getAll();
+   $callUserModel = new User();
+   $tb_name = "priority";
+   $LoadPriorityColumnForSelect =  $callUserModel->GeneralSelectAnyTable($tb_name);
+   $tb_name = "incidence_source";$LoadIncidenceSourceColumnForSelect=$callUserModel->GeneralSelectAnyTable($tb_name);
+   $tb_name = "operator";$LoadOperatorColumnForSelect=$callUserModel->GeneralSelectAnyTable($tb_name);
+   $tb_name = "zone";$LoadZoneColumnForSelect=$callUserModel->GeneralSelectAnyTable($tb_name);
+   $tb_name = "pipeline";$LoadPipelineColumnForSelect=$callUserModel->GeneralSelectAnyTable($tb_name);
+   $tb_name = "pipeline_type";$LoadPipelineTypeColumnForSelect=$callUserModel->GeneralSelectAnyTable($tb_name);
+   $ticket_id = $callUserModel->generateTicketId();
+   if ($ticket_id === null) { $ticket_id="Undefined"; }
+$page_link_title = $_GET['action'] ?? 'tickets';
+if ($page_link_title =="run_reports") {
+$page_name ="Run Reports";
+}elseif ($page_link_title =="audit_trail") {
+$page_name ="Audit Trail";
+}elseif ($page_link_title =="cr_ticket") {
+    $Crt_sn = isset($_GET['sn']) ? (int) $_GET['sn'] : 0; 
+    if ($Crt_sn <= 0) {
+    header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php')); exit;
+}
+
+    $the_tablename="ticket_category"; $column_name="sn"; $column_value=$Crt_sn  ;
+ $checkIfCrSn = $callUserModel->GeneralSelectAnyTableWhereColumnValueEquals($the_tablename, $column_name, $column_value);
+if (empty($checkIfCrSn)) {
+    header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php')); exit;
+}
+
+
+$checkIfCrSn = $checkIfCrSn[0] ?? null; // because ORDER BY sn DESC
+
+if ($checkIfCrSn) {
+    $Tk_RowSearchValue = $checkIfCrSn['name']; // e.g. $row['report_title']
+    // do something with $row
+}
+
+
+
+ $page_name ="Create Tickets";
+}elseif ($page_link_title =="export_tickets") {
+$page_name ="Export Tickets";
+}elseif ($page_link_title =="manage_users") {
+$page_name ="Manage Users";
+}elseif ($page_link_title =="user_requests") {
+$page_name ="All Request";
+}elseif ($page_link_title =="transfers") {
+$page_name ="Transfer History";
+}elseif ($page_link_title =="user_library") {
+$page_name ="Upload Library";
+}elseif ($page_link_title =="audit_trail") {
+$page_name ="Audit Trail";
+}else{
+   $page_link_title="tickets";
+  $page_name ="Tickets";
+$tb_name = "ticket_reports";
+$LoadAllTickets =  $callUserModel->GeneralSelectAnyTable($tb_name);
+}   
+    $CallModelAdmin = new ModelAdmin;
+        $callAuthMiddlewareClass = new AuthMiddleware;
+        $callCompanyModel = new CompanyModel() ;
+         $company_settings = $callCompanyModel->web_settings();
+         $company_adminseniorman  = $company_settings['company_adminseniorman'] ;
+          $CF_VerificationSiteUrl = $company_settings['cloudfare_verifyurl'] ?? '';
+        $CF_SecretKey = $company_settings['cloudfare_secretkey'] ?? '';
+        $CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
+           // $LoadCorridorsAndItLikes = $callUserModel->SelecttableForSelectOptionsFormField($tb_name);
+         $callAuthMiddlewareClass->IfSessionDeactiveAutologout();
+   if ($callAuthMiddlewareClass->IsThisAfirstTimeLogin()) {
+header("Location: index?action=compulsory_cp");
+   }
+   $search_tb_name ="ticket_category";
+  $LoadTicketcategories= $callUserModel->GeneralSelectAnyTable($search_tb_name);
+   $wellhead_status_counts = $CallModelAdmin->GetWellheadStatusCounts();
+   $TotalNoTickets = $callUserModel->CountAllTickets();
+            // $isConnected = $callAuthMiddlewareClass->checkConnection();
+//    $roleCounts = $CallModelAdmin->getRoleCounts();
+
+//    $CountTickets = $CallModelAdmin->TicketCount();
+
+//   $totalrequests = $CallModelAdmin->GetRequestSum();
+// $totalreporters = $roleCounts['reporters'];$totaladmin = $roleCounts['administrators'];$totalsupervisor = $roleCounts['supervisors'];
+
+// $Ticket = $CallDevModel->TicketCount();
+
+//  $counttickets = $CountTickets['total'];
+
+// $ticketCounts['status_0']
+
+// $ticketCounts['status_1']
+
+// $ticketCounts['status_2']
+ $LoadUsersAndLoginTableForAdmin = $callUserModel->SelectUsersAndLoginTableforOnePersonAfterLogin($userid);
+         if ($LoadUsersAndLoginTableForAdmin['success']) {
+            $user = $LoadUsersAndLoginTableForAdmin['user'];
+           $user_corridor = $user['user_corridor']; 
+           $user_email  = $user['user_email']; 
+           $user_phone  = $user['user_phone']; 
+           $fullname = $user['user_fullname']; 
+           $role = $_SESSION['role'] = $user['login_role']; 
+           $role_name  = $user['login_role_name']; 
+           $AbrvName = $user['AbrvName'];
+           $last_login = $user['login_last_login'];
+            $user_image = ($user['user_image'] ?? "") === "" ? "noimage2.png" : $user['user_image'];
+if ($user['user_msg_notification']==1){
+    $_SESSION['msg_notification'] = 1;
+$_SESSION['msg'] = $user['user_msg'];
+$callUserModel->clearMsgNotification($userid);
+}
+             } else {
+
+            $_SESSION['error'] = $LoadUsersAndLoginTableForAdmin['error'];
+              header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php')); exit;
+
+        }
+
+  
+    
+
+      $company_logfile_url  = $company_settings['company_logfile_url'] ;
+
+      $company_userid  = $company_settings['company_userid'] ;
+
+       $company_copyright  = $company_settings['company_copyright'] ?? '2025';
+
+       $company_poweredby  = $company_settings['company_poweredby'] ?? 'AgbTeam';
+
+       $company_copyrightlink  = $company_settings['company_copyrightlink'] ?? 'https://www.agbng.com';
+
+      
+ $company_logo =     $company_settings['company_logo'] ?? '';
+      $company_online = $company_settings['company_online'] ?? 0;
+
+      $company_Allow_signup = $company_settings['company_signup'] ?? 0;
+
+      $company_alias = $company_settings['company_alias'] ?? 'Page';
+
+       $company_logo = $company_settings['company_logo'] ?? '';
+
+       $company_favicon = $company_settings['company_favicon'] ?? '';
+
+         $company_url = $company_settings['company_url'] ?? '';
+
+            $loginurl = $company_url."/index.php?action=login" ;
+
+ 
+
+       require ROOT_PATH . "/views/users/admin/dashboard.php";
+
+  }
+
+
+
+
+    /* ==========================
+       UPDATE PASSWORD
+    ========================== */
+public function updatepassword(){
+
+    $callusermodel = new User();
+    $AuthMiddlewareModel = new AuthMiddleware();
+    $callCompanyModel = new CompanyModel();
+    $company_settings = $callCompanyModel->web_settings();
+    $CallMailerModel = new Mailer;
+ $AuthMiddlewareModel->IfSessionDeactiveAutologout();
+  $LoadAllNigeriaStates = $this->stateModel->getAll();
+    $company_logfile_url = $company_settings['company_logfile_url'] ?? '';
+    $CF_VerificationSiteUrl = $company_settings['cloudfare_verifyurl'] ?? '';
+    $CF_SecretKey = $company_settings['cloudfare_secretkey'] ?? '';
+    $CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
+
+    if (isset($_POST['update_user_password'])) {
+
+        $userid = $_SESSION['userid'];
+        $role_name = $role = $_SESSION['role'];
+
+        $subject = $action = "Your Password was updated";
+
+        $data = [
+            'userid' => $userid,
+            'old_password' => trim($_POST['old_password'] ?? ''),
+            'new_password' => trim($_POST['new_password'] ?? ''),
+            'verify_password' => trim($_POST['verify_password'] ?? '')
+        ];
+
+        if (
+            $data['new_password'] === '' ||
+            $data['verify_password'] === ''
+        ) {
+            $_SESSION['error'] = "Empty fields are not allowed";
+
+            header(
+                "Location: " .
+                ($_SERVER['HTTP_REFERER'] ?? 'index.php?action=index')
+            );
+
+            exit;
+        }
+
+        $result = $callusermodel->updateuserpwd($data);
+
+        if ($result === "Password updated successfully.") {
+
+            $_SESSION['success'] = $result;
+
+            $userResult = $callusermodel->SelectUserTableForOne($userid);
+
+            if (
+                !empty($userResult['success']) &&
+                !empty($userResult['user'])
+            ) {
+
+                $user = $userResult['user'];
+
+                $user_fullname = $user['fullname'] ?? 'User';
+
+                $parts = explode(' ', trim($user_fullname));
+
+                $first = array_shift($parts);
+
+                $AbrvName = !empty($first)
+                    ? $first .
+                        (!empty($parts)
+                            ? ' ' .
+                                implode(
+                                    '.',
+                                    array_map(
+                                        fn($p) => strtoupper($p[0]),
+                                        $parts
+                                    )
+                                )
+                            : '')
+                    : 'User';
+
+                $receiveraddress = $user['email'] ?? '';
+
+                $user_details = $AbrvName . "  " . $userid;
+            }
+
+            $message =
+                "Hello $user_fullname,<br><br>" .
+                "Your account password has been changed successfully.<br><br>" .
+                "<strong>Reference ID:</strong> $userid<br><br>" .
+                "If you made this change, no further action is required.<br><br>" .
+                "If you did not change your password, please contact the Support Team immediately.<br><br>" .
+                "Best regards,<br>" .
+                "The Support Team";
+
+            $logResult = $AuthMiddlewareModel->writelog(
+                $userid,
+                $role_name,
+                $role,
+                $user_details,
+                $action,
+                $company_logfile_url
+            );
+
+            $SendEmail = $CallMailerModel->sendmail(
+                $receiveraddress,
+                $subject,
+                $message
+            );
+
+  
+            // header("Location: index?action=dashboard");
+
+            // exit;
+             header("Location: " .($_SERVER['HTTP_REFERER'] ?? 'index.php?action=dashboard')); exit;
+
+        } else {
+
+            $_SESSION['error'] = $result;
+
+            header("Location: " .($_SERVER['HTTP_REFERER'] ?? 'index.php?action=dashboard')); exit;
+        }
+    }
+
+    if ($AuthMiddlewareModel->IsThisAfirstTimeLogin()) {
+
+        require ROOT_PATH . "/views//users/compulsory_changepassword.php";
+
+    } else {
+
+        // header(
+        //     "Location: " .
+        //     ($_SERVER['HTTP_REFERER'] ?? 'index.php?action=dashboard')
+        // );
+
+        // exit;
+    }
+}
 
 
 
@@ -1546,100 +1864,6 @@ if ($result['success']) {
 
 
 
-public function page_dashboard() {
-  if (session_status() === PHP_SESSION_NONE) session_start();
-  $userid =$_SESSION['userid']; 
-   $role_name = $role = $_SESSION['role'] ;
-   $callUserModel = new User();
-    $CallModelAdmin = new ModelAdmin;
-        $callAuthMiddlewareClass = new AuthMiddleware;
-        $callCompanyModel = new CompanyModel() ;
-         $company_settings = $callCompanyModel->web_settings();
-         $company_adminseniorman  = $company_settings['company_adminseniorman'] ;
-          $CF_VerificationSiteUrl = $company_settings['cloudfare_verifyurl'] ?? '';
-        $CF_SecretKey = $company_settings['cloudfare_secretkey'] ?? '';
-        $CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
-           // $LoadCorridorsAndItLikes = $callUserModel->SelecttableForSelectOptionsFormField($tb_name);
-         $callAuthMiddlewareClass->IfSessionDeactiveAutologout();
-   if ($callAuthMiddlewareClass->IsThisAfirstTimeLogin()) {
-header("Location: index?action=compulsory_cp");
-   }
-   $search_tb_name ="ticket_category";
-  $LoadTicketcategories= $callUserModel->GeneralSelectAnyTable($search_tb_name);
-   $wellhead_status_counts = $CallModelAdmin->GetWellheadStatusCounts();
-   $TotalNoTickets = $callUserModel->CountAllTickets();
-            // $isConnected = $callAuthMiddlewareClass->checkConnection();
-//    $roleCounts = $CallModelAdmin->getRoleCounts();
-
-//    $CountTickets = $CallModelAdmin->TicketCount();
-
-//   $totalrequests = $CallModelAdmin->GetRequestSum();
-// $totalreporters = $roleCounts['reporters'];$totaladmin = $roleCounts['administrators'];$totalsupervisor = $roleCounts['supervisors'];
-
-// $Ticket = $CallDevModel->TicketCount();
-
-//  $counttickets = $CountTickets['total'];
-
-// $ticketCounts['status_0']
-
-// $ticketCounts['status_1']
-
-// $ticketCounts['status_2']
- $LoadUsersAndLoginTableForAdmin = $callUserModel->SelectUsersAndLoginTableforOnePersonAfterLogin($userid);
-         if ($LoadUsersAndLoginTableForAdmin['success']) {
-            $user = $LoadUsersAndLoginTableForAdmin['user'];
-           $fullname = $user['user_fullname']; 
-           $role = $_SESSION['role'] = $user['login_role']; 
-           $role_name  = $user['login_role_name']; 
-           $AbrvName = $user['AbrvName'];
-           $last_login = $user['login_last_login'];
-            $user_image = ($user['user_image'] ?? "") === "" ? "noimage2.png" : $user['user_image'];
-if ($user['user_msg_notification']==1){
-    $_SESSION['msg_notification'] = 1;
-$_SESSION['msg'] = $user['user_msg'];
-$callUserModel->clearMsgNotification($userid);
-}
-             } else {
-
-            $_SESSION['error'] = $LoadUsersAndLoginTableForAdmin['error'];
-              header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php')); exit;
-
-        }
-
-  
-    
-
-      $company_logfile_url  = $company_settings['company_logfile_url'] ;
-
-      $company_userid  = $company_settings['company_userid'] ;
-
-       $company_copyright  = $company_settings['company_copyright'] ?? '2025';
-
-       $company_poweredby  = $company_settings['company_poweredby'] ?? 'AgbTeam';
-
-       $company_copyrightlink  = $company_settings['company_copyrightlink'] ?? 'https://www.agbng.com';
-
-      
-
-      $company_online = $company_settings['company_online'] ?? 0;
-
-      $company_Allow_signup = $company_settings['company_signup'] ?? 0;
-
-      $company_alias = $company_settings['company_alias'] ?? 'Page';
-
-       $company_logo = $company_settings['company_logo'] ?? '';
-
-       $company_favicon = $company_settings['company_favicon'] ?? '';
-
-         $company_url = $company_settings['company_url'] ?? '';
-
-            $loginurl = $company_url."/index.php?action=login" ;
-
- $page_name = "dashboard";
-
-       require ROOT_PATH . "/views/users/admin/dashboard.php";
-
-  }
 
 
 

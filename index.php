@@ -27,8 +27,7 @@ switch ($entryroles) {
         break;
 
           case 'developer':
-            //  $SearchForMiddleware->IsLoginSessionActive() ;
-    require_once   ROOT_PATH ."/routers/dev.php";
+               require_once   ROOT_PATH ."/routers/dev.php";
         break;
 
     default:

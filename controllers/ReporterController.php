@@ -44,6 +44,11 @@ class ReporterController {
 public function page_dashboard() {
 
   if (session_status() === PHP_SESSION_NONE) session_start();
+//   session_destroy();
+
+//         header("Location: index?action=login");
+
+//         exit;
 
 //    $_SESSION['msg']  = "";
 

@@ -131,14 +131,13 @@ public function updateuserpwd($data){
 
 
 
-public function GeneralSelectAnyTable($tb_name)
-{
+public function GeneralSelectAnyTable($tb_name){
     try {
          $allowed_tables = [
         'audit_trail','company','corridor','incidence_source','lgas',
         'local_government_areas','login','operator','owner','pipeline',
         'pipeline_type','priority','report_type','request','states',
-        'tickets','ticket_category','users','wellhead_status','zone'
+        'tickets','ticket_category','users','ticket_reports','wellhead_status','zone'
     ];
 
 
@@ -198,7 +197,6 @@ public function GeneralUpdateAnyTableColumnWithThisValue($data)
 
 
 
-
 public function GeneralSelectAnyTableWhereColumnValueEquals($the_tablename, $column_name, $column_value)
 {
     try {
@@ -206,10 +204,22 @@ public function GeneralSelectAnyTableWhereColumnValueEquals($the_tablename, $col
             'audit_trail','company','corridor','incidence_source','lgas',
             'local_government_areas','login','operator','owner','pipeline',
             'pipeline_type','priority','report_type','request','states',
-            'tickets','ticket_category','users','wellhead_status','zone'
+            'tickets','ticket_category','ticket_reports','users','wellhead_status','zone'
         ];
 
         if (!in_array($the_tablename, $allowed_tables, true)) {
+            return [];
+        }
+
+        // ✅ Validate column name: letters, numbers, underscore only
+        if (!preg_match('/^[A-Za-z0-9_]+$/', $column_name)) {
+            return [];
+        }
+
+        // ✅ Optional but stronger: check it exists in the table
+        $check = $this->conn->prepare("SHOW COLUMNS FROM `{$the_tablename}` LIKE :col");
+        $check->execute([':col' => $column_name]);
+        if (!$check->fetch()) {
             return [];
         }
 
@@ -223,6 +233,30 @@ public function GeneralSelectAnyTableWhereColumnValueEquals($the_tablename, $col
     } catch (PDOException $e) {
         error_log('GeneralSelectAnyTable error: ' . $e->getMessage());
         return [];
+    }
+}
+
+
+
+
+
+public function generateTicketId()
+{
+    try {
+        $sql = "SELECT COALESCE(MAX(sn), 0) + 10234 AS ticket_id FROM `ticket_reports`";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$row) {
+            return null;
+        }
+
+        return 'tid-' . (int) $row['ticket_id'];
+
+    } catch (PDOException $e) {
+        error_log('generateTicketId error: ' . $e->getMessage());
+        return null;
     }
 }
 
@@ -328,6 +362,7 @@ public function SelectUsersAndLoginTableforOnePersonAfterLogin($user_id)
 
         $sql = "SELECT
             users.sn AS user_sn,
+            users.corridor AS user_corridor,
             users.date AS user_date,
             users.title AS user_title,
             users.user_image AS user_image,
@@ -609,19 +644,33 @@ public function SelectUserTableForOne($userid){
 
 
 
-public function CreateUserAccount($data) {
-    try {
+public function CreateUserAccount($data) {try {try {
      
-        $company_userid = $data['company_userid'];
-        $title          = $data['title'];
-        $fullname       = $data['fullname'];
-        $phone          = $data['phone'];
-        $role           = $data['role'];
-        $role_name      = $data['role_name'];
-        $email          = $data['email'];
-        $user_corridor  = $data['user_corridor'];
+    // Set Nigeria timezone (West Africa Time - UTC+1, no DST)
+    date_default_timezone_set('Africa/Lagos');
 
-        $status = 1;
+    $company_userid = $data['company_userid'];
+    $title          = $data['title'];
+    $fullname       = $data['fullname'];
+    $phone          = $data['phone'];
+    $role           = $data['role'];
+    $role_name      = $data['role_name'];
+    $email          = $data['email'];
+    $user_corridor  = $data['user_corridor'];
+
+    $status = 1;
+
+    $Role_comment =
+    $Role_create_user =
+    $Role_approve_user =
+    $Role_delete_user =
+    $Role_edit_user =
+    $Role_create_report =
+    $Role_delete_report =
+    $Role_edit_report =
+    $Role_approve_report = 0;
+
+    if ($role == "administrator") {
 
         $Role_comment =
         $Role_create_user =
@@ -631,225 +680,228 @@ public function CreateUserAccount($data) {
         $Role_create_report =
         $Role_delete_report =
         $Role_edit_report =
-        $Role_approve_report = 0;
+        $Role_approve_report = 1;
 
-        if ($role == "administrator") {
+    } elseif ($role == "supervisor") {
 
-            $Role_comment =
-            $Role_create_user =
-            $Role_approve_user =
-            $Role_delete_user =
-            $Role_edit_user =
-            $Role_create_report =
-            $Role_delete_report =
-            $Role_edit_report =
-            $Role_approve_report = 1;
+        $Role_comment = 1;
+        $Role_create_report = 1;
+        $Role_approve_report = 1;
 
-        } elseif ($role == "supervisor") {
+    } else {
 
-            $Role_comment = 1;
-            $Role_create_report = 1;
-            $Role_approve_report = 1;
+        $Role_comment = 1;
+        $Role_create_report = 1;
+    }
 
-        } else {
+    $sql = "
+        SELECT userid
+        FROM users
+        WHERE phone = :phone
+        LIMIT 1
+    ";
 
-            $Role_comment = 1;
-            $Role_create_report = 1;
-        }
+    $stmt = $this->conn->prepare($sql);
 
-        $sql = "
-            SELECT userid
-            FROM users
-            WHERE phone = :phone
-            LIMIT 1
-        ";
+    $stmt->execute([
+        ':phone' => $phone
+    ]);
 
-        $stmt = $this->conn->prepare($sql);
+    $phoneExists = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        $stmt->execute([
-            ':phone' => $phone
-        ]);
-
-        $phoneExists = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($phoneExists) {
-
-            return [
-                'success'      => false,
-                'password'     => null,
-                'phone_exists' => true,
-                'email_exists' => false,
-                'error'        => null
-            ];
-        }
-
-        $sql = "
-            SELECT userid
-            FROM users
-            WHERE email = :email
-            LIMIT 1
-        ";
-
-        $stmt = $this->conn->prepare($sql);
-
-        $stmt->execute([
-            ':email' => $email
-        ]);
-
-        $emailExists = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($emailExists) {
-
-            return [
-                'success'      => false,
-                'password'     => null,
-                'phone_exists' => false,
-                'email_exists' => true,
-                'error'        => null
-            ];
-        }
-
-        $sql = "SELECT MAX(sn) AS last_sn FROM login";
-
-        $stmt = $this->conn->prepare($sql);
-
-        $stmt->execute();
-
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        $lastSn = $result['last_sn'] ?? 0;
-
-        $userid = $company_userid + $lastSn;
-
-        $action_token = bin2hex(random_bytes(5)) . $userid;
-
-        $this->conn->beginTransaction();
-
-        $password =
-            chr(rand(65, 90)) .
-            chr(rand(65, 90)) .
-            rand(1000, 9999);
-
-        $hashedPassword = password_hash(
-            $phone,
-            PASSWORD_DEFAULT
-        );
-
-        $sql = "
-            INSERT INTO login (
-                userid,
-                password,
-                role,
-                role_name,
-                status,
-                action_token,
-                Role_comment,
-                Role_create_user,
-                Role_approve_user,
-                Role_delete_user,
-                Role_edit_user,
-                Role_create_report,
-                Role_delete_report,
-                Role_edit_report,
-                Role_approve_report
-            )
-            VALUES (
-                :userid,
-                :password,
-                :role,
-                :role_name,
-                :status,
-                :action_token,
-                :Role_comment,
-                :Role_create_user,
-                :Role_approve_user,
-                :Role_delete_user,
-                :Role_edit_user,
-                :Role_create_report,
-                :Role_delete_report,
-                :Role_edit_report,
-                :Role_approve_report
-            )
-        ";
-
-        $stmt = $this->conn->prepare($sql);
-
-        $stmt->execute([
-            ':userid'              => $userid,
-            ':password'            => $hashedPassword,
-            ':role'                => $role,
-            ':role_name'           => $role_name,
-            ':status'              => $status,
-            ':action_token'        => $action_token,
-            ':Role_comment'        => $Role_comment,
-            ':Role_create_user'    => $Role_create_user,
-            ':Role_approve_user'   => $Role_approve_user,
-            ':Role_delete_user'    => $Role_delete_user,
-            ':Role_edit_user'      => $Role_edit_user,
-            ':Role_create_report'  => $Role_create_report,
-            ':Role_delete_report'  => $Role_delete_report,
-            ':Role_edit_report'    => $Role_edit_report,
-            ':Role_approve_report' => $Role_approve_report
-        ]);
-
-        $sql = "
-            INSERT INTO users (
-                status,
-                title,
-                fullname,
-                phone,
-                email,
-                userid,
-                date
-            )
-            VALUES (
-                1,
-                :title,
-                :fullname,
-                :phone,
-                :email,
-                :userid,
-                :date
-            )
-        ";
-
-        $stmt = $this->conn->prepare($sql);
-
-        $stmt->execute([
-            ':fullname' => $fullname,
-            ':title'    => $title,
-            ':phone'    => $phone,
-            ':email'    => $email,
-            ':userid'   => $userid,
-            ':date'     => date('Y-m-d H:i:s')
-        ]);
-
-        $this->conn->commit();
+    if ($phoneExists) {
 
         return [
-            'success'      => true,
-            'userid'       => $userid,
-            'password'     => $password,
-            'phone_exists' => false,
+            'success'      => false,
+            'password'     => null,
+            'phone_exists' => true,
             'email_exists' => false,
             'error'        => null
         ];
+    }
 
-    } catch (PDOException $e) {
+    $sql = "
+        SELECT userid
+        FROM users
+        WHERE email = :email
+        LIMIT 1
+    ";
 
-        if ($this->conn->inTransaction()) {
-            $this->conn->rollBack();
-        }
+    $stmt = $this->conn->prepare($sql);
+
+    $stmt->execute([
+        ':email' => $email
+    ]);
+
+    $emailExists = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($emailExists) {
 
         return [
             'success'      => false,
             'password'     => null,
             'phone_exists' => false,
-            'email_exists' => false,
-            'error'        => $e->getMessage()
+            'email_exists' => true,
+            'error'        => null
         ];
     }
-}
+
+    $sql = "SELECT MAX(sn) AS last_sn FROM login";
+
+    $stmt = $this->conn->prepare($sql);
+
+    $stmt->execute();
+
+    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    $lastSn = $result['last_sn'] ?? 0;
+
+    $userid = $company_userid + $lastSn;
+
+    $action_token = bin2hex(random_bytes(5)) . $userid;
+
+    $this->conn->beginTransaction();
+
+    $password =
+        chr(rand(65, 90)) .
+        chr(rand(65, 90)) .
+        rand(1000, 9999);
+
+    $hashedPassword = password_hash(
+        $phone,
+        PASSWORD_DEFAULT
+    );
+
+    $sql = "
+        INSERT INTO login (
+            userid,
+            password,
+            role,
+            role_name,
+            status,
+            action_token,
+            Role_comment,
+            Role_create_user,
+            Role_approve_user,
+            Role_delete_user,
+            Role_edit_user,
+            Role_create_report,
+            Role_delete_report,
+            Role_edit_report,
+            Role_approve_report
+        )
+        VALUES (
+            :userid,
+            :password,
+            :role,
+            :role_name,
+            :status,
+            :action_token,
+            :Role_comment,
+            :Role_create_user,
+            :Role_approve_user,
+            :Role_delete_user,
+            :Role_edit_user,
+            :Role_create_report,
+            :Role_delete_report,
+            :Role_edit_report,
+            :Role_approve_report
+        )
+    ";
+
+    $stmt = $this->conn->prepare($sql);
+
+    $stmt->execute([
+        ':userid'              => $userid,
+        ':password'            => $hashedPassword,
+        ':role'                => $role,
+        ':role_name'           => $role_name,
+        ':status'              => $status,
+        ':action_token'        => $action_token,
+        ':Role_comment'        => $Role_comment,
+        ':Role_create_user'    => $Role_create_user,
+        ':Role_approve_user'   => $Role_approve_user,
+        ':Role_delete_user'    => $Role_delete_user,
+        ':Role_edit_user'      => $Role_edit_user,
+        ':Role_create_report'  => $Role_create_report,
+        ':Role_delete_report'  => $Role_delete_report,
+        ':Role_edit_report'    => $Role_edit_report,
+        ':Role_approve_report' => $Role_approve_report
+    ]);
+
+    $sql = "
+        INSERT INTO users (
+            status,
+            title,
+            fullname,
+            phone,
+            email,
+            userid,
+            corridor,
+            date
+        )
+        VALUES (
+            1,
+            :title,
+            :fullname,
+            :phone,
+            :email,
+            :userid,
+            :corridor,
+            :date
+        )
+    ";
+
+    $stmt = $this->conn->prepare($sql);
+
+    $stmt->execute([
+        ':fullname' => $fullname,
+        ':title'    => $title,
+        ':phone'    => $phone,
+        ':email'    => $email,
+        ':userid'   => $userid,
+        ':corridor' => $user_corridor,
+        ':date'     => date('Y-m-d H:i:s')
+    ]);
+
+    $this->conn->commit();
+
+    return [
+        'success'      => true,
+        'userid'       => $userid,
+        'password'     => $password,
+        'phone_exists' => false,
+        'email_exists' => false,
+        'error'        => null
+    ];
+
+} catch (PDOException $e) {
+
+    if ($this->conn->inTransaction()) {
+        $this->conn->rollBack();
+    }
+
+    return [
+        'success'      => false,
+        'password'     => null,
+        'phone_exists' => false,
+        'email_exists' => false,
+        'error'        => $e->getMessage()
+    ];
+}} catch (PDOException $e) {
+
+    if ($this->conn->inTransaction()) {
+        $this->conn->rollBack();
+    }
+
+    return [
+        'success'      => false,
+        'password'     => null,
+        'phone_exists' => false,
+        'email_exists' => false,
+        'error'        => $e->getMessage()
+    ];
+}}
 
 
 }

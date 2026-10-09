@@ -47,7 +47,7 @@
                 <div class="profile-pic">
 
                     <div class="count-indicator">
-
+                         
                         <img
                             class="img-xs rounded-circle"
                             src="views/uploads/img/profile/<?= $user_image ?>"

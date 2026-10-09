@@ -21,7 +21,7 @@
                     $ticket_category_serial = 1;
                     foreach ($LoadTicketcategories as $LoadTicketcategory):
                     ?>
-                        <a class="ticket-category-item" href="admin/new_ticket.php?a=add&category=<?= urlencode($LoadTicketcategory['sn'] ?? '') ?>">
+                        <a class="ticket-category-item" href="index.php?action=cr_ticket&sn=<?= urlencode($LoadTicketcategory['sn'] ?? '') ?>"
                             <span class="ticket-category-number"><?= $ticket_category_serial ?></span>
                             <span><?= htmlspecialchars($LoadTicketcategory['name'] ?? '') ?></span>
                         </a>
@@ -37,9 +37,11 @@
 
 <main class="main-content">
     <div class="content-header"></div>
-
+<?php if ($page_link_title=="tickets")  : ?>
    <?php include 'views/inc/admin/ticket_categoryheader.php'   ?>
-
+<?php elseif ($page_link_title=="cr_ticket")  : ?>
+   <?php include 'views/inc/admin/cr_ticket.php'   ?>
+<?php endif;  ?>
   
 </main>
 

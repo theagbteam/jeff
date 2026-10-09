@@ -24,6 +24,34 @@ $current_action = $page_name;
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<!-- ============================================================
+     SEO META TAGS
+============================================================ -->
+<title><?= htmlspecialchars($company_alias . " - " . $page_name, ENT_QUOTES, 'UTF-8') ?></title>
+<meta name="description" content="<?= htmlspecialchars(($page_name ?? 'Dashboard') . ' - ' . ($company_name ?? 'IMRA') . ' operations management system.', ENT_QUOTES, 'UTF-8') ?>">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#1e2b42">
+<meta name="color-scheme" content="light dark">
+<meta name="format-detection" content="telephone=no">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+
+<!-- Open Graph (helps if links are ever shared internally) -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="<?= htmlspecialchars($company_name . " - " . $page_name, ENT_QUOTES, 'UTF-8') ?>">
+<meta property="og:description" content="<?= htmlspecialchars(($page_name ?? 'Dashboard') . ' - ' . ($company_name ?? 'IMRA') . ' operations management system.', ENT_QUOTES, 'UTF-8') ?>">
+<meta property="og:site_name" content="<?= htmlspecialchars($company_name ?? 'IMRA', ENT_QUOTES, 'UTF-8') ?>">
+
+<!-- ============================================================
+     PERFORMANCE: PRE-CONNECT / DNS-PREFETCH FOR CDNs
+============================================================ -->
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://cdn.datatables.net" crossorigin>
+<link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+<link rel="dns-prefetch" href="https://cdn.datatables.net">
+
+<!-- ============================================================
+     THEME INITIALIZATION (kept as-is, just cleaned)
+============================================================ -->
 <script>
     (function () {
         const templateMode = <?= json_encode($template_mode) ?>;
@@ -40,13 +68,37 @@ $current_action = $page_name;
     })();
 </script>
 
-<title>NNPC IMRA - Tickets Dashboard</title>
-<script src="views/inc/sweetalert/sweetalert2@11.js"></script>
-<script src="views/inc/sweetalert/jquery-3.6.4.min.js"></script>
+<!-- ============================================================
+     LOCAL SCRIPTS (defer to unblock rendering)
+============================================================ -->
+<script defer src="views/inc/sweetalert/sweetalert2@11.js"></script>
+<script defer src="views/inc/sweetalert/jquery-3.6.4.min.js"></script>
+
+<!-- ============================================================
+     LOCAL STYLES
+============================================================ -->
 <link rel="stylesheet" href="views/inc/sweetalert/sweetalert2.min.css">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css">
+
+<!-- ============================================================
+     CDN STYLES (preload + stylesheet with integrity-friendly load)
+============================================================ -->
+<link rel="preload" as="style" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" media="print" onload="this.media='all'">
+<noscript>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+</noscript>
+
+<link rel="preload" as="style" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" media="print" onload="this.media='all'">
+<noscript>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</noscript>
+
+<link rel="preload" as="style" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css" media="print" onload="this.media='all'">
+<noscript>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css">
+</noscript>
 
 <style>
     /* ============================================================
@@ -105,12 +157,17 @@ $current_action = $page_name;
 
     * { box-sizing: border-box; }
 
+    html { -webkit-text-size-adjust: 100%; }
+
     body {
         margin: 0; padding: 0;
         font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
         font-size: 13px;
         color: var(--body-text);
         background: var(--page-bg);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeSpeed;
     }
 
     /* ============================================================
@@ -294,6 +351,7 @@ $current_action = $page_name;
         color: #ffffff; z-index: 1200; overflow-y: auto;
         box-shadow: 8px 0 30px rgba(15, 23, 42, .12);
         transform: translateX(-105%); transition: transform .25s ease;
+        will-change: transform;
     }
 
     .sidebar.show { transform: translateX(0); }
@@ -610,6 +668,7 @@ $current_action = $page_name;
         background: var(--surface-bg);
         box-shadow: 0 5px 20px rgba(15, 23, 42, .04);
         padding: 16px 20px 20px;
+        -webkit-overflow-scrolling: touch;
     }
 
     /* DataTables live search */
@@ -975,6 +1034,18 @@ $current_action = $page_name;
         }
         .auto-reload {
             justify-content: center;
+        }
+    }
+
+    /* ============================================================
+       ACCESSIBILITY: REDUCED MOTION
+       ============================================================ */
+    @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+            scroll-behavior: auto !important;
         }
     }
 </style>

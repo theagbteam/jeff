@@ -5,8 +5,6 @@ require_once ROOT_PATH . '/models/company.php';
 
 require_once ROOT_PATH . '/models/User.php';
 
-require_once ROOT_PATH . '/models/StateModel.php';
-
 require_once ROOT_PATH . '/models/PhotoPassword_Update.php';
 
 require_once ROOT_PATH . '/middleware/AuthMiddleware.php';
@@ -16,9 +14,6 @@ require_once ROOT_PATH . '/services/mailer.php';
 class UserController {
 
     private $db;
-
-    // private $photoPasswordModel;
-
     private $userid;
 
     public string $deviceType = 'pc';
@@ -27,9 +22,7 @@ class UserController {
 
     public function __construct() {
 
-            //   $this->db = (new Database())->getConnection();
-
-        // $this->photoPasswordModel = new PhotoPassword_Update($this->db);
+              $this->db = (new Database())->getConnection();
 
     }
 
@@ -146,23 +139,14 @@ exit;
 
 
 
-
-
-
-
-
-
     /* ==========================
        LOGIN
     ========================== */
 
  public function page_login(){
 
-    if (session_status() === PHP_SESSION_NONE) {
-        // $_SESSION=[]; setcookie(session_name(),'',time()-42000,'/'); session_destroy(); 
-        session_start();
-    }
-      
+    if (session_status() === PHP_SESSION_NONE) {session_start();}
+        //  $_SESSION=[]; setcookie(session_name(),'',time()-42000,'/'); session_destroy(); 
     $callCompanyModel = new CompanyModel();
     $GetTheModelClassCalledUser = new User();
         $AuthMiddlewareModel = new AuthMiddleware();

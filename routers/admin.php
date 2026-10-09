@@ -1,25 +1,32 @@
  <?php
-require_once ROOT_PATH ."/controllers/Admincontroller.php";
+require_once ROOT_PATH ."/controllers/AdminController.php";
 require_once ROOT_PATH ."/controllers/UserController.php";
 require_once   ROOT_PATH ."/middleware/AuthMiddleware.php";
-
-$Usercontroller = new UserController();
 $Admincontroller = new Admincontroller();
- $SearchForMiddleware = new AuthMiddleware();
+$Usercontroller = new UserController();
 $userid = $_SESSION['userid'] ?? null;
  $action = $_GET['action'] ?? 'login';
 
 
 switch ($action) {
-        case 'lgas':
-        $Usercontroller->lgas();
+     case 'updateuserpwd':
+        $Usercontroller->updatepassword();
         break;
-    case 'submit':
-        $Usercontroller->submit();
+        case 'get_lgas':
+        $Admincontroller->getLgas();
         break;
          case 'dashboard':
-        $Admincontroller->page_dashboard();
-        break;
+        case 'cr_ticket':
+        case 'tickets':
+        case 'run_reports':
+        case 'audit_trail':
+        case 'user_library':
+        case 'transfers':
+        case 'user_requests':
+        case 'manage_users':
+        case 'export_tickets':
+       $Admincontroller->page_dashboard();
+        break;    
        case 'compulsory_cp':
         $Usercontroller->updatepassword();
         break;
