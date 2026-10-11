@@ -600,11 +600,11 @@
                             </option>
 
                             <option value="clear_log">
-                                Reet log & audit trail
+                                Reset log & audit trail
                             </option>
 
                             <option value="reset_database">
-                                Reset database
+                                Reset full database
                             </option>
 
                         </select>

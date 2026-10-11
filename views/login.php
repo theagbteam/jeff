@@ -2940,7 +2940,7 @@ body.terms-open {
                     id="signupAccountForm"
                     action="index?action=create_reporter"
                     method="post"
-                    enctype="multipart/form-data" onsubmit="return disableSubmitButton(this);"  >
+                    enctype="multipart/form-data"  onsubmit="return checkTurnstile(event) && disableSubmitButton(this);"  >
 
  <input type="hidden" name="action_token" value="<?= htmlspecialchars($_SESSION['action_token'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
 
@@ -3920,9 +3920,9 @@ function checkTurnstile(event) {
     }
 
     return true;
-}  -->
+} 
     
-</script>
+</script> -->
 
 <!-- =============================================================
      JAVASCRIPT

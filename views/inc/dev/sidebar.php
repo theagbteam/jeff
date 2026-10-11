@@ -524,7 +524,7 @@
                     style="<?= $tb_name === 'wellhead_status' ? 'color:lawngreen !important;' : '' ?>"
                 >
 
-                    Incidence Status
+                    Report Status
 
                 </span>
 

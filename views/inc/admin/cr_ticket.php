@@ -188,6 +188,28 @@
     }
 
     /* ============================================================
+       VALIDATION STATES (HTML5 pattern / required)
+       ============================================================ */
+    .form-field input:invalid,
+    .form-field select:invalid,
+    .form-field textarea:invalid {
+        border-color: #d9535e;
+        background: rgba(217, 83, 94, .05);
+    }
+
+    .form-field input:invalid:focus,
+    .form-field select:invalid:focus,
+    .form-field textarea:invalid:focus {
+        box-shadow: 0 0 0 3px rgba(217, 83, 94, .15);
+    }
+
+    /* Only show invalid styling after the user has interacted */
+    .form-field input:not(:placeholder-shown):invalid,
+    .form-field textarea:not(:placeholder-shown):invalid {
+        border-color: #d9535e;
+    }
+
+    /* ============================================================
        DATE INPUT (native picker) tweaks
        ============================================================ */
     .form-field input[type="date"] {
@@ -741,7 +763,7 @@
             <div class="form-grid cols-3">
                 <div class="form-field">
                     <label for="category">Category <span class="required">*</span></label>
-                    <select name="category" id="category">
+                    <select name="category" id="category" required>
                         <option value="<?=  $Tk_RowSearchValue ?>"><?=  $Tk_RowSearchValue  ?></option>
 
                        <?php
@@ -758,7 +780,7 @@
 
                 <div class="form-field">
                     <label>Tracking ID</label>
-                    <input type="text" name="tracking_id" value="<?= $ticket_id ?>" readonly>
+                    <input type="text" name="ticket_id" value="<?= $ticket_id ?>" readonly>
                 </div>
 
                 <div class="form-field">
@@ -770,7 +792,7 @@
         <div class="priority-option" data-color="<?= $priority_options['color'] ?>" style="background-color: <?= $first ? $priority_options['color'] : 'transparent' ?>;">
             <input  type="radio" name="priority" id="pri_<?= $priority_options['sn'] ?>"
                    value="<?= $priority_options['name'] ?? 'Undefined' ?>"
-                   <?= $first ? 'checked' : '' ?>>
+                   <?= $first ? 'checked' : '' ?> required>
             <label for="pri_<?= $priority_options['sn'] ?>"  style="<?php if ($template_mode != 'dark'){echo 'color:black' ;} ?>">
                 <?= $priority_options['name'] ?>
             </label>
@@ -790,14 +812,14 @@
 
                 </div>
 
-                <div class="form-field">
-                    <label>Submitted</label>
-                    <input type="text" name="submitted" value="2026-08-13 12:48:53" readonly>
-                </div>
+               <div class="form-field">
+    <label>Submitted</label>
+    <input type="text" name="date_created" value="<?= date('Y-m-d H:i:s') ?>" readonly>
+</div>
 
                 <div class="form-field">
                     <label>Updated</label>
-                    <input type="text" name="updated" value="Nil" readonly>
+                    <input type="text" name="date_updated" value="Nil" readonly>
                 </div>
 
                 <div class="form-field">
@@ -806,7 +828,8 @@
                         <svg class="cal-icon" viewBox="0 0 16 16" fill="currentColor">
                             <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/>
                         </svg>
-                        <input name="custom10" value="" type="date">
+                        <input name="incidence_date" value="" type="date" required
+                               max="<?= date('Y-m-d') ?>">
                     </div>
                 </div>
             </div>
@@ -832,12 +855,14 @@
 
                 <div class="form-field">
                     <label>Phone No</label>
-                    <input type="text" name="custom5" value="<?= $user_phone ?>" maxlength="255" placeholder="+234 ..." readonly>
+                    <input type="text" name="phone_no" value="<?= $user_phone ?>" maxlength="255"
+                           placeholder="+234 ..." readonly
+                           pattern="[0-9+\-\s()]{7,20}">
                 </div>
 
                 <div class="form-field">
-                    <label for="custom20">Incident Source <span class="required">*</span></label>
-                    <select name="custom20" id="custom20">
+                    <label for="incidence_source">Incident Source <span class="required">*</span></label>
+                    <select name="incidence_source" id="incidence_source" required>
                         <option value="">— Select source —</option>
                         <?php foreach ($LoadIncidenceSourceColumnForSelect as $Incidence_options): ?>
                         <option value="<?= $Incidence_options['name'] ?>"><?= $Incidence_options['name'] ?></option>
@@ -854,7 +879,7 @@
             <div class="form-grid cols-3">
                    <div class="form-field">
         <label for="state_of_origin">State <span class="required">*</span></label>
-        <select name="state" id="state_of_origin">
+        <select name="state" id="state_of_origin" required>
             <option value="">— Select state —</option>
             <?php foreach ($LoadAllNigeriaStates as $states): ?>
                 <option value="<?= htmlspecialchars($states['id']) ?>">
@@ -867,7 +892,7 @@
 
                     <div class="form-field">
         <label for="lga">Local Government Area <span class="required">*</span></label>
-        <select name="lga" id="lga" disabled>
+        <select name="local_government" id="lga" disabled required>
             <option value="">— Select LGA —</option>
         </select>
         <div class="error-message">Please select LGA</div>
@@ -876,14 +901,15 @@
 
                 <div class="form-field">
                     <label>Community</label>
-                    <input type="text" name="custom13" maxlength="50" placeholder="Community name">
+                    <input type="text" name="community" maxlength="50" placeholder="Community name"
+                           pattern="[A-Za-z0-9\s\-',.]{2,50}">
                 </div>
 
                
 
                 <div class="form-field">
-                    <label for="custom16">Operator <span class="required">*</span></label>
-                    <select name="custom16" id="custom16">
+                    <label for="operator">Operator <span class="required">*</span></label>
+                    <select name="operator" id="operator" required>
                         <option value="">— Select operator —</option>
                             <?php foreach ($LoadOperatorColumnForSelect as $Operator_options): ?>
                         <option value="<?= $Operator_options['name'] ?>"><?= $Operator_options['name'] ?></option>
@@ -892,8 +918,8 @@
                 </div>
 
                 <div class="form-field">
-                    <label for="custom28">Zone <span class="required">*</span></label>
-                    <select name="custom28" id="custom28">
+                    <label for="zone">Zone <span class="required">*</span></label>
+                    <select name="zone" id="zone" required>
                         <option value="">— Select zone —</option>
                           <?php foreach ($LoadZoneColumnForSelect as $Zone_options): ?>
                         <option value="<?= $Zone_options['name'] ?>"><?= $Zone_options['name'] ?></option>
@@ -905,8 +931,8 @@
 
                 <!-- ===== CORRIDOR: text field, read-only ===== -->
                 <div class="form-field">
-                    <label for="custom18">Corridor <span class="required"></span></label>
-                    <input type="text" value="<?= $user_corridor ?>" name="custom18" id="custom18" maxlength="255" placeholder="Enter corridor" readonly>
+                    <label for="corridor">Corridor <span class="required"></span></label>
+                    <input type="text" value="<?= $user_corridor ?>" name="corridor" id="corridor" maxlength="255" placeholder="Enter corridor" readonly>
                 </div>
 
                
@@ -916,7 +942,7 @@
     <div class="radio-list">
 
         <div class="radio-chip">
-            <input type="radio" id="pt_select_none" name="custom47" value="Select" checked>
+            <input type="radio" id="pt_select_none" name="custom47" value="Select" checked required>
             <label for="pt_select_none">Select</label>
         </div>
 
@@ -934,7 +960,7 @@
 </div>
  <div class="form-field">
                     <label for="custom19">Pipeline <span class="required">*</span></label>
-                    <select name="custom19" id="custom19">
+                    <select name="custom19" id="custom19" required>
                         <option value="">— Select pipeline —</option>
                          <?php foreach ($LoadPipelineColumnForSelect as $Pipeline_options): ?>
                         <option value="<?= $Pipeline_options['name'] ?>"><?= $Pipeline_options['name'] ?></option>
@@ -953,12 +979,18 @@
 
                 <div class="form-field">
                     <label>Latitude <span class="required">*</span></label>
-                    <input type="text" name="custom23" maxlength="255" value="0" placeholder="e.g. 4.8156">
+                    <input type="text" name="location_coordinate_latitude" maxlength="255" value="0"
+                           placeholder="e.g. 4.8156" required
+                           pattern="^-?\d{1,3}(\.\d{1,8})?$"
+                           title="Enter a valid latitude (e.g. 4.8156)">
                 </div>
 
                 <div class="form-field">
                     <label>Longitude <span class="required">*</span></label>
-                    <input type="text" name="custom22" maxlength="255" value="0" placeholder="e.g. 7.0498">
+                    <input type="text" name="location_coordinate_longitude" maxlength="255" value="0"
+                           placeholder="e.g. 7.0498" required
+                           pattern="^-?\d{1,3}(\.\d{1,8})?$"
+                           title="Enter a valid longitude (e.g. 7.0498)">
                 </div>
             </div>
         </div>
@@ -970,39 +1002,49 @@
             <div class="form-grid cols-3">
                 <div class="form-field">
                     <label>Arrested Suspects <span class="required">*</span></label>
-                    <input type="text" name="custom21" maxlength="255" value="0">
+                    <input type="number" name="number_of_arrested_suspects" maxlength="255" value="0"
+                           min="0" step="1" required
+                           title="Enter a whole number (0 or more)">
                 </div>
                 <div class="form-field">
                     <label>Vehicles Arrested/Destroyed <span class="required">*</span></label>
-                    <input type="text" name="custom29" maxlength="255" value="0">
+                    <input type="number" name="vehicle_arrested_destroyed" maxlength="255" value="0"
+                           min="0" step="1" required>
                 </div>
                 <div class="form-field">
                     <label>Boats Arrested/Destroyed</label>
-                    <input type="text" name="custom30" maxlength="255" value="0">
+                    <input type="number" name="wooden_boat_speed_boat_arrested_destroyed" maxlength="255" value="0"
+                           min="0" step="1">
                 </div>
                 <div class="form-field">
                     <label>Vessels Arrested/Destroyed</label>
-                    <input type="text" name="custom31" maxlength="255" value="0">
+                    <input type="number" name="vessel_arrested_destroyed" maxlength="255" value="0"
+                           min="0" step="1">
                 </div>
                 <div class="form-field">
                     <label>Crude Recovered/Destroyed (Ltr) <span class="required">*</span></label>
-                    <input type="text" name="custom24" maxlength="255" value="0">
+                    <input type="number" name="quantity_of_crude_recovered_destroyed_ltr" maxlength="255" value="0"
+                           min="0" step="0.01" required>
                 </div>
                 <div class="form-field">
                     <label>AGO Recovered/Destroyed (Ltr) <span class="required">*</span></label>
-                    <input type="text" name="custom25" maxlength="255" value="0">
+                    <input type="number" name="quantity_of_ago_recovered_destroyed_ltr" maxlength="255" value="0"
+                           min="0" step="0.01" required>
                 </div>
                 <div class="form-field">
                     <label>PMS Recovered/Destroyed (Ltr) <span class="required">*</span></label>
-                    <input type="text" name="custom26" maxlength="255" value="0">
+                    <input type="number" name="quantity_of_pms_recovered_destroyed_ltr" maxlength="255" value="0"
+                           min="0" step="0.01" required>
                 </div>
                 <div class="form-field">
                     <label>DPK Recovered/Destroyed (Ltr) <span class="required">*</span></label>
-                    <input type="text" name="custom27" maxlength="255" value="0">
+                    <input type="number" name="custom27" maxlength="255" value="0"
+                           min="0" step="0.01" required>
                 </div>
                 <div class="form-field">
                     <label>Illegal Storage/Dump Sites <span class="required">*</span></label>
-                    <input type="text" name="custom43" maxlength="255" value="0">
+                    <input type="number" name="custom43" maxlength="255" value="0"
+                           min="0" step="1" required>
                 </div>
             </div>
         </div>
@@ -1015,19 +1057,24 @@
                 <div class="form-field">
                     <label for="subject">Subject <span class="required">*</span></label>
                     <input type="text" id="subject" name="subject" maxlength="70"
-                           value="Illegal Connection" placeholder="Brief subject">
+                           value="Illegal Connection" placeholder="Brief subject" required
+                           pattern=".{3,70}"
+                           title="Subject must be between 3 and 70 characters">
                 </div>
 
                 <div class="form-field">
                     <label for="message">Message <span class="required">*</span></label>
                     <textarea id="message" name="message" rows="6"
-                              placeholder="Describe the incident..."></textarea>
+                              placeholder="Describe the incident..." required
+                              minlength="10"
+                              title="Please provide at least 10 characters"></textarea>
                 </div>
 
                 <div class="form-field">
                     <label>Description of the Spill Location</label>
-                    <textarea name="custom7" rows="4"
-                              placeholder="Additional details about the spill location..."></textarea>
+                    <textarea name="description_of_reported_incidence" rows="4"
+                              placeholder="Additional details about the spill location..."
+                              minlength="5"></textarea>
                 </div>
             </div>
         </div>
@@ -1101,7 +1148,8 @@
                         <svg class="cal-icon" viewBox="0 0 16 16" fill="currentColor">
                             <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/>
                         </svg>
-                        <input name="due_date" value="" type="date">
+                        <input name="due_date" value="" type="date"
+                               min="<?= date('Y-m-d') ?>">
                     </div>
                 </div>
             </div>
@@ -1111,7 +1159,7 @@
         <div class="form-footer">
             <span class="footer-note">Please review all details before submitting.</span>
             <input type="hidden" name="token" value="b39045cb91a74fbf58ed3b593e77a8abf419e841">
-            <button type="submit" class="btn-submit">
+            <button type="submit" name="create_ticket" class="btn-submit">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                     <path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11z"/>
                 </svg>
@@ -1165,9 +1213,9 @@
 
 <script>
     // Initialize selectize on the custom selects
-    // NOTE: #custom18 (Corridor) removed — it is now a text input
+    // NOTE: #corridor (Corridor) removed — it is now a text input
     (function () {
-        var ids = ['#category', '#custom20', '#custom11', '#custom16', '#custom28', '#custom19', '#custom46'];
+        var ids = ['#category', '#incidence_source', '#custom11', '#operator', '#zone', '#custom19', '#custom46'];
         if (typeof jQuery !== 'undefined' && jQuery.fn.selectize) {
             ids.forEach(function (id) {
                 if (jQuery(id).length) jQuery(id).selectize();

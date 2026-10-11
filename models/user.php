@@ -18,6 +18,164 @@ class User {
 
 
 
+
+
+public function createTicket(array $post, array $files): array{
+    $uploadDir       = ROOT_PATH . "/views/uploads/ticket_library/";
+    $uploadUrlPrefix = 'views/uploads/ticket_library/';
+    $maxFileSize     = 992097152;
+    $allowedExt      = ['gif','jpg','jpeg','png','zip','rar','csv','doc','docx','xls','xlsx','txt','pdf','mp4'];
+
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0755, true);
+    }
+
+    $ticketId   = !empty($post['ticket_id']) ? $post['ticket_id'] : 'TKT-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(2)));
+    $now        = date('Y-m-d H:i:s');
+    $ticketDesc = trim($post['subject'] ?? 'Ticket attachments');
+    $notify     = isset($post['notify']) ? 1 : 0;
+    $show       = isset($post['show'])   ? 1 : 0;
+    $uploads    = [];
+
+    try {
+        $this->conn->beginTransaction();
+
+        // ---- ticket_reports ----
+        $sql = "INSERT INTO ticket_reports (
+                    ticket_id, date_created, date_updated, category, name, email,
+                    priority, subject, message, phone_no, incidence_date,
+                    incidence_source, state, community, local_government,
+                    operator, zone, corridor, number_of_arrested_suspects,
+                    vehicle_arrested_destroyed, wooden_boat_speed_boat_arrested_destroyed,
+                    vessel_arrested_destroyed, location_coordinate_latitude,
+                    location_coordinate_longitude,
+                    quantity_of_crude_recovered_destroyed_ltr,
+                    quantity_of_ago_recovered_destroyed_ltr,
+                    quantity_of_pms_recovered_destroyed_ltr,
+                    description_of_reported_incidence, notify, show, due_date
+                ) VALUES (
+                    :ticket_id, :date_created, :date_updated, :category, :name, :email,
+                    :priority, :subject, :message, :phone_no, :incidence_date,
+                    :incidence_source, :state, :community, :local_government,
+                    :operator, :zone, :corridor, :n_suspects,
+                    :veh, :boat, :vessel, :lat, :lng,
+                    :qty_crude, :qty_ago, :qty_pms,
+                    :description, :notify, :show, :due_date
+                )";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute([
+            ':ticket_id'        => $ticketId,
+            ':date_created'     => $now,
+            ':date_updated'     => 'Nil',
+            ':category'         => $post['category']         ?? '',
+            ':name'             => $post['name']             ?? '',
+            ':email'            => $post['email']            ?? '',
+            ':priority'         => $post['priority']         ?? '0',
+            ':subject'          => $post['subject']          ?? '',
+            ':message'          => $post['message']          ?? '',
+            ':phone_no'         => $post['phone_no']         ?? null,
+            ':incidence_date'   => $post['incidence_date']   ?? null,
+            ':incidence_source' => $post['incidence_source'] ?? null,
+            ':state'            => $post['state']            ?? null,
+            ':community'        => $post['community']        ?? null,
+            ':local_government' => $post['local_government'] ?? null,
+            ':operator'         => $post['operator']         ?? null,
+            ':zone'             => $post['zone']             ?? null,
+            ':corridor'         => $post['corridor']         ?? null,
+            ':n_suspects'       => (int)($post['number_of_arrested_suspects'] ?? 0),
+            ':veh'              => (int)($post['vehicle_arrested_destroyed'] ?? 0),
+            ':boat'             => (int)($post['wooden_boat_speed_boat_arrested_destroyed'] ?? 0),
+            ':vessel'           => (int)($post['vessel_arrested_destroyed'] ?? 0),
+            ':lat'              => $post['location_coordinate_latitude']  ?? '0',
+            ':lng'              => $post['location_coordinate_longitude'] ?? '0',
+            ':qty_crude'        => (float)($post['quantity_of_crude_recovered_destroyed_ltr'] ?? 0),
+            ':qty_ago'          => (float)($post['quantity_of_ago_recovered_destroyed_ltr']   ?? 0),
+            ':qty_pms'          => (float)($post['quantity_of_pms_recovered_destroyed_ltr']   ?? 0),
+            ':description'      => $post['description_of_reported_incidence'] ?? null,
+            ':notify'           => $notify,
+            ':show'             => $show,
+            ':due_date'         => !empty($post['due_date']) ? $post['due_date'] : null,
+        ]);
+
+        // ---- process uploads ----
+        if (!empty($files['attachment']['name'])) {
+            $names = $files['attachment']['name'];
+            $tmps  = $files['attachment']['tmp_name'];
+            $sizes = $files['attachment']['size'];
+            $errs  = $files['attachment']['error'];
+
+            for ($i = 1; $i <= 8; $i++) {
+                if (empty($names[$i]) || $errs[$i] === UPLOAD_ERR_NO_FILE) continue;
+                if ($errs[$i] !== UPLOAD_ERR_OK) throw new RuntimeException("Upload error on attachment #{$i}.");
+                if ($sizes[$i] > $maxFileSize)   throw new RuntimeException("Attachment #{$i} too large.");
+
+                $ext = strtolower(pathinfo($names[$i], PATHINFO_EXTENSION));
+                if (!in_array($ext, $allowedExt, true)) {
+                    throw new RuntimeException("Attachment #{$i} extension .{$ext} not allowed.");
+                }
+
+                $base     = preg_replace('/[^A-Za-z0-9_\-]/', '_', pathinfo($names[$i], PATHINFO_FILENAME));
+                $filename = $ticketId . '_' . $i . '_' . substr($base, 0, 60) . '.' . $ext;
+                $dest     = $uploadDir . $filename;
+
+                if (!move_uploaded_file($tmps[$i], $dest)) {
+                    throw new RuntimeException("Failed to save attachment #{$i}.");
+                }
+
+                $uploads[$i] = $uploadUrlPrefix . $filename;
+            }
+        }
+
+        // ---- upload_library ----
+        $stmtUp = $this->conn->prepare(
+            "INSERT INTO upload_library (
+                ticket_id, ticket_desc,
+                upload1, upload2, upload3, upload4,
+                upload5, upload6, upload7, upload8, status
+            ) VALUES (
+                :ticket_id, :ticket_desc,
+                :u1, :u2, :u3, :u4, :u5, :u6, :u7, :u8, 1
+            )"
+        );
+        $stmtUp->execute([
+            ':ticket_id'   => $ticketId,
+            ':ticket_desc' => $ticketDesc,
+            ':u1' => $uploads[1] ?? '',
+            ':u2' => $uploads[2] ?? '',
+            ':u3' => $uploads[3] ?? '',
+            ':u4' => $uploads[4] ?? '',
+            ':u5' => $uploads[5] ?? '',
+            ':u6' => $uploads[6] ?? '',
+            ':u7' => $uploads[7] ?? '',
+            ':u8' => $uploads[8] ?? '',
+        ]);
+
+        $this->conn->commit();
+
+        return ['success' => true, 'ticket_id' => $ticketId, 'message' => 'Ticket created successfully.'];
+    } catch (Throwable $e) {
+        if ($this->conn->inTransaction()) {
+            $this->conn->rollBack();
+        }
+        foreach ($uploads as $path) {
+            if ($path && is_file($uploadDir . basename($path))) {
+                @unlink($uploadDir . basename($path));
+            }
+        }
+        return ['success' => false, 'message' => 'Error: ' . $e->getMessage()];
+    }
+}
+
+
+
+
+
+
+
+
+
+
 public function CountAllTickets()
 {
     try {

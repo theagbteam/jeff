@@ -41,6 +41,18 @@
    <?php include 'views/inc/admin/ticket_categoryheader.php'   ?>
 <?php elseif ($page_link_title=="cr_ticket")  : ?>
    <?php include 'views/inc/admin/cr_ticket.php'   ?>
+<?php elseif ($page_link_title=="user_requests")  : ?>
+   <?php include 'views/inc/admin/request_preview.php'   ?>
+<?php elseif ($page_link_title=="audit_trail")  : ?>
+   <?php include 'views/inc/admin/audit_preview.php'   ?>
+<?php elseif ($page_link_title=="run_reports")  : ?>
+   <?php include 'views/inc/admin/runreport_preview.php'   ?>
+<?php elseif ($page_link_title=="export_tickets")  : ?>
+   <?php include 'views/inc/admin/exportreport_preview.php'   ?>
+<?php elseif ($page_link_title=="transfers")  : ?>
+   <?php include 'views/inc/admin/transfer_history.php'   ?>
+<?php elseif ($page_link_title=="manage_users")  : ?>
+   <?php include 'views/inc/admin/userspreview.php'   ?>
 <?php endif;  ?>
   
 </main>

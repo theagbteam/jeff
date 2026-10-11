@@ -166,15 +166,13 @@ $Ltable_sn = $corridor_sn = 0;
 
                                         </td>
 
-                                        <td>
-                                            <?= htmlspecialchars(
-                                                ucfirst(
-                                                    $corridor_name
-                                                ),
-                                                ENT_QUOTES,
-                                                'UTF-8'
-                                            ); ?>
-                                        </td>
+           <?php
+$color = trim($corridor['color'] ?? '');
+$style = $color !== '' ? 'style="color:' . htmlspecialchars($color) . ' !important;"' : '';
+?>
+<td <?= $style ?>>
+    <?= htmlspecialchars($corridor['name']) ?>
+</td>
 
                                         <td>
 

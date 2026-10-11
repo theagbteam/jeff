@@ -2147,12 +2147,12 @@ header('Location: index.php');
     }
 
 
-$maxrecords  = 28;
+$maxrecords  = 100;
 if ($tb_name == "corridors") {
-     $maxrecords  = 8;
+    //  $maxrecords  = 8;
        $page_name = $tb_name = "corridor";
      } elseif ($tb_name == "ticket_category") {
-        $maxrecords  = 28;
+        // $maxrecords  = 28;
     $page_name = "Ticket Category";
      } elseif ($tb_name == "owners") {
     $tb_name = $page_name = "owner";
@@ -2165,8 +2165,8 @@ if ($tb_name == "corridors") {
     $tb_name = "report_type";
   
 } elseif ($tb_name == "wellhead_status") {
-    $maxrecords  = 6;
-    $page_name = "Incidence status";
+    // $maxrecords  = 6;
+    $page_name = "Report status";
 } elseif ($tb_name == "priority") {
     $page_name = "priority";
 

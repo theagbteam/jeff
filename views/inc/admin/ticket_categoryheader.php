@@ -61,6 +61,7 @@
         <table class="ticket-table" id="ticketsTable">
             <thead>
                 <tr>
+                   
                     <th class="checkbox-cell"><input type="checkbox" id="selectAll" aria-label="Select all tickets"></th>
                     <th class="id-cell">SN <i class="bi bi-arrow-down-up sort-icon"></i></th>
                     <th class="tracking-cell">Tracking ID <i class="bi bi-arrow-down-up sort-icon"></i></th>
@@ -77,26 +78,53 @@
                     <th class="zone-cell">Zone <i class="bi bi-arrow-down-up sort-icon"></i></th>
                     <th class="corridor-cell">Corridor <i class="bi bi-arrow-down-up sort-icon"></i></th>
                     <th class="priority-cell">Priority <i class="bi bi-arrow-down-up sort-icon"></i></th>
+                    
                 </tr>
             </thead>
             <tbody>
                 <tr>
-                    <td class="checkbox-cell"><input type="checkbox" class="ticket-checkbox" aria-label="Select ticket 22783"></td>
-                    <td class="id-cell center-cell"><a href="#">22783</a></td>
-                    <td><a href="#">7P5-R7H-D920</a></td>
-                    <td>2026-08-13<br>12:48:53</td>
-                    <td>2026-08-13<br>12:48:53</td>
-                    <td>ILLEGAL CONNECTION</td>
-                    <td>Oando</td>
-                    <td><a href="#">Illegal Connection</a></td>
-                    <td class="status-new">New</td>
-                    <td>Unassigned</td>
-                    <td>August 9, 2026</td>
-                    <td>OANDO</td>
-                    <td>Rivers</td>
-                    <td>OANDO Zone B - Area 8</td>
-                    <td>Central</td>
-                    <td><span class="priority-label"><span class="priority-indicator"></span>Critical</span></td>
+                    <?php 
+$sn = 1; // Initialize serial number counter
+foreach ($LoadAllTickets as $ticket_history): 
+?>
+    <tr>
+        <td class="checkbox-cell">
+            <input type="checkbox" class="ticket-checkbox" aria-label="Select ticket <?= htmlspecialchars($ticket_history['ticket_id'] ?? $ticket_history['id']) ?>">
+        </td>
+        <td class="id-cell center-cell">
+            <a href="#"><?= $sn++ ?></a>
+        </td>
+        <td>
+            <a href="#"><?= htmlspecialchars($ticket_history['ticket_id']) ?></a>
+        </td>
+        <td>
+            <?= htmlspecialchars(date('Y-m-d', strtotime($ticket_history['date_created']))) ?><br>
+            <?= htmlspecialchars(date('H:i:s', strtotime($ticket_history['date_created']))) ?>
+        </td>
+        <td>
+            <?= htmlspecialchars(date('Y-m-d', strtotime($ticket_history['date_updated']))) ?><br>
+            <?= htmlspecialchars(date('H:i:s', strtotime($ticket_history['date_updated']))) ?>
+        </td>
+        <td><?= htmlspecialchars($ticket_history['category']) ?></td>
+        <td><?= htmlspecialchars($ticket_history['operator']) ?></td>
+        <td>
+            <a href="#"><?= htmlspecialchars($ticket_history['subject']) ?></a>
+        </td>
+        <td class="status-new"><?= htmlspecialchars($ticket_history['status'] ?? 'New') ?></td>
+        <td><?= htmlspecialchars($ticket_history['assigned_to'] ?? 'Unassigned') ?></td>
+        <td><?= htmlspecialchars(date('F j, Y', strtotime($ticket_history['due_date']))) ?></td>
+        <td><?= htmlspecialchars(strtoupper($ticket_history['operator'])) ?></td>
+        <td><?= htmlspecialchars($ticket_history['state']) ?></td>
+        <td><?= htmlspecialchars($ticket_history['zone']) ?></td>
+        <td><?= htmlspecialchars($ticket_history['corridor']) ?></td>
+        <td>
+            <span class="priority-label">
+                <span class="priority-indicator"></span>
+                <?= htmlspecialchars($ticket_history['priority']) ?>
+            </span>
+        </td>
+    </tr>
+<?php endforeach; ?>
                 </tr>
                
             </tbody>

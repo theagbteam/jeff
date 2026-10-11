@@ -9,7 +9,13 @@
         <button class="theme-toggle" type="button" id="themeToggle" aria-label="Switch to dark mode" title="Switch theme">
             <i class="bi bi-moon-stars-fill" id="themeIcon"></i>
         </button>
+        <?php if ($page_link_title=="tickets" || $page_link_title=="cr_ticket")  : ?>
         <button class="btn create-ticket-btn" type="button">Create New Ticket</button>
+        <?php elseif ($page_link_title=="user_requests")  : ?>
+        <button class="btn create-ticket-btn" type="button"> Create request</button>
+        <?php elseif ($page_link_title=="manage_users")  : ?>
+        <button class="btn create-ticket-btn" type="button"> Create user</button>
+        <?php endif; ?>
 
         <!-- ==================================================
              USER PROFILE DROPDOWN

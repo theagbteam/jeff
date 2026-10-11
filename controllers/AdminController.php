@@ -72,6 +72,7 @@ public function page_dashboard() {
    $tb_name = "zone";$LoadZoneColumnForSelect=$callUserModel->GeneralSelectAnyTable($tb_name);
    $tb_name = "pipeline";$LoadPipelineColumnForSelect=$callUserModel->GeneralSelectAnyTable($tb_name);
    $tb_name = "pipeline_type";$LoadPipelineTypeColumnForSelect=$callUserModel->GeneralSelectAnyTable($tb_name);
+   $tb_name = "ticket_reports";$LoadAllTickets=$callUserModel->GeneralSelectAnyTable($tb_name);
    $ticket_id = $callUserModel->generateTicketId();
    if ($ticket_id === null) { $ticket_id="Undefined"; }
 $page_link_title = $_GET['action'] ?? 'tickets';
