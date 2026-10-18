@@ -753,7 +753,7 @@
         <span class="header-meta">All fields marked <span class="req">*</span> are required</span>
     </div>
 
-    <form method="post" class="ticket-form" action="admin_submit_ticket.php"
+    <form method="post" class="ticket-form" action="index.php?action=create_ticket"
           name="form1" enctype="multipart/form-data">
 
         <!-- ===== SECTION 1: TICKET INFO ===== -->
@@ -901,7 +901,7 @@
 
                 <div class="form-field">
                     <label>Community</label>
-                    <input type="text" name="community" maxlength="50" placeholder="Community name"
+                    <input required type="text" name="community" maxlength="50" placeholder="Community name"
                            pattern="[A-Za-z0-9\s\-',.]{2,50}">
                 </div>
 
@@ -942,15 +942,15 @@
     <div class="radio-list">
 
         <div class="radio-chip">
-            <input type="radio" id="pt_select_none" name="custom47" value="Select" checked required>
+            <input type="radio" id="pt_select_none" name="pipeline_type " value="Select" checked >
             <label for="pt_select_none">Select</label>
         </div>
 
         <?php foreach ($LoadPipelineTypeColumnForSelect as $index => $Ptype_options): ?>
             <div class="radio-chip">
-                <input type="radio"
+                <input type="radio" required
                        id="pt_select_<?= $index ?>"
-                       name="custom47"
+                       name="pipeline_type"
                        value="<?= htmlspecialchars($Ptype_options['name']) ?>">
                 <label for="pt_select_<?= $index ?>"><?= htmlspecialchars($Ptype_options['name']) ?></label>
             </div>
@@ -960,7 +960,7 @@
 </div>
  <div class="form-field">
                     <label for="custom19">Pipeline <span class="required">*</span></label>
-                    <select name="custom19" id="custom19" required>
+                    <select name="pipeline" id="custom19" required>
                         <option value="">— Select pipeline —</option>
                          <?php foreach ($LoadPipelineColumnForSelect as $Pipeline_options): ?>
                         <option value="<?= $Pipeline_options['name'] ?>"><?= $Pipeline_options['name'] ?></option>
@@ -1038,12 +1038,12 @@
                 </div>
                 <div class="form-field">
                     <label>DPK Recovered/Destroyed (Ltr) <span class="required">*</span></label>
-                    <input type="number" name="custom27" maxlength="255" value="0"
+                    <input type="number" name="dpk_recovered_destroyed_ltr " maxlength="255" value="0"
                            min="0" step="0.01" required>
                 </div>
                 <div class="form-field">
                     <label>Illegal Storage/Dump Sites <span class="required">*</span></label>
-                    <input type="number" name="custom43" maxlength="255" value="0"
+                    <input type="number" name="illegal_storage_dump_sites" maxlength="255" value="0"
                            min="0" step="1" required>
                 </div>
             </div>
@@ -1154,7 +1154,7 @@
                 </div>
             </div>
         </div>
-
+     <input type="hidden" name="CreateNewTicket">
         <!-- ===== FOOTER ===== -->
         <div class="form-footer">
             <span class="footer-note">Please review all details before submitting.</span>

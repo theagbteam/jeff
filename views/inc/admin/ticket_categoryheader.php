@@ -1,4 +1,4 @@
- <section class="summary-section">
+<section class="summary-section">
         <div class="summary-counters">
             <?php foreach ($wellhead_status_counts as $status_count): ?>
                 <?php
@@ -81,52 +81,88 @@
                     
                 </tr>
             </thead>
-            <tbody>
-                <tr>
-                    <?php 
-$sn = 1; // Initialize serial number counter
-foreach ($LoadAllTickets as $ticket_history): 
-?>
-    <tr>
-        <td class="checkbox-cell">
-            <input type="checkbox" class="ticket-checkbox" aria-label="Select ticket <?= htmlspecialchars($ticket_history['ticket_id'] ?? $ticket_history['id']) ?>">
-        </td>
-        <td class="id-cell center-cell">
-            <a href="#"><?= $sn++ ?></a>
-        </td>
-        <td>
-            <a href="#"><?= htmlspecialchars($ticket_history['ticket_id']) ?></a>
-        </td>
-        <td>
-            <?= htmlspecialchars(date('Y-m-d', strtotime($ticket_history['date_created']))) ?><br>
-            <?= htmlspecialchars(date('H:i:s', strtotime($ticket_history['date_created']))) ?>
-        </td>
-        <td>
-            <?= htmlspecialchars(date('Y-m-d', strtotime($ticket_history['date_updated']))) ?><br>
-            <?= htmlspecialchars(date('H:i:s', strtotime($ticket_history['date_updated']))) ?>
-        </td>
-        <td><?= htmlspecialchars($ticket_history['category']) ?></td>
-        <td><?= htmlspecialchars($ticket_history['operator']) ?></td>
-        <td>
-            <a href="#"><?= htmlspecialchars($ticket_history['subject']) ?></a>
-        </td>
-        <td class="status-new"><?= htmlspecialchars($ticket_history['status'] ?? 'New') ?></td>
-        <td><?= htmlspecialchars($ticket_history['assigned_to'] ?? 'Unassigned') ?></td>
-        <td><?= htmlspecialchars(date('F j, Y', strtotime($ticket_history['due_date']))) ?></td>
-        <td><?= htmlspecialchars(strtoupper($ticket_history['operator'])) ?></td>
-        <td><?= htmlspecialchars($ticket_history['state']) ?></td>
-        <td><?= htmlspecialchars($ticket_history['zone']) ?></td>
-        <td><?= htmlspecialchars($ticket_history['corridor']) ?></td>
-        <td>
-            <span class="priority-label">
-                <span class="priority-indicator"></span>
-                <?= htmlspecialchars($ticket_history['priority']) ?>
-            </span>
-        </td>
-    </tr>
-<?php endforeach; ?>
-                </tr>
-               
-            </tbody>
+           
+<tbody>
+    <?php
+    $sn = 1; // Initialize serial number counter
+
+    foreach ($LoadAllTickets as $ticket_history):
+        if ((int)($ticket_history['status'] ?? -1) < 0) {
+            continue;
+        }
+    ?>
+        <tr>
+            <td class="checkbox-cell">
+                <input
+                    type="checkbox"
+                    class="ticket-checkbox"
+                    aria-label="Select ticket <?= htmlspecialchars($ticket_history['ticket_id'] ?? $ticket_history['id'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
+                >
+            </td>
+
+            <td class="id-cell center-cell">
+                <a href="#"><?= $sn++ ?></a>
+            </td>
+
+            <td>
+                <a href="#"><?= htmlspecialchars($ticket_history['ticket_id'] ?? '', ENT_QUOTES, 'UTF-8') ?></a>
+            </td>
+
+            <td>
+                <?= htmlspecialchars(date('Y-m-d', strtotime($ticket_history['date_created'] ?? '')), ENT_QUOTES, 'UTF-8') ?><br>
+                <?= htmlspecialchars(date('H:i:s', strtotime($ticket_history['date_created'] ?? '')), ENT_QUOTES, 'UTF-8') ?>
+            </td>
+
+            <td>
+                <?= htmlspecialchars(date('Y-m-d', strtotime($ticket_history['date_updated'] ?? '')), ENT_QUOTES, 'UTF-8') ?><br>
+                <?= htmlspecialchars(date('H:i:s', strtotime($ticket_history['date_updated'] ?? '')), ENT_QUOTES, 'UTF-8') ?>
+            </td>
+
+            <td><?= htmlspecialchars($ticket_history['category'] ?? '', ENT_QUOTES, 'UTF-8') ?></td>
+
+            <td><?= htmlspecialchars($ticket_history['operator'] ?? '', ENT_QUOTES, 'UTF-8') ?></td>
+
+            <td>
+                <a href="#"><?= htmlspecialchars($ticket_history['subject'] ?? '', ENT_QUOTES, 'UTF-8') ?></a>
+            </td>
+
+            <td class="status-new">
+                <?= htmlspecialchars($ticket_history['status'] ?? 'New', ENT_QUOTES, 'UTF-8') ?>
+            </td>
+
+            <td>
+                <?= htmlspecialchars($ticket_history['assigned_to'] ?? 'Unassigned', ENT_QUOTES, 'UTF-8') ?>
+            </td>
+
+            <td>
+                <?= htmlspecialchars(
+                    !empty($ticket_history['due_date'])
+                        ? date('F j, Y', strtotime($ticket_history['due_date']))
+                        : '',
+                    ENT_QUOTES,
+                    'UTF-8'
+                ) ?>
+            </td>
+
+            <td>
+                <?= htmlspecialchars(strtoupper($ticket_history['operator'] ?? ''), ENT_QUOTES, 'UTF-8') ?>
+            </td>
+
+            <td><?= htmlspecialchars($ticket_history['state'] ?? '', ENT_QUOTES, 'UTF-8') ?></td>
+
+            <td><?= htmlspecialchars($ticket_history['zone'] ?? '', ENT_QUOTES, 'UTF-8') ?></td>
+
+            <td><?= htmlspecialchars($ticket_history['corridor'] ?? '', ENT_QUOTES, 'UTF-8') ?></td>
+
+            <td>
+                <span class="priority-label">
+                    <span class="priority-indicator"></span>
+                    <?= htmlspecialchars($ticket_history['priority'] ?? '', ENT_QUOTES, 'UTF-8') ?>
+                </span>
+            </td>
+        </tr>
+    <?php endforeach; ?>
+</tbody>
+
         </table>
     </div>

@@ -235,7 +235,7 @@ public function IfSessionActiveAutologin(){
         session_start();
     }
 
-    if (isset($_SESSION['userid']) && isset($_SESSION['role'])) {
+    if (isset($_SESSION['userid']) && isset($_SESSION['role']) && isset($_SESSION['action_token'])) {
 
         header("Location: index.php?action=dashboard");
         exit;
@@ -257,7 +257,7 @@ public function IfSessionDeactiveAutologout(){
         session_start();
     }
 
-    if (!isset($_SESSION['userid']) || !isset($_SESSION['role'])) {
+    if (!isset($_SESSION['userid']) || !isset($_SESSION['role']) || !isset($_SESSION['action_token']) ) {
 
         // Destroy all session data
         $_SESSION = [];

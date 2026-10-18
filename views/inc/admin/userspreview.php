@@ -1,1068 +1,2232 @@
 <?php
 
 $Ltable_name = "login";
+$users_table_name = "users";
 $Ltable_sn = $user_sn = 0;
 $page_controller = base64_encode("users");
 
-$users_preview = $LoadUsersAndLoginTableForAdmin['all'] ?? [];
-$is_sample_user = false;
+// ------------------------------------------------------------
+// SUMMARY COUNTS (active / inactive / deleted)
+// Read counts from the controller
+// ------------------------------------------------------------
+$statusCounts = $statusCounts ?? [];
 
-if (empty($users_preview)) {
-    $is_sample_user = true;
+$totalActiveUsers   = (int) ($statusCounts['active'] ?? 0);
+$totalInactiveUsers = (int) ($statusCounts['inactive'] ?? 0);
+$totalDeletedUsers  = (int) ($statusCounts['deleted'] ?? 0);
 
-    $users_preview = [
-        [
-            'login_sn' => 0,
-            'user_sn' => 0,
-            'user_userid' => 'sample_user',
-            'user_fullname' => 'John Doe',
-            'user_email' => 'john.doe@example.com',
-            'user_title' => 'System Administrator',
-            'login_role' => 'Administrator',
-            'user_date' => date('Y-m-d H:i:s'),
-            'login_status' => 1,
-            'status' => 1,
-            'user_image' => 'noimage2.png',
-            'corridor_name' => 'Lagos Corridor'
-        ]
-    ];
-}
+// Total users excludes deleted users
+$totalAllUsers = $totalActiveUsers + $totalInactiveUsers;
 
 ?>
 
-<style>
-/* =========================================================
-   USER PREVIEW
-   Theme-aware styles: preserves the existing application
-   palette and adapts to the active light/dark theme.
-========================================================= */
 
-.user-preview-page {
-    --up-bg: var(--surface-bg, var(--bs-card-bg, #ffffff));
-    --up-soft-bg: var(--surface-soft, var(--bs-tertiary-bg, #f4f6fa));
-    --up-text: var(--body-text, var(--bs-body-color, #343a40));
-    --up-muted: var(--text-muted, var(--bs-secondary-color, #6c7293));
-    --up-border: var(--surface-border, var(--bs-border-color, #dee2e6));
-    --up-head-bg: var(--table-head-bg, var(--up-soft-bg));
-    --up-cell-bg: var(--table-cell-bg, var(--up-bg));
-    --up-hover-bg: var(--table-hover-bg, rgba(108, 114, 147, 0.08));
+<div class="row">
 
-    width: 100%;
-    min-width: 0;
-    color: var(--up-text);
-}
+    <div class="col-12">
 
-.user-preview-page .user-preview-card {
-    margin: 0 24px 20px;
-    padding: 22px 24px;
-    color: var(--up-text);
-    background: var(--up-bg);
-    border: 1px solid var(--up-border);
-    border-radius: 16px;
-    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.045);
-}
+        <div class="users-activity-card">
 
-.user-preview-page .user-preview-heading {
-    color: var(--up-text);
-    font-size: 1.15rem;
-    font-weight: 600;
-    margin: 0 0 5px;
-}
+            <div class="users-activity-header">
 
-.user-preview-page .user-preview-subtitle {
-    color: var(--up-muted);
-    font-size: 0.875rem;
-    margin: 0;
-}
+                <div>
+                    <h4 class="users-activity-title">Users summary</h4>
+                    <p class="users-activity-description">Overview of recent system users</p>
+                </div>
 
-.user-preview-page .user-preview-view-all {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 8px 13px;
-    border: 1px solid var(--up-border);
-    border-radius: 8px;
-    color: var(--up-text);
-    background: var(--up-soft-bg);
-    text-decoration: none;
-    font-size: 0.85rem;
-    font-weight: 600;
-    transition: background 0.2s ease, border-color 0.2s ease;
-}
+                <?php if ($page_name == "dashboard") : ?>
 
-.user-preview-page .user-preview-view-all:hover {
-    background: var(--up-hover-bg);
-    border-color: var(--up-muted);
-    color: var(--up-text);
-    text-decoration: none;
-}
+                    <a href="index?action=users" class="btn-view-all">
+                        <i class="mdi mdi-account-multiple-outline"></i>
+                        View All
+                    </a>
 
-.user-preview-page .user-preview-notice {
-    color: var(--up-text);
-    background: var(--up-soft-bg);
-    border: 1px solid var(--up-border);
-    border-radius: 8px;
-    padding: 10px 13px;
-    margin: 18px 0;
-    font-size: 0.84rem;
-}
+                <?php endif; ?>
 
-.user-preview-page .user-preview-table-wrap {
-    width: 100%;
-    padding: 16px 20px 20px;
-    border: 1px solid var(--up-border);
-    border-radius: 12px;
-    background: var(--up-bg);
-}
-
-.user-preview-page #dashboardDataTable {
-    width: 100% !important;
-    margin-bottom: 0 !important;
-    color: var(--up-text);
-    border-color: var(--up-border);
-}
-
-.user-preview-page #dashboardDataTable thead th {
-    color: var(--up-text) !important;
-    background: var(--up-head-bg) !important;
-    border-color: var(--up-border) !important;
-    font-size: 0.79rem;
-    font-weight: 600;
-    padding: 13px 11px;
-    vertical-align: middle;
-    white-space: nowrap;
-}
-
-.user-preview-page #dashboardDataTable tbody td {
-    color: var(--up-text) !important;
-    background: var(--up-cell-bg) !important;
-    border-color: var(--up-border) !important;
-    padding: 12px 11px;
-    vertical-align: middle;
-    font-size: 0.82rem;
-}
-
-.user-preview-page #dashboardDataTable tbody tr:hover td {
-    background: var(--up-hover-bg) !important;
-}
-
-.user-preview-page .user-preview-person {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    min-width: 175px;
-}
-
-.user-preview-page .user-preview-avatar {
-    width: 39px;
-    height: 39px;
-    min-width: 39px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 1px solid var(--up-border);
-    background: var(--up-soft-bg);
-}
-
-.user-preview-page .user-preview-person-name {
-    color: var(--up-text);
-    font-weight: 600;
-    line-height: 1.4;
-    overflow-wrap: anywhere;
-}
-
-.user-preview-page .user-preview-person-email {
-    color: var(--up-muted);
-    font-size: 0.75rem;
-    margin-top: 2px;
-    overflow-wrap: anywhere;
-}
-
-.user-preview-page .user-preview-muted {
-    color: var(--up-muted) !important;
-}
-
-.user-preview-page .user-preview-status {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 5px 9px;
-    border-radius: 6px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    white-space: nowrap;
-}
-
-.user-preview-page .user-preview-status-active {
-    color: #16834a;
-    background: rgba(40, 167, 69, 0.13);
-    border: 1px solid rgba(40, 167, 69, 0.28);
-}
-
-.user-preview-page .user-preview-status-inactive {
-    color: #a66a00;
-    background: rgba(230, 166, 35, 0.14);
-    border: 1px solid rgba(230, 166, 35, 0.3);
-}
-
-.user-preview-page .user-preview-status-deleted {
-    color: #cf4b55;
-    background: rgba(220, 53, 69, 0.12);
-    border: 1px solid rgba(220, 53, 69, 0.28);
-}
-
-/* Action buttons: text and inline SVG remain visible without icon fonts. */
-
-.user-preview-page .user-preview-actions {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-wrap: nowrap;
-    gap: 7px;
-    min-width: 125px;
-}
-
-.user-preview-page .user-preview-action {
-    display: inline-flex !important;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    min-height: 34px;
-    padding: 6px 9px;
-    border: 1px solid var(--up-border);
-    border-radius: 7px;
-    font-size: 0.78rem;
-    font-weight: 600;
-    line-height: 1.2;
-    text-decoration: none !important;
-    white-space: nowrap;
-    cursor: pointer;
-    opacity: 1 !important;
-    visibility: visible !important;
-    box-shadow: none;
-    transition: background 0.18s ease, border-color 0.18s ease;
-}
-
-.user-preview-page .user-preview-action svg {
-    display: block !important;
-    width: 16px !important;
-    height: 16px !important;
-    min-width: 16px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.8;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    visibility: visible !important;
-    opacity: 1 !important;
-}
-
-.user-preview-page .user-preview-action-edit {
-    color: #2474c7 !important;
-    background: rgba(36, 116, 199, 0.10) !important;
-    border-color: rgba(36, 116, 199, 0.35) !important;
-}
-
-.user-preview-page .user-preview-action-edit:hover {
-    color: #ffffff !important;
-    background: #2474c7 !important;
-    border-color: #2474c7 !important;
-}
-
-.user-preview-page .user-preview-action-delete {
-    color: #d44752 !important;
-    background: rgba(212, 71, 82, 0.10) !important;
-    border-color: rgba(212, 71, 82, 0.35) !important;
-}
-
-.user-preview-page .user-preview-action-delete:hover {
-    color: #ffffff !important;
-    background: #c93642 !important;
-    border-color: #c93642 !important;
-}
-
-.user-preview-page .user-preview-action-restore {
-    color: #16834a !important;
-    background: rgba(40, 167, 69, 0.10) !important;
-    border-color: rgba(40, 167, 69, 0.35) !important;
-}
-
-.user-preview-page .user-preview-action-restore:hover {
-    color: #ffffff !important;
-    background: #16834a !important;
-    border-color: #16834a !important;
-}
-
-.user-preview-page .user-preview-action-disabled {
-    opacity: 0.55 !important;
-    cursor: not-allowed !important;
-}
-
-/* DataTables controls follow the current theme. */
-
-.user-preview-page .dataTables_wrapper,
-.user-preview-page .dataTables_wrapper label,
-.user-preview-page .dataTables_info,
-.user-preview-page .dataTables_length,
-.user-preview-page .dataTables_filter {
-    color: var(--up-text) !important;
-}
-
-.user-preview-page .dataTables_wrapper .dataTables_filter input,
-.user-preview-page .dataTables_wrapper .dataTables_length select {
-    color: var(--up-text) !important;
-    background: var(--up-soft-bg) !important;
-    border: 1px solid var(--up-border) !important;
-    border-radius: 7px;
-    padding: 7px 10px;
-    outline: none;
-}
-
-.user-preview-page .dataTables_wrapper .dataTables_filter input::placeholder {
-    color: var(--up-muted) !important;
-    opacity: 1;
-}
-
-.user-preview-page .dataTables_wrapper .dataTables_paginate .paginate_button {
-    color: var(--up-text) !important;
-    background: var(--up-bg) !important;
-    border: 1px solid var(--up-border) !important;
-    border-radius: 6px;
-    margin: 0 2px;
-}
-
-.user-preview-page .dataTables_wrapper .dataTables_paginate .paginate_button.current,
-.user-preview-page .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
-    color: #ffffff !important;
-    background: #2474c7 !important;
-    border-color: #2474c7 !important;
-}
-
-.user-preview-page .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
-    color: var(--up-text) !important;
-    background: var(--up-hover-bg) !important;
-    border-color: var(--up-border) !important;
-}
-
-.user-preview-page .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
-    color: var(--up-muted) !important;
-    opacity: 0.55;
-}
-
-/* Export buttons (Excel, PDF) styling */
-
-.user-preview-page .dt-buttons {
-    display: inline-flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-left: 12px;
-    vertical-align: middle;
-}
-
-.user-preview-page .dt-button {
-    display: inline-flex !important;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    min-height: 34px;
-    padding: 6px 12px !important;
-    border: 1px solid var(--up-border) !important;
-    border-radius: 7px !important;
-    background: var(--up-soft-bg) !important;
-    color: var(--up-text) !important;
-    font-size: 0.78rem !important;
-    font-weight: 600 !important;
-    line-height: 1.2 !important;
-    text-decoration: none !important;
-    white-space: nowrap;
-    cursor: pointer;
-    box-shadow: none !important;
-    transition: background 0.18s ease, border-color 0.18s ease;
-}
-
-.user-preview-page .dt-button:hover {
-    background: var(--up-hover-bg) !important;
-    border-color: var(--up-muted) !important;
-    color: var(--up-text) !important;
-}
-
-.user-preview-page .dt-button.buttons-excel {
-    color: #1f7a3d !important;
-    background: rgba(31, 122, 61, 0.10) !important;
-    border-color: rgba(31, 122, 61, 0.35) !important;
-}
-
-.user-preview-page .dt-button.buttons-excel:hover {
-    color: #ffffff !important;
-    background: #1f7a3d !important;
-    border-color: #1f7a3d !important;
-}
-
-.user-preview-page .dt-button.buttons-pdf {
-    color: #c93642 !important;
-    background: rgba(201, 54, 66, 0.10) !important;
-    border-color: rgba(201, 54, 66, 0.35) !important;
-}
-
-.user-preview-page .dt-button.buttons-pdf:hover {
-    color: #ffffff !important;
-    background: #c93642 !important;
-    border-color: #c93642 !important;
-}
-
-/* Delete and restore modals. */
-
-.user-preview-modal-backdrop {
-    display: none;
-    position: fixed;
-    inset: 0;
-    z-index: 99990;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    background: rgba(0, 0, 0, 0.58);
-}
-
-.user-preview-modal-backdrop.is-open {
-    display: flex;
-}
-
-.user-preview-modal {
-    width: 100%;
-    max-width: 440px;
-    color: var(--body-text, var(--bs-body-color, #343a40));
-    background: var(--surface-bg, var(--bs-card-bg, #ffffff));
-    border: 1px solid var(--surface-border, var(--bs-border-color, #dee2e6));
-    border-radius: 14px;
-    padding: 24px;
-    box-shadow: 0 16px 50px rgba(0, 0, 0, 0.25);
-}
-
-.user-preview-modal h5 {
-    color: var(--body-text, var(--bs-body-color, #343a40));
-    margin: 0 0 12px;
-    font-size: 1.05rem;
-    font-weight: 600;
-}
-
-.user-preview-modal p {
-    color: var(--body-text, var(--bs-body-color, #343a40));
-    margin: 0 0 20px;
-    line-height: 1.6;
-    font-size: 0.9rem;
-}
-
-.user-preview-modal-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 9px;
-    flex-wrap: wrap;
-}
-
-.user-preview-modal-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 36px;
-    padding: 8px 14px;
-    border-radius: 7px;
-    border: 1px solid var(--surface-border, var(--bs-border-color, #dee2e6));
-    font-size: 0.85rem;
-    font-weight: 600;
-    cursor: pointer;
-}
-
-.user-preview-modal-cancel {
-    color: var(--body-text, var(--bs-body-color, #343a40));
-    background: var(--surface-soft, var(--bs-tertiary-bg, #f4f6fa));
-}
-
-.user-preview-modal-delete {
-    color: #ffffff;
-    background: #c93642;
-    border-color: #c93642;
-}
-
-.user-preview-modal-restore {
-    color: #ffffff;
-    background: #16834a;
-    border-color: #16834a;
-}
-
-@media (max-width: 768px) {
-    .user-preview-page .user-preview-card {
-        margin: 0 8px 16px;
-        padding: 16px 12px;
-    }
-
-    .user-preview-page .user-preview-table-wrap {
-        padding: 10px;
-    }
-
-    .user-preview-page .user-preview-actions {
-        gap: 5px;
-    }
-
-    .user-preview-page .user-preview-action {
-        padding: 6px;
-    }
-
-    .user-preview-page .user-preview-action-label {
-        display: none;
-    }
-
-    .user-preview-page .dt-buttons {
-        margin-left: 0;
-        margin-top: 8px;
-        width: 100%;
-    }
-}
-</style>
-
-<!-- DataTables + Buttons CSS (ensure these are loaded; if already in layout, you may remove duplicates) -->
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
-
-<section class="user-preview-page">
-    <div class="user-preview-card">
-
-        <div class="d-flex justify-content-between align-items-center flex-wrap"
-             style="gap: 14px; margin-bottom: 20px;">
-
-            <div>
-                <h4 class="user-preview-heading">Recent Activity</h4>
-                <p class="user-preview-subtitle">
-                    Overview of recent system users
-                </p>
             </div>
 
-            <?php if (($page_name ?? '') === 'dashboard') { ?>
-                <a href="index?action=users" class="user-preview-view-all">
-                    View All
-                    <svg viewBox="0 0 24 24" width="16" height="16"
-                         fill="none" stroke="currentColor" stroke-width="2"
-                         stroke-linecap="round" stroke-linejoin="round"
-                         aria-hidden="true">
-                        <path d="M5 12h14"></path>
-                        <path d="m13 6 6 6-6 6"></path>
-                    </svg>
-                </a>
-            <?php } ?>
-        </div>
+            <!-- ============================================
+                 USER STATUS SUMMARY CARDS
+            ============================================ -->
+            <div class="users-summary-stats">
 
-        <?php if ($is_sample_user) { ?>
-            <div class="user-preview-notice">
-                <strong>Preview mode:</strong>
-                This is a sample record displayed because no user records
-                were returned. It is not saved in the database.
+                <div class="summary-stat-card summary-stat-total">
+                    <div class="summary-stat-icon">
+                        <i class="mdi mdi-account-group-outline"></i>
+                    </div>
+                    <div class="summary-stat-info">
+                        <span class="summary-stat-value"><?= number_format($totalAllUsers); ?></span>
+                        <span class="summary-stat-label">Total Users</span>
+                    </div>
+                </div>
+
+                <div class="summary-stat-card summary-stat-active">
+                    <div class="summary-stat-icon">
+                        <i class="mdi mdi-account-check-outline"></i>
+                    </div>
+                    <div class="summary-stat-info">
+                        <span class="summary-stat-value"><?= number_format($totalActiveUsers); ?></span>
+                        <span class="summary-stat-label">Active</span>
+                    </div>
+                </div>
+
+                <div class="summary-stat-card summary-stat-inactive">
+                    <div class="summary-stat-icon">
+                        <i class="mdi mdi-account-clock-outline"></i>
+                    </div>
+                    <div class="summary-stat-info">
+                        <span class="summary-stat-value"><?= number_format($totalInactiveUsers); ?></span>
+                        <span class="summary-stat-label">Inactive</span>
+                    </div>
+                </div>
+
+                <div class="summary-stat-card summary-stat-deleted">
+                    <div class="summary-stat-icon">
+                        <i class="mdi mdi-account-remove-outline"></i>
+                    </div>
+                    <div class="summary-stat-info">
+                        <span class="summary-stat-value"><?= number_format($totalDeletedUsers); ?></span>
+                        <span class="summary-stat-label">All deleted</span>
+                    </div>
+                </div>
+
             </div>
-        <?php } ?>
 
-        <div class="user-preview-table-wrap">
-            <div class="table-responsive">
-                <table id="dashboardDataTable"
-                       class="table table-hover align-middle"
-                       style="width:100%;">
+            <div class="table-container users-activity-table-container">
+
+                <table class="dashboard-datatable ticket-table" id="dashboardDataTable">
 
                     <thead>
                         <tr>
-                            <th>S/N</th>
+                            <th class="center-header">S/N</th>
                             <th>User</th>
-                            <th>Title</th>
-                            <th>Role</th>
                             <th>Corridor</th>
-                            <th>Date &amp; Time</th>
                             <th>Status</th>
+                            <th>Date &amp; Time</th>
                             <th>Action</th>
                         </tr>
                     </thead>
 
                     <tbody>
-                    <?php
-                    $Ltable_sn = 0;
 
-                    foreach ($users_preview as $user) {
-                        $Ltable_sn++;
+                        <?php if (!empty($LoadAllUsersAndLoginTableForAdmin['all'])): ?>
 
-                        $Luser_sn = (int)($user['user_sn'] ?? 0);
-                        $Llogin_sn = (int)($user['login_sn'] ?? 0);
-                        $user_id = $user['user_userid'] ?? '';
-                        $user_name = $user['user_fullname'] ?? 'N/A';
-                        $user_email = $user['user_email'] ?? 'N/A';
-                        $user_title = $user['user_title'] ?? 'N/A';
-                        $user_role = $user['login_role'] ?? 'N/A';
-                        $user_date = $user['user_date'] ?? '';
-                        $user_image = $user['user_image'] ?? 'noimage2.png';
+                            <?php $sn = 1; ?>
 
-                        $user_corridor =
-                            $user['corridor_name']
-                            ?? $user['user_corridor']
-                            ?? $user['corridor']
-                            ?? $user['corridorname']
-                            ?? $user['user_corridor_name']
-                            ?? 'N/A';
+                            <?php foreach ($LoadAllUsersAndLoginTableForAdmin['all'] as $user): ?>
 
-                        $user_status = (int)(
-                            $user['login_status']
-                            ?? $user['status']
-                            ?? 0
-                        );
+                                <?php
 
-                        if ($user_status === 1) {
-                            $status_text = 'Active';
-                            $status_class = 'user-preview-status-active';
-                        } elseif ($user_status === 0) {
-                            $status_text = 'Inactive';
-                            $status_class = 'user-preview-status-inactive';
-                        } else {
-                            $status_text = 'Deleted';
-                            $status_class = 'user-preview-status-deleted';
-                        }
+                                $user_image = "noimage2.png";
 
-                        $is_admin_user = (
-                            isset($company_adminseniorman, $user_id)
-                            && (string)$company_adminseniorman === (string)$user_id
-                        );
+                                $Luser_sn = $user['login_sn'];
+                               
+                                $user_sn = $user['user_sn'] ?? 0;
 
-                        $is_sample_row = !empty($user['_is_sample'])
-                            || ($is_sample_user && $Ltable_sn === 1);
+                                if (!empty($user['user_image'])) {
+                                    $user_image = $user['user_image'];
+                                }
 
-                        $image_file = basename((string)$user_image);
-                        $image_path = 'views/uploads/img/profile/' . $image_file;
+                                $user_id = $user['user_userid'] ?? '';
+                                
+                                $user_name = $user['user_fullname'] ?? 'N/A';
 
-                        $edit_url = 'index?action=edit_user&token='
-                            . urlencode(base64_encode((string)$user_id));
+                                // determine status ball class
+                                $login_status = $user['login_status'] ?? null;
 
-                        $delete_token = base64_encode(json_encode([
-                            'sn' => $Luser_sn,
-                            'table_name' => $Ltable_name,
-                            'user_name' => $user_name,
-                            'page_controller' => $page_controller
-                        ]));
+                                if ($login_status == 1) {
+                                    $status_ball_class = 'status-ball-active';
+                                    $status_text = 'Active';
+                                } elseif ($login_status == 0) {
+                                    $status_ball_class = 'status-ball-inactive';
+                                    $status_text = 'Inactive';
+                                } else {
+                                    $status_ball_class = 'status-ball-deleted';
+                                    $status_text = 'Deleted';
+                                }
 
-                        $delete_url = 'index?action=delete_user&sn='
-                            . urlencode((string)$Llogin_sn)
-                            . '&table_name='
-                            . urlencode($Ltable_name);
-                    ?>
-                        <tr>
-                            <td><?= $Ltable_sn; ?></td>
+                                ?>
 
-                            <td>
-                                <div class="user-preview-person">
-                                    <img
-                                        src="<?= htmlspecialchars($image_path, ENT_QUOTES, 'UTF-8'); ?>"
-                                        class="user-preview-avatar"
-                                        alt="User"
-                                        onerror="this.onerror=null;this.src='views/uploads/img/profile/noimage2.png';">
+                                <tr>
 
-                                    <div>
-                                        <div class="user-preview-person-name">
-                                            <?= htmlspecialchars((string)$user_name, ENT_QUOTES, 'UTF-8'); ?>
+                                    <td class="center-cell">
+                                        <?= $sn++; ?>
+                                    </td>
 
-                                            <?php if ($is_admin_user) { ?>
-                                                <span title="Senior Administrator"
-                                                      style="color:#d6a52d; margin-left:3px;">
-                                                    ★
-                                                </span>
-                                            <?php } ?>
+                                    <td>
+                                        <div class="dashboard-table-user">
+
+                                            <img
+                                                class="dashboard-table-avatar"
+                                                src="views/uploads/img/profile/<?= htmlspecialchars($user_image, ENT_QUOTES, 'UTF-8'); ?>"
+                                                alt="User"
+                                                loading="lazy"
+                                                onerror="this.onerror=null;this.src='views/uploads/img/noimage2.png';"
+                                            >
+
+                                            <div class="dashboard-table-user-details">
+
+                                                <div class="dashboard-table-user-name">
+                                                    <span class="status-ball <?= $status_ball_class; ?>" aria-hidden="true"></span>
+                                                    <?= ucfirst(htmlspecialchars($user['user_title'])) ." " .ucfirst(htmlspecialchars($user['user_fullname'] ." (". ucfirst(htmlspecialchars($user['login_role'])).")" ?? 'N/A', ENT_QUOTES, 'UTF-8')); ?>
+                                             <?php if ( $company_adminseniorman == $user['user_userid']){ echo "👑"; } ?>
+                                                </div>
+
+                                                <div class="dashboard-table-user-email">
+                                                    <?= htmlspecialchars($user['user_email'] ?? 'N/A', ENT_QUOTES, 'UTF-8'); ?>
+                                                </div>
+
+                                            </div>
+
                                         </div>
+                                    </td>
 
-                                        <div class="user-preview-person-email">
-                                            <?= htmlspecialchars((string)$user_email, ENT_QUOTES, 'UTF-8'); ?>
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
+                                    <td>
+                                        <?= htmlspecialchars($user['user_corridor'] ?? 'N/A', ENT_QUOTES, 'UTF-8'); ?>
+                                    </td>
 
-                            <td><?= htmlspecialchars((string)$user_title, ENT_QUOTES, 'UTF-8'); ?></td>
-
-                            <td><?= htmlspecialchars((string)$user_role, ENT_QUOTES, 'UTF-8'); ?></td>
-
-                            <td>
-                                <?= htmlspecialchars((string)$user_corridor, ENT_QUOTES, 'UTF-8'); ?>
-                            </td>
-
-                            <td>
-                                <?php if (!empty($user_date)) { ?>
-                                    <?= htmlspecialchars((string)$user_date, ENT_QUOTES, 'UTF-8'); ?>
-                                <?php } else { ?>
-                                    <span class="user-preview-muted">N/A</span>
-                                <?php } ?>
-                            </td>
-
-                            <td>
-                                <span class="user-preview-status <?= $status_class; ?>">
-                                    <?= htmlspecialchars($status_text, ENT_QUOTES, 'UTF-8'); ?>
-                                </span>
-                            </td>
-
-                            <td>
-                                <div class="user-preview-actions">
-                                    <?php if (!$is_sample_row && $user_status !== -1) { ?>
-
-                                        <a
-                                            href="<?= htmlspecialchars($edit_url, ENT_QUOTES, 'UTF-8'); ?>"
-                                            class="user-preview-action user-preview-action-edit"
-                                            title="Edit user"
-                                            aria-label="Edit user">
-
-                                            <svg viewBox="0 0 24 24"
-                                                 aria-hidden="true">
-                                                <path d="M12 20h9"></path>
-                                                <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"></path>
-                                            </svg>
-
-                                            <span class="user-preview-action-label">Edit</span>
-                                        </a>
-
-                                    <?php } ?>
-
-                                    <?php if (!$is_sample_row && $user_status === -1) { ?>
-
-                                        <button
-                                            type="button"
-                                            class="user-preview-action user-preview-action-restore"
-                                            title="Restore user"
-                                            aria-label="Restore user"
-                                            onclick="showRestoreModal(
-                                                <?= htmlspecialchars(json_encode((string)$delete_token), ENT_QUOTES, 'UTF-8'); ?>
-                                            )">
-
-                                            <svg viewBox="0 0 24 24"
-                                                 aria-hidden="true">
-                                                <path d="M3 12a9 9 0 1 0 3-6.7"></path>
-                                                <path d="M3 4v5h5"></path>
-                                                <path d="M12 7v5l3 2"></path>
-                                            </svg>
-
-                                            <span class="user-preview-action-label">Restore</span>
-                                        </button>
-
-                                    <?php } elseif (!$is_sample_row) { ?>
-
-                                        <button
-                                            type="button"
-                                            class="user-preview-action user-preview-action-delete"
-                                            title="Delete user"
-                                            aria-label="Delete user"
-                                            onclick="showDeleteModal(
-                                                <?= (int)$Llogin_sn; ?>,
-                                                <?= htmlspecialchars(json_encode((string)$Ltable_name), ENT_QUOTES, 'UTF-8'); ?>
-                                            )">
-
-                                            <svg viewBox="0 0 24 24"
-                                                 aria-hidden="true">
-                                                <path d="M3 6h18"></path>
-                                                <path d="M8 6V4h8v2"></path>
-                                                <path d="m19 6-1 14H6L5 6"></path>
-                                                <path d="M10 11v5"></path>
-                                                <path d="M14 11v5"></path>
-                                            </svg>
-
-                                            <span class="user-preview-action-label">Delete</span>
-                                        </button>
-
-                                    <?php } else { ?>
-
-                                        <span
-                                            class="user-preview-action user-preview-action-edit user-preview-action-disabled"
-                                            title="Sample preview only">
-                                            <svg viewBox="0 0 24 24"
-                                                 aria-hidden="true">
-                                                <path d="M12 20h9"></path>
-                                                <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"></path>
-                                            </svg>
-                                            <span class="user-preview-action-label">Edit</span>
+                                    <td class="users-status-cell">
+                                        <span class="status-badge <?= $status_ball_class; ?>">
+                                            <?= $status_text; ?>
                                         </span>
+                                    </td>
 
-                                        <span
-                                            class="user-preview-action user-preview-action-delete user-preview-action-disabled"
-                                            title="Sample preview only">
-                                            <svg viewBox="0 0 24 24"
-                                                 aria-hidden="true">
-                                                <path d="M3 6h18"></path>
-                                                <path d="M8 6V4h8v2"></path>
-                                                <path d="m19 6-1 14H6L5 6"></path>
-                                                <path d="M10 11v5"></path>
-                                                <path d="M14 11v5"></path>
-                                            </svg>
-                                            <span class="user-preview-action-label">Delete</span>
-                                        </span>
+                                    <td class="users-activity-date">
+                                        <?= !empty($user['user_date'])
+                                            ? date('d M Y, h:i A', strtotime($user['user_date']))
+                                            : 'N/A';
+                                        ?>
+                                    </td>
 
-                                    <?php } ?>
-                                </div>
-                            </td>
-                        </tr>
-                    <?php } ?>
+                                    <td class="users-activity-action-cell">
+
+                                      
+                                    
+                                    <!-- start here -->
+                                    <?php if (($user['login_status'] ?? '') == 0 || ($user['login_status'] ?? '') == 1): ?>
+                                    
+                                  <?php if (($user['login_role'] == "administrator" ) AND ( $company_adminseniorman != $_SESSION['userid'])) : ?>
+                                    
+ <?php elseif (($user['login_role'] == "administrator" ) AND ($_SESSION['userid']=="administrator")) : ?>
+
+    <?php else :  ?>
+
+                                            <?php if ($login_edit_user == 1 || $company_adminseniorman == $_SESSION['userid']) : ?>
+                                            <button
+                                                type="button"
+                                                class="dashboard-table-action"
+                                                title="Edit"
+                                                aria-label="Edit user"
+                                                onclick="window.location.href='index?action=edit_user&token_edit=<?= urlencode(base64_encode($user_id)); ?>'"
+                                            >
+                                                <i class="mdi mdi-pencil"></i>
+                                            </button>
+                                            <?php endif; ?>
+
+                                            <?php if (($user['login_status'] ?? '') == 0): ?>
+                                                <?php if (!($company_acct_approval == 0 && $company_adminseniorman != $_SESSION['userid'])) : ?>
+                                                <button
+                                                    type="button"
+                                                    class="dashboard-table-action reset-user-btn"
+                                                    title="Reset"
+                                                    aria-label="Reset user"
+                                                    onclick="showResetModal(
+                                                        '<?= urlencode(base64_encode($user_id)); ?>',
+                                                        <?= htmlspecialchars(json_encode($user_name, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP), ENT_QUOTES, 'UTF-8'); ?>
+                                                    )"
+                                                >
+                                                    <i class="mdi mdi-lock-reset"></i>
+                                                </button>
+                                                <?php endif; ?>
+                                            <?php endif; ?>
+
+                                            <?php if ($login_delete_user == 1 || $company_adminseniorman == $_SESSION['userid']) : ?>
+                                            <button
+                                                type="button"
+                                                class="dashboard-table-action delete-user-btn"
+                                                title="Delete"
+                                                aria-label="Delete user"
+                                                onclick="showDeleteModal(
+                                                    '<?= htmlspecialchars((string) $user_sn, ENT_QUOTES, 'UTF-8'); ?>',
+                                                    '<?= htmlspecialchars((string) $Luser_sn, ENT_QUOTES, 'UTF-8'); ?>',
+                                                    <?= htmlspecialchars(json_encode($user_name, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP), ENT_QUOTES, 'UTF-8'); ?>,
+                                                    '<?= htmlspecialchars($users_table_name, ENT_QUOTES, 'UTF-8'); ?>',
+                                                    '<?= htmlspecialchars($Ltable_name, ENT_QUOTES, 'UTF-8'); ?>'
+                                                )"
+                                            >
+                                                <i class="mdi mdi-delete"></i>
+                                            </button>
+                                            <?php endif; ?>
+
+                                      
+                                        <?php endif; ?>
+<?php endif; ?>
+ <!-- end here -->   
+
+
+                                    </td>
+
+                                </tr>
+
+                            <?php endforeach; ?>
+
+                        <?php endif; ?>
+
                     </tbody>
 
                 </table>
+
             </div>
+
         </div>
+
     </div>
-</section>
 
-<!-- Delete confirmation modal -->
-<div class="user-preview-modal-backdrop"
-     id="deleteModal"
-     role="dialog"
-     aria-modal="true"
-     aria-labelledby="userPreviewDeleteTitle">
+</div>
 
-    <div class="user-preview-modal">
-        <h5 id="userPreviewDeleteTitle">Confirm Delete</h5>
+<!-- DELETE CONFIRMATION MODAL -->
+
+<div id="deleteModal" class="delete-modal-overlay" aria-hidden="true">
+
+    <div class="delete-modal-box" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle">
+
+        <button type="button" class="delete-modal-close" onclick="closeDeleteModal()" aria-label="Close">
+            &times;
+        </button>
+
+        <div class="delete-modal-icon">
+            <i class="mdi mdi-delete-alert-outline"></i>
+        </div>
+
+        <h3 id="deleteModalTitle">Are you sure?</h3>
 
         <p>
-            Are you sure you want to delete this user?
-            This action cannot be undone from this confirmation.
+            Do you truly want to delete
+            <strong id="deleteUserName">this user</strong>?
         </p>
 
-        <div class="user-preview-modal-actions">
-            <button type="button"
-                    class="user-preview-modal-btn user-preview-modal-cancel"
-                    onclick="closeUserPreviewModal('deleteModal')">
+        <div class="delete-modal-actions">
+
+            <button type="button" class="delete-modal-cancel" onclick="closeDeleteModal()">
                 Cancel
             </button>
 
-            <button type="button"
-                    class="user-preview-modal-btn user-preview-modal-delete"
-                    id="confirmDeleteBtn">
-                Delete User
+            <button type="button" class="delete-modal-confirm" id="confirmDeleteBtn">
+                <i class="mdi mdi-delete-outline"></i>
+                Yes, Delete
             </button>
+
         </div>
+
     </div>
+
 </div>
 
-<!-- Restore confirmation modal -->
-<div class="user-preview-modal-backdrop"
-     id="restoreModal"
-     role="dialog"
-     aria-modal="true"
-     aria-labelledby="userPreviewRestoreTitle">
+<!-- RESET CONFIRMATION MODAL -->
 
-    <div class="user-preview-modal">
-        <h5 id="userPreviewRestoreTitle">Restore User</h5>
+<div id="resetModal" class="reset-modal-overlay" aria-hidden="true">
+
+    <div class="reset-modal-box" role="dialog" aria-modal="true" aria-labelledby="resetModalTitle">
+
+        <button type="button" class="reset-modal-close" onclick="closeResetModal()" aria-label="Close">
+            &times;
+        </button>
+
+        <div class="reset-modal-icon">
+            <i class="mdi mdi-lock-reset"></i>
+        </div>
+
+        <h3 id="resetModalTitle">Reset Account?</h3>
 
         <p>
-            Are you sure you want to restore this user?
+            Resetting <strong id="resetUserName">this account</strong> will also
+            <strong>activate it</strong> and <strong>notify the user</strong>.
+            Continue?
         </p>
 
-        <div class="user-preview-modal-actions">
-            <button type="button"
-                    class="user-preview-modal-btn user-preview-modal-cancel"
-                    onclick="closeUserPreviewModal('restoreModal')">
+        <div class="reset-modal-actions">
+
+            <button type="button" class="reset-modal-cancel" onclick="closeResetModal()">
                 Cancel
             </button>
 
-            <button type="button"
-                    class="user-preview-modal-btn user-preview-modal-restore"
-                    id="confirmRestoreBtn">
-                Restore User
+            <button type="button" class="reset-modal-confirm" id="confirmResetBtn">
+                <i class="mdi mdi-check-circle-outline"></i>
+                Yes, Reset
             </button>
+
         </div>
+
     </div>
+
 </div>
 
-<!-- DataTables & Buttons JS libraries -->
-<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+<!-- RESTORE CONFIRMATION MODAL -->
+
+<div id="restoreModal" class="restore-modal-overlay" aria-hidden="true">
+
+    <div class="restore-modal-box" role="dialog" aria-modal="true" aria-labelledby="restoreModalTitle">
+
+        <button type="button" class="restore-modal-close" onclick="closeRestoreModal()" aria-label="Close">
+            &times;
+        </button>
+
+        <div class="restore-modal-icon">
+            <i class="mdi mdi-recycle"></i>
+        </div>
+
+        <h3 id="restoreModalTitle">Restore User?</h3>
+
+        <p>
+            Do you want to restore
+            <strong id="restoreUserName">this user</strong>?
+        </p>
+
+        <div class="restore-modal-actions">
+
+            <button type="button" class="restore-modal-cancel" onclick="closeRestoreModal()">
+                Cancel
+            </button>
+
+            <button type="button" class="restore-modal-confirm" id="confirmRestoreBtn">
+                <i class="mdi mdi-restore"></i>
+                Yes, Restore
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+<style>
+/* ============================================
+   USER SUMMARY STATS CARDS
+============================================ */
+.users-summary-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.summary-stat-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px solid var(--surface-border);
+    border-radius: 12px;
+    background: var(--surface-soft);
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    min-width: 0;
+}
+
+.summary-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, .07);
+}
+
+.summary-stat-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    border-radius: 11px;
+    font-size: 22px;
+    border: 1px solid transparent;
+}
+
+.summary-stat-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.summary-stat-value {
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -.5px;
+    color: var(--body-text);
+}
+
+.summary-stat-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    color: var(--secondary-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Total */
+.summary-stat-total .summary-stat-icon {
+    background: rgba(59, 111, 212, .10);
+    border-color: rgba(59, 111, 212, .28);
+    color: #3b6fd4;
+}
+.summary-stat-total:hover {
+    border-color: rgba(59, 111, 212, .45);
+}
+
+/* Active */
+.summary-stat-active .summary-stat-icon {
+    background: rgba(22, 163, 74, .10);
+    border-color: rgba(22, 163, 74, .28);
+    color: #16804a;
+}
+.summary-stat-active:hover {
+    border-color: rgba(22, 163, 74, .45);
+}
+.summary-stat-active .summary-stat-value {
+    color: #16804a;
+}
+
+/* Inactive */
+.summary-stat-inactive .summary-stat-icon {
+    background: rgba(234, 179, 8, .12);
+    border-color: rgba(234, 179, 8, .30);
+    color: #b45309;
+}
+.summary-stat-inactive:hover {
+    border-color: rgba(234, 179, 8, .48);
+}
+.summary-stat-inactive .summary-stat-value {
+    color: #b45309;
+}
+
+/* Deleted */
+.summary-stat-deleted .summary-stat-icon {
+    background: rgba(220, 38, 38, .10);
+    border-color: rgba(220, 38, 38, .28);
+    color: #c93642;
+}
+.summary-stat-deleted:hover {
+    border-color: rgba(220, 38, 38, .45);
+}
+.summary-stat-deleted .summary-stat-value {
+    color: #c93642;
+}
+
+/* Dark theme adjustments */
+:root[data-theme="dark"] .summary-stat-total .summary-stat-icon {
+    background: rgba(96, 165, 250, .12);
+    border-color: rgba(96, 165, 250, .32);
+    color: #93c5fd;
+}
+:root[data-theme="dark"] .summary-stat-active .summary-stat-icon {
+    background: rgba(74, 222, 128, .12);
+    border-color: rgba(74, 222, 128, .32);
+    color: #6ee7a0;
+}
+:root[data-theme="dark"] .summary-stat-active .summary-stat-value {
+    color: #6ee7a0;
+}
+:root[data-theme="dark"] .summary-stat-inactive .summary-stat-icon {
+    background: rgba(250, 204, 21, .12);
+    border-color: rgba(250, 204, 21, .32);
+    color: #facc15;
+}
+:root[data-theme="dark"] .summary-stat-inactive .summary-stat-value {
+    color: #facc15;
+}
+:root[data-theme="dark"] .summary-stat-deleted .summary-stat-icon {
+    background: rgba(248, 113, 113, .12);
+    border-color: rgba(248, 113, 113, .32);
+    color: #ff9aa6;
+}
+:root[data-theme="dark"] .summary-stat-deleted .summary-stat-value {
+    color: #ff9aa6;
+}
+
+.users-activity-card {
+    margin: 0 16px 20px;
+    padding: 18px 16px 20px;
+    background: var(--surface-bg);
+    color: var(--body-text);
+    border: 1px solid var(--surface-border);
+    border-radius: 16px;
+    box-shadow: 0 5px 20px rgba(15, 23, 42, .04);
+    width: auto;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.users-activity-card *,
+.users-activity-card *::before,
+.users-activity-card *::after {
+    box-sizing: border-box;
+}
+
+.users-activity-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.users-activity-title {
+    margin: 0 0 6px;
+    color: var(--body-text);
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -.2px;
+}
+
+.users-activity-description {
+    margin: 0;
+    color: var(--secondary-text);
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.users-activity-header .btn-view-all {
+    text-decoration: none;
+}
+
+.users-activity-table-container {
+    margin: 0;
+    padding: 12px 8px 16px;
+    border-radius: 12px;
+    box-shadow: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* TABLE WIDTH AND COLUMN SIZING */
+
+#dashboardDataTable_wrapper {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+}
+
+.dashboard-datatable {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    border-collapse: collapse !important;
+    margin: 0 !important;
+    table-layout: fixed !important;
+}
+
+/* ALIGN EVERY COLUMN HEADER TO THE LEFT */
+
+#dashboardDataTable thead th {
+    height: 40px;
+    padding: 7px 5px;
+    background: var(--table-head-bg);
+    color: var(--secondary-text);
+    border-bottom: 1px solid var(--surface-border);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .2px;
+    text-transform: uppercase;
+    vertical-align: middle;
+    text-align: left !important;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+/* CENTER THE S/N HEADER ONLY */
+
+#dashboardDataTable thead th.center-header {
+    text-align: center !important;
+}
+
+.dashboard-datatable thead th:nth-child(1) {
+    width: 6%;
+}
+
+.dashboard-datatable thead th:nth-child(2) {
+    width: 34%;
+}
+
+.dashboard-datatable thead th:nth-child(3) {
+    width: 14%;
+}
+
+.dashboard-datatable thead th:nth-child(4) {
+    width: 12%;
+}
+
+.dashboard-datatable thead th:nth-child(5) {
+    width: 19%;
+}
+
+.dashboard-datatable thead th:nth-child(6) {
+    width: 15%;
+}
+
+/* ALIGN ROW VALUES TO THE LEFT BY DEFAULT */
+
+#dashboardDataTable tbody td {
+    padding: 9px 5px;
+    background: var(--table-cell-bg);
+    color: var(--body-text);
+    border-bottom: 1px solid var(--surface-border);
+    font-size: 11px;
+    line-height: 1.5;
+    vertical-align: middle;
+    text-align: left !important;
+    min-width: 0;
+    max-width: 0;
+    overflow-wrap: anywhere;
+    word-break: normal;
+}
+
+/* CENTER ONLY THE S/N VALUES; KEEP ITS HEADER LEFT-ALIGNED */
+
+#dashboardDataTable tbody td.center-cell {
+    text-align: center !important;
+}
+
+.dashboard-datatable tbody tr:hover td {
+    background: var(--table-hover-bg);
+}
+
+.dashboard-datatable tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.dashboard-table-user {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    width: 100%;
+    min-width: 0;
+}
+
+.dashboard-table-avatar {
+    width: 30px;
+    height: 30px;
+    min-width: 30px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--surface-soft);
+    border: 1px solid var(--surface-border);
+}
+
+.dashboard-table-user-details {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 100%;
+    min-width: 0;
+    gap: 2px;
+}
+
+.dashboard-table-user-name {
+    color: var(--body-text);
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1.4;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+/* Status ball placed before the user name. */
+
+.dashboard-table-user-name .status-ball {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 5px;
+    vertical-align: middle;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, .08);
+}
+
+.status-ball-active {
+    background: #16a34a;
+    box-shadow: 0 0 0 2px rgba(22, 163, 74, .20);
+}
+
+.status-ball-inactive {
+    background: #eab308;
+    box-shadow: 0 0 0 2px rgba(234, 179, 8, .20);
+}
+
+.status-ball-deleted {
+    background: #dc2626;
+    box-shadow: 0 0 0 2px rgba(220, 38, 38, .20);
+}
+
+/* STATUS BADGE */
+
+.users-status-cell {
+    white-space: nowrap;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .3px;
+    text-transform: uppercase;
+    line-height: 1.4;
+    border: 1px solid transparent;
+}
+
+.status-badge.status-ball-active {
+    background: rgba(22, 163, 74, .12);
+    border-color: rgba(22, 163, 74, .30);
+    color: #16804a;
+    box-shadow: none;
+}
+
+.status-badge.status-ball-inactive {
+    background: rgba(234, 179, 8, .14);
+    border-color: rgba(234, 179, 8, .34);
+    color: #b45309;
+    box-shadow: none;
+}
+
+.status-badge.status-ball-deleted {
+    background: rgba(220, 38, 38, .12);
+    border-color: rgba(220, 38, 38, .30);
+    color: #c93642;
+    box-shadow: none;
+}
+
+:root[data-theme="dark"] .status-badge.status-ball-active {
+    background: rgba(74, 222, 128, .14);
+    border-color: rgba(74, 222, 128, .34);
+    color: #6ee7a0;
+}
+
+:root[data-theme="dark"] .status-badge.status-ball-inactive {
+    background: rgba(250, 204, 21, .14);
+    border-color: rgba(250, 204, 21, .34);
+    color: #facc15;
+}
+
+:root[data-theme="dark"] .status-badge.status-ball-deleted {
+    background: rgba(248, 113, 113, .14);
+    border-color: rgba(248, 113, 113, .34);
+    color: #ff9aa6;
+}
+
+.dashboard-table-user-email {
+    color: var(--secondary-text);
+    font-size: 9px;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.dashboard-admin-crown {
+    display: inline-block;
+    margin-left: 3px;
+    font-size: 12px;
+}
+
+.users-activity-date {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    color: var(--secondary-text) !important;
+    font-size: 9px;
+    text-align: left !important;
+}
+
+/* LEFT-ALIGNED ACTION COLUMN */
+
+.users-activity-action-cell {
+    width: 1%;
+    min-width: 56px;
+    max-width: 75px;
+    padding-left: 5px !important;
+    padding-right: 2px !important;
+    text-align: left !important;
+    white-space: nowrap !important;
+    overflow: visible !important;
+}
+
+.dashboard-table-action {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 27px;
+    height: 27px;
+    padding: 0;
+    margin: 2px 1px;
+    border: 1px solid var(--surface-border);
+    border-radius: 7px;
+    background: var(--surface-soft);
+    color: var(--link-color);
+    font-size: 15px;
+    line-height: 1;
+    vertical-align: middle;
+    cursor: pointer;
+    overflow: visible;
+    transition: background .18s ease, border-color .18s ease, color .18s ease;
+}
+
+.dashboard-table-action:hover {
+    background: var(--table-hover-bg);
+    border-color: var(--link-color);
+    color: var(--link-color);
+}
+
+/* Preserve Material Design Icons inside action buttons. */
+
+.dashboard-table-action i.mdi {
+    display: inline-block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    font-family: "Material Design Icons" !important;
+    font-style: normal !important;
+    font-weight: normal !important;
+    font-size: 15px !important;
+    line-height: 1 !important;
+    speak: never;
+}
+
+.dashboard-table-action i.mdi::before {
+    display: inline-block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    font-family: "Material Design Icons" !important;
+    font-style: normal !important;
+    font-weight: normal !important;
+    line-height: 1 !important;
+}
+
+.delete-user-btn {
+    color: #c93642;
+}
+
+.delete-user-btn:hover {
+    color: #b91c1c;
+    border-color: #d9535e;
+}
+
+.recycle-user-btn {
+    color: #16804a;
+}
+
+.recycle-user-btn:hover {
+    color: #15803d;
+    border-color: #16a34a;
+}
+
+.reset-user-btn {
+    color: #b45309;
+}
+
+.reset-user-btn:hover {
+    color: #92400e;
+    border-color: #eab308;
+}
+
+:root[data-theme="dark"] .delete-user-btn {
+    color: #ff9aa6;
+}
+
+:root[data-theme="dark"] .recycle-user-btn {
+    color: #6ee7a0;
+}
+
+:root[data-theme="dark"] .reset-user-btn {
+    color: #facc15;
+}
+
+:root[data-theme="dark"] .status-ball-active {
+    background: #4ade80;
+    box-shadow: 0 0 0 2px rgba(74, 222, 128, .25);
+}
+
+:root[data-theme="dark"] .status-ball-inactive {
+    background: #facc15;
+    box-shadow: 0 0 0 2px rgba(250, 204, 21, .25);
+}
+
+:root[data-theme="dark"] .status-ball-deleted {
+    background: #f87171;
+    box-shadow: 0 0 0 2px rgba(248, 113, 113, .25);
+}
+
+/* DATATABLES SEARCH AND LENGTH */
+
+#dashboardDataTable_wrapper .dataTables_filter {
+    margin-bottom: 12px;
+    text-align: right;
+    font-size: 12px;
+}
+
+#dashboardDataTable_wrapper .dataTables_filter label {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    margin: 0;
+    color: var(--secondary-text);
+    font-weight: 500;
+}
+
+#dashboardDataTable_wrapper .dataTables_filter input {
+    width: 180px;
+    max-width: 100%;
+    margin-left: 0;
+    padding: 6px 10px;
+    border: 1px solid var(--surface-border);
+    border-radius: 8px;
+    outline: none;
+    background: var(--surface-soft);
+    color: var(--body-text);
+    font-size: 12px;
+    transition: border-color .2s ease, box-shadow .2s ease;
+}
+
+#dashboardDataTable_wrapper .dataTables_filter input:focus {
+    border-color: #3b6fd4;
+    box-shadow: 0 0 0 3px rgba(59, 111, 212, .12);
+    background: var(--surface-bg);
+}
+
+#dashboardDataTable_wrapper .dataTables_length {
+    margin-bottom: 12px;
+    color: var(--secondary-text);
+    font-size: 12px;
+}
+
+#dashboardDataTable_wrapper .dataTables_length select {
+    margin: 0 4px;
+    padding: 5px 8px;
+    border: 1px solid var(--surface-border);
+    border-radius: 8px;
+    background: var(--surface-soft);
+    color: var(--body-text);
+    font-size: 12px;
+}
+
+#dashboardDataTable_wrapper .dataTables_info {
+    padding-top: 10px;
+    color: var(--secondary-text);
+    font-size: 12px;
+}
+
+#dashboardDataTable_wrapper .dataTables_paginate {
+    padding-top: 10px;
+    margin-top: 10px;
+}
+
+#dashboardDataTable_wrapper .dataTables_paginate .paginate_button {
+    margin: 0 2px;
+    padding: 4px 9px !important;
+    border: 1px solid var(--surface-border) !important;
+    border-radius: 7px !important;
+    background: var(--surface-soft) !important;
+    color: var(--body-text) !important;
+    font-size: 11px;
+}
+
+#dashboardDataTable_wrapper .dataTables_paginate .paginate_button.current {
+    border-color: #3b6fd4 !important;
+    background: #3b6fd4 !important;
+    color: #fff !important;
+}
+
+#dashboardDataTable_wrapper .dataTables_paginate .paginate_button:hover {
+    border-color: var(--surface-border) !important;
+    background: var(--table-hover-bg) !important;
+    color: var(--body-text) !important;
+}
+
+#dashboardDataTable_wrapper .dataTables_paginate .paginate_button.current:hover {
+    border-color: #2f5cb8 !important;
+    background: #2f5cb8 !important;
+    color: #fff !important;
+}
+
+:root[data-theme="dark"] .dashboard-datatable {
+    color: var(--body-text);
+}
+
+:root[data-theme="dark"] .dashboard-datatable thead th,
+:root[data-theme="dark"] .dashboard-datatable tbody td {
+    border-color: var(--surface-border);
+}
+
+:root[data-theme="dark"] #dashboardDataTable_wrapper .dataTables_filter input,
+:root[data-theme="dark"] #dashboardDataTable_wrapper .dataTables_length select {
+    color-scheme: dark;
+}
+
+/* DATATABLES EXPORT BUTTONS */
+
+#dashboardDataTable_wrapper .dt-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 14px;
+    max-width: 100%;
+}
+
+#dashboardDataTable_wrapper .dt-buttons {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 5px;
+    max-width: 100%;
+}
+
+#dashboardDataTable_wrapper .dt-buttons .dt-button {
+    margin: 0;
+    padding: 6px 10px;
+    border: 1px solid var(--surface-border);
+    border-radius: 6px;
+    background: var(--surface-soft);
+    color: var(--body-text);
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .18s ease, border-color .18s ease;
+}
+
+#dashboardDataTable_wrapper .dt-buttons .dt-button:hover,
+#dashboardDataTable_wrapper .dt-buttons .dt-button:focus {
+    border-color: #3b6fd4;
+    background: rgba(59, 111, 212, .10);
+    color: var(--body-text);
+}
+
+#dashboardDataTable_wrapper .dt-buttons .dt-button.disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+#dashboardDataTable_wrapper .dt-top .dataTables_filter {
+    margin: 0;
+}
+
+#dashboardDataTable_wrapper .dt-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+    max-width: 100%;
+}
+
+/* RESPONSIVE DETAILS */
+
+#dashboardDataTable_wrapper td.child {
+    padding: 10px 12px !important;
+    background: var(--surface-soft) !important;
+    white-space: normal !important;
+    text-align: left !important;
+}
+
+#dashboardDataTable_wrapper td.child ul.dtr-details {
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+#dashboardDataTable_wrapper td.child ul.dtr-details li {
+    display: flex;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 5px;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--surface-border);
+    white-space: normal;
+    text-align: left !important;
+    overflow-wrap: anywhere;
+}
+
+#dashboardDataTable_wrapper td.child ul.dtr-details li:last-child {
+    border-bottom: 0;
+}
+
+#dashboardDataTable_wrapper .dtr-title {
+    color: var(--secondary-text);
+    font-weight: 700;
+}
+
+#dashboardDataTable_wrapper .dtr-data {
+    color: var(--body-text);
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-align: left !important;
+}
+
+#dashboardDataTable_wrapper .dtr-control {
+    cursor: pointer;
+    text-align: left !important;
+}
+
+#dashboardDataTable_wrapper .dataTables_empty {
+    text-align: left !important;
+    padding: 18px 8px !important;
+}
+
+/* DELETE BUTTON */
+
+.delete-user-btn {
+    color: #c93642;
+}
+
+.delete-user-btn:hover {
+    color: #b91c1c;
+}
+
+/* MODAL OVERLAYS */
+
+.delete-modal-overlay,
+.reset-modal-overlay,
+.restore-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(15, 23, 42, .68);
+    backdrop-filter: blur(7px);
+    -webkit-backdrop-filter: blur(7px);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity .25s ease, visibility .25s ease;
+}
+
+.delete-modal-overlay.show,
+.reset-modal-overlay.show,
+.restore-modal-overlay.show {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+/* MODAL BOXES */
+
+.delete-modal-box,
+.reset-modal-box,
+.restore-modal-box {
+    position: relative;
+    width: 100%;
+    max-width: 440px;
+    padding: 36px 30px 28px;
+    border: 1px solid var(--surface-border);
+    border-radius: 18px;
+    background: var(--surface-bg);
+    color: var(--body-text);
+    text-align: center;
+    box-shadow: 0 25px 70px rgba(15, 23, 42, .28);
+    transform: translateY(20px) scale(.96);
+    opacity: 0;
+    transition: transform .25s ease, opacity .25s ease;
+}
+
+.delete-modal-overlay.show .delete-modal-box,
+.reset-modal-overlay.show .reset-modal-box,
+.restore-modal-overlay.show .restore-modal-box {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+}
+
+/* MODAL CLOSE BUTTONS */
+
+.delete-modal-close,
+.reset-modal-close,
+.restore-modal-close {
+    position: absolute;
+    top: 13px;
+    right: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--surface-border);
+    border-radius: 9px;
+    background: var(--surface-soft);
+    color: var(--secondary-text);
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    transition: background .18s ease, color .18s ease, border-color .18s ease;
+}
+
+.delete-modal-close:hover {
+    background: rgba(217, 83, 94, .12);
+    border-color: rgba(217, 83, 94, .35);
+    color: #d9535e;
+}
+
+.reset-modal-close:hover {
+    background: rgba(234, 179, 8, .12);
+    border-color: rgba(234, 179, 8, .35);
+    color: #b45309;
+}
+
+.restore-modal-close:hover {
+    background: rgba(22, 163, 74, .10);
+    border-color: rgba(22, 163, 74, .35);
+    color: #16a34a;
+}
+
+/* MODAL ICONS */
+
+.delete-modal-icon,
+.reset-modal-icon,
+.restore-modal-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 20px;
+    border: 1px solid transparent;
+    border-radius: 16px;
+    font-size: 32px;
+}
+
+.delete-modal-icon {
+    background: rgba(217, 83, 94, .10);
+    border-color: rgba(217, 83, 94, .28);
+    color: #c93642;
+}
+
+.reset-modal-icon {
+    background: rgba(234, 179, 8, .12);
+    border-color: rgba(234, 179, 8, .30);
+    color: #b45309;
+}
+
+.restore-modal-icon {
+    background: rgba(22, 163, 74, .10);
+    border-color: rgba(22, 163, 74, .28);
+    color: #16804a;
+}
+
+:root[data-theme="dark"] .delete-modal-icon {
+    color: #ff9aa6;
+}
+
+:root[data-theme="dark"] .reset-modal-icon {
+    color: #facc15;
+}
+
+:root[data-theme="dark"] .restore-modal-icon {
+    color: #6ee7a0;
+}
+
+/* MODAL TITLES AND MESSAGES */
+
+.delete-modal-box h3,
+.reset-modal-box h3,
+.restore-modal-box h3 {
+    margin: 0 0 10px;
+    color: var(--body-text);
+    font-size: 21px;
+    font-weight: 700;
+    letter-spacing: -.3px;
+}
+
+.delete-modal-box p,
+.reset-modal-box p,
+.restore-modal-box p {
+    max-width: 350px;
+    margin: 0 auto 24px;
+    color: var(--secondary-text);
+    font-size: 13px;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+}
+
+.delete-modal-box p strong {
+    color: #c93642;
+    font-weight: 700;
+}
+
+.reset-modal-box p strong {
+    color: #b45309;
+    font-weight: 700;
+}
+
+.restore-modal-box p strong {
+    color: #16804a;
+    font-weight: 700;
+}
+
+:root[data-theme="dark"] .delete-modal-box p strong {
+    color: #ff9aa6;
+}
+
+:root[data-theme="dark"] .reset-modal-box p strong {
+    color: #facc15;
+}
+
+:root[data-theme="dark"] .restore-modal-box p strong {
+    color: #6ee7a0;
+}
+
+/* MODAL ACTION BUTTONS */
+
+.delete-modal-actions,
+.reset-modal-actions,
+.restore-modal-actions {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+}
+
+.delete-modal-cancel,
+.delete-modal-confirm,
+.reset-modal-cancel,
+.reset-modal-confirm,
+.restore-modal-cancel,
+.restore-modal-confirm {
+    display: inline-flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 42px;
+    padding: 0 14px;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .18s ease, border-color .18s ease, color .18s ease;
+}
+
+.delete-modal-cancel,
+.reset-modal-cancel,
+.restore-modal-cancel {
+    border-color: var(--surface-border);
+    background: var(--surface-soft);
+    color: var(--body-text);
+}
+
+.delete-modal-cancel:hover,
+.reset-modal-cancel:hover,
+.restore-modal-cancel:hover {
+    border-color: var(--link-color);
+    background: var(--table-hover-bg);
+}
+
+.delete-modal-confirm {
+    border-color: #c93642;
+    background: #c93642;
+    color: #fff;
+}
+
+.delete-modal-confirm:hover {
+    border-color: #b91c1c;
+    background: #b91c1c;
+}
+
+.reset-modal-confirm {
+    border-color: #b45309;
+    background: #b45309;
+    color: #fff;
+}
+
+.reset-modal-confirm:hover {
+    border-color: #92400e;
+    background: #92400e;
+}
+
+.restore-modal-confirm {
+    border-color: #16804a;
+    background: #16804a;
+    color: #fff;
+}
+
+.restore-modal-confirm:hover {
+    border-color: #12683c;
+    background: #12683c;
+}
+
+.delete-modal-confirm i,
+.reset-modal-confirm i,
+.restore-modal-confirm i {
+    font-size: 15px;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 991.98px) {
+    .users-summary-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .users-activity-card {
+        margin: 0 10px 16px;
+        padding: 16px 12px;
+    }
+
+    .users-activity-table-container {
+        padding: 10px 6px 14px;
+    }
+
+    .dashboard-datatable thead th,
+    .dashboard-datatable tbody td {
+        padding: 7px 4px;
+        text-align: left !important;
+    }
+
+    #dashboardDataTable thead th.center-header {
+        text-align: center !important;
+    }
+
+    #dashboardDataTable tbody td.center-cell {
+        text-align: center !important;
+    }
+
+    .dashboard-table-avatar {
+        width: 27px;
+        height: 27px;
+        min-width: 27px;
+    }
+
+    .dashboard-table-user-name {
+        font-size: 10px;
+    }
+
+    .dashboard-table-user-email {
+        font-size: 9px;
+    }
+
+    .users-activity-date {
+        font-size: 9px;
+    }
+
+    .status-badge {
+        font-size: 8px;
+        padding: 3px 7px;
+    }
+
+    .dashboard-table-action {
+        width: 26px;
+        height: 26px;
+        font-size: 14px;
+    }
+
+    .dashboard-table-action i.mdi,
+    .dashboard-table-action i.mdi::before {
+        font-size: 14px !important;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .users-summary-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .summary-stat-card {
+        padding: 11px 12px;
+        gap: 10px;
+    }
+
+    .summary-stat-icon {
+        width: 38px;
+        height: 38px;
+        min-width: 38px;
+        font-size: 19px;
+        border-radius: 9px;
+    }
+
+    .summary-stat-value {
+        font-size: 18px;
+    }
+
+    .summary-stat-label {
+        font-size: 10px;
+    }
+
+    .users-activity-card {
+        margin: 0 8px 14px;
+        padding: 14px 10px;
+        border-radius: 12px;
+    }
+
+    .users-activity-header {
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .users-activity-title {
+        font-size: 15px;
+    }
+
+    .users-activity-description {
+        font-size: 11px;
+    }
+
+    .users-activity-table-container {
+        padding: 8px 4px 12px;
+    }
+
+    #dashboardDataTable_wrapper .dataTables_filter {
+        text-align: left;
+    }
+
+    #dashboardDataTable_wrapper .dataTables_filter label {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    #dashboardDataTable_wrapper .dataTables_filter input {
+        width: 100%;
+        margin-top: 5px;
+    }
+
+    #dashboardDataTable_wrapper .dataTables_length {
+        margin-bottom: 10px;
+    }
+
+    #dashboardDataTable_wrapper .dataTables_paginate {
+        text-align: left;
+        overflow-x: auto;
+        white-space: nowrap;
+        max-width: 100%;
+    }
+
+    #dashboardDataTable_wrapper .dt-top {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    #dashboardDataTable_wrapper .dt-buttons {
+        width: 100%;
+    }
+
+    #dashboardDataTable_wrapper .dt-top .dataTables_filter {
+        width: 100%;
+        text-align: left;
+    }
+
+    #dashboardDataTable_wrapper .dt-top .dataTables_filter input {
+        width: 100%;
+    }
+
+    #dashboardDataTable_wrapper .dt-bottom {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .dashboard-datatable thead th,
+    .dashboard-datatable tbody td {
+        padding: 6px 3px;
+        font-size: 9px;
+        text-align: left !important;
+    }
+
+    #dashboardDataTable thead th.center-header {
+        text-align: center !important;
+    }
+
+    #dashboardDataTable tbody td.center-cell {
+        text-align: center !important;
+    }
+
+    .dashboard-table-user {
+        gap: 5px;
+    }
+
+    .dashboard-table-avatar {
+        width: 24px;
+        height: 24px;
+        min-width: 24px;
+    }
+
+    .dashboard-table-user-name {
+        font-size: 9px;
+    }
+
+    .dashboard-table-user-email {
+        font-size: 8px;
+    }
+
+    .users-activity-date {
+        font-size: 8px;
+    }
+
+    .status-badge {
+        font-size: 8px;
+        padding: 2px 6px;
+    }
+
+    .dashboard-table-action {
+        width: 25px;
+        height: 25px;
+        font-size: 13px;
+        border-radius: 6px;
+        margin: 2px 0;
+    }
+
+    .dashboard-table-action i.mdi,
+    .dashboard-table-action i.mdi::before {
+        font-size: 13px !important;
+    }
+
+    .users-activity-action-cell {
+        min-width: 55px;
+        text-align: left !important;
+    }
+
+    .delete-modal-box,
+    .reset-modal-box,
+    .restore-modal-box {
+        max-width: 420px;
+        padding: 34px 22px 24px;
+    }
+}
+
+@media (max-width: 480px) {
+    .users-summary-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .summary-stat-card {
+        padding: 10px 10px;
+        gap: 8px;
+        border-radius: 10px;
+    }
+
+    .summary-stat-icon {
+        width: 34px;
+        height: 34px;
+        min-width: 34px;
+        font-size: 17px;
+        border-radius: 8px;
+    }
+
+    .summary-stat-value {
+        font-size: 16px;
+    }
+
+    .summary-stat-label {
+        font-size: 9px;
+        letter-spacing: .2px;
+    }
+
+    .users-activity-card {
+        margin: 0 5px 10px;
+        padding: 12px 8px;
+    }
+
+    .users-activity-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .users-activity-header .btn-view-all {
+        justify-content: center;
+        width: 100%;
+    }
+
+    .users-activity-table-container {
+        padding: 6px 3px 10px;
+    }
+
+    .dashboard-datatable thead th,
+    .dashboard-datatable tbody td {
+        padding: 5px 2px;
+        font-size: 8px;
+        text-align: left !important;
+    }
+
+    #dashboardDataTable thead th.center-header {
+        text-align: center !important;
+    }
+
+    #dashboardDataTable tbody td.center-cell {
+        text-align: center !important;
+    }
+
+    .dashboard-table-avatar {
+        width: 22px;
+        height: 22px;
+        min-width: 22px;
+    }
+
+    .dashboard-table-user {
+        gap: 4px;
+    }
+
+    .dashboard-table-user-name {
+        font-size: 8px;
+    }
+
+    .dashboard-table-user-email {
+        font-size: 7px;
+    }
+
+    .users-activity-date {
+        font-size: 7px;
+    }
+
+    .status-badge {
+        font-size: 7px;
+        padding: 2px 5px;
+    }
+
+    .dashboard-table-user-name .status-ball {
+        width: 6px;
+        height: 6px;
+        margin-right: 3px;
+    }
+
+    .dashboard-table-action {
+        width: 23px;
+        height: 23px;
+        font-size: 12px;
+        border-radius: 5px;
+        margin: 1px 0;
+    }
+
+    .dashboard-table-action i.mdi,
+    .dashboard-table-action i.mdi::before {
+        font-size: 12px !important;
+    }
+
+    .users-activity-action-cell {
+        min-width: 49px;
+        text-align: left !important;
+    }
+
+    .delete-modal-box,
+    .reset-modal-box,
+    .restore-modal-box {
+        max-width: 100%;
+        padding: 34px 18px 22px;
+        border-radius: 14px;
+    }
+
+    .delete-modal-icon,
+    .reset-modal-icon,
+    .restore-modal-icon {
+        width: 64px;
+        height: 64px;
+        font-size: 28px;
+    }
+
+    .delete-modal-box h3,
+    .reset-modal-box h3,
+    .restore-modal-box h3 {
+        font-size: 19px;
+    }
+
+    .delete-modal-actions,
+    .reset-modal-actions,
+    .restore-modal-actions {
+        flex-direction: column-reverse;
+    }
+
+    .delete-modal-cancel,
+    .delete-modal-confirm,
+    .reset-modal-cancel,
+    .reset-modal-confirm,
+    .restore-modal-cancel,
+    .restore-modal-confirm {
+        width: 100%;
+        min-height: 40px;
+        flex: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .delete-modal-overlay,
+    .reset-modal-overlay,
+    .restore-modal-overlay,
+    .delete-modal-box,
+    .reset-modal-box,
+    .restore-modal-box,
+    .dashboard-table-action,
+    .summary-stat-card {
+        transition-duration: .01ms !important;
+    }
+}
+</style>
 
 <script>
-(function () {
-    'use strict';
+let deleteUserSn = null;
+let deleteLoginSn = null;
+let deleteUsersTableName = null;
+let deleteLoginTableName = null;
+let restoreUserSn = null;
+let restoreTableName = null;
+let restoreUserName = null;
+let resetUserId = null;
+let resetUserName = null;
 
-    let userPreviewDeleteSn = null;
-    let userPreviewDeleteTable = 'login';
-    let userPreviewRestoreToken = null;
+function showDeleteModal(userSn, loginSn, userName, usersTableName, loginTableName) {
+    deleteUserSn = userSn;
+    deleteLoginSn = loginSn;
+    deleteUsersTableName = usersTableName;
+    deleteLoginTableName = loginTableName;
 
-    window.showDeleteModal = function (sn, tableName) {
-        userPreviewDeleteSn = sn;
-        userPreviewDeleteTable = tableName || 'login';
+    const modal = document.getElementById('deleteModal');
+    const userNameElement = document.getElementById('deleteUserName');
 
-        const modal = document.getElementById('deleteModal');
+    userNameElement.textContent = userName;
+    modal.classList.add('show');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+}
 
-        if (modal) {
-            modal.classList.add('is-open');
+function closeDeleteModal() {
+    const modal = document.getElementById('deleteModal');
+
+    modal.classList.remove('show');
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+
+    deleteUserSn = null;
+    deleteLoginSn = null;
+    deleteUsersTableName = null;
+    deleteLoginTableName = null;
+}
+
+document.getElementById('confirmDeleteBtn').addEventListener('click', function () {
+    if (
+        !deleteUserSn ||
+        !deleteLoginSn ||
+        !deleteUsersTableName ||
+        !deleteLoginTableName
+    ) {
+        return;
+    }
+
+    // Generate a cryptographically random, non-empty token value.
+    // The current controller only checks that token is non-empty; it does
+    // not verify a signature or bind the token to these values.
+    const tokenBytes = new Uint8Array(32);
+    window.crypto.getRandomValues(tokenBytes);
+    const deleteToken = Array.from(tokenBytes, byte => byte.toString(16).padStart(2, '0')).join('');
+
+    const params = new URLSearchParams({
+        token: deleteToken,
+        user_sn: btoa(String(deleteUserSn)),
+        login_sn: btoa(String(deleteLoginSn)),
+        users_column: btoa(String(deleteUsersTableName)),
+        login_column: btoa(String(deleteLoginTableName))
+    });
+
+    window.location.href = 'index?action=delete_user&' + params.toString();
+});
+
+function showResetModal(userId, userName) {
+    resetUserId = userId;
+    resetUserName = userName;
+
+    const modal = document.getElementById('resetModal');
+    const userNameElement = document.getElementById('resetUserName');
+
+    userNameElement.textContent = userName;
+    modal.classList.add('show');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeResetModal() {
+    const modal = document.getElementById('resetModal');
+
+    modal.classList.remove('show');
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+
+    resetUserId = null;
+    resetUserName = null;
+}
+
+document.getElementById('confirmResetBtn').addEventListener('click', function () {
+    if (!resetUserId) {
+        return;
+    }
+
+    const tokenEdit = resetUserId;
+
+    closeResetModal();
+
+    window.location.href = 'index?action=reset_user&token_reset=' + encodeURIComponent(tokenEdit);
+});
+
+function showRestoreModal(userSn, userName, tableName) {
+    restoreUserSn = userSn;
+    restoreUserName = userName;
+    restoreTableName = tableName;
+
+    const modal = document.getElementById('restoreModal');
+    const userNameElement = document.getElementById('restoreUserName');
+
+    userNameElement.textContent = userName;
+    modal.classList.add('show');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeRestoreModal() {
+    const modal = document.getElementById('restoreModal');
+
+    modal.classList.remove('show');
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+
+    restoreUserSn = null;
+    restoreUserName = null;
+    restoreTableName = null;
+}
+
+document.getElementById('confirmRestoreBtn').addEventListener('click', function () {
+    if (!restoreUserSn || !restoreTableName) {
+        return;
+    }
+
+    const restoreToken = btoa(
+        unescape(
+            encodeURIComponent(
+                JSON.stringify({
+                    sn: restoreUserSn,
+                    table_name: restoreTableName,
+                    user_name: restoreUserName,
+                    page_controller: "<?= $page_controller ?>"
+                })
+            )
+        )
+    );
+
+    window.location.href =
+        'index?action=restore_user' +
+        '&token=' + encodeURIComponent(restoreToken) +
+        '&page_controller=' + encodeURIComponent("<?= $page_controller ?>");
+});
+
+document.getElementById('deleteModal').addEventListener('click', function (event) {
+    if (event.target === this) {
+        closeDeleteModal();
+    }
+});
+
+document.getElementById('resetModal').addEventListener('click', function (event) {
+    if (event.target === this) {
+        closeResetModal();
+    }
+});
+
+document.getElementById('restoreModal').addEventListener('click', function (event) {
+    if (event.target === this) {
+        closeRestoreModal();
+    }
+});
+
+document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape') {
+        if (document.getElementById('deleteModal').classList.contains('show')) {
+            closeDeleteModal();
         }
-    };
 
-    window.showRestoreModal = function (token) {
-        userPreviewRestoreToken = token;
-
-        const modal = document.getElementById('restoreModal');
-
-        if (modal) {
-            modal.classList.add('is-open');
-        }
-    };
-
-    window.closeUserPreviewModal = function (modalId) {
-        const modal = document.getElementById(modalId);
-
-        if (modal) {
-            modal.classList.remove('is-open');
-        }
-    };
-
-    document.addEventListener('DOMContentLoaded', function () {
-        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
-        const confirmRestoreBtn = document.getElementById('confirmRestoreBtn');
-
-        if (confirmDeleteBtn) {
-            confirmDeleteBtn.addEventListener('click', function () {
-                if (userPreviewDeleteSn === null) {
-                    return;
-                }
-
-                const url = 'index?action=delete_user'
-                    + '&sn=' + encodeURIComponent(userPreviewDeleteSn)
-                    + '&table_name=' + encodeURIComponent(userPreviewDeleteTable);
-
-                window.location.href = url;
-            });
+        if (document.getElementById('resetModal').classList.contains('show')) {
+            closeResetModal();
         }
 
-        if (confirmRestoreBtn) {
-            confirmRestoreBtn.addEventListener('click', function () {
-                if (!userPreviewRestoreToken) {
-                    return;
-                }
-
-                const pageController = <?= json_encode((string)$page_controller); ?>;
-
-                window.location.href = 'index?action=restore_user'
-                    + '&token=' + encodeURIComponent(userPreviewRestoreToken)
-                    + '&page_controller=' + encodeURIComponent(pageController);
-            });
+        if (document.getElementById('restoreModal').classList.contains('show')) {
+            closeRestoreModal();
         }
+    }
+});
+</script>
 
-        document.querySelectorAll('.user-preview-modal-backdrop').forEach(function (modal) {
-            modal.addEventListener('click', function (event) {
-                if (event.target === modal) {
-                    modal.classList.remove('is-open');
-                }
-            });
-        });
+<!-- ============================================================
+     DATATABLES INITIALIZATION WITH SEARCH AND EXPORT BUTTONS
+     (Buttons extension JS libraries are loaded in the header)
+============================================================ -->
+<script>
+$(document).ready(function () {
 
-        document.addEventListener('keydown', function (event) {
-            if (event.key === 'Escape') {
-                document.querySelectorAll('.user-preview-modal-backdrop.is-open')
-                    .forEach(function (modal) {
-                        modal.classList.remove('is-open');
-                    });
+    if ($.fn.DataTable.isDataTable('#dashboardDataTable')) {
+        $('#dashboardDataTable').DataTable().destroy();
+    }
+
+    const usersTable = $('#dashboardDataTable').DataTable({
+        responsive: {
+            details: {
+                type: 'inline',
+                target: 0
             }
-        });
-
-        if (window.jQuery && jQuery.fn && jQuery.fn.DataTable) {
-            if (!jQuery.fn.DataTable.isDataTable('#dashboardDataTable')) {
-                jQuery('#dashboardDataTable').DataTable({
-                    pageLength: 10,
-                    lengthMenu: [10, 25, 50, 100],
-                    searching: true,
-                    ordering: true,
-                    responsive: false,
-                    autoWidth: false,
-                    order: [],
-                    dom: '<"row align-items-center"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
-                         '<"row align-items-center"<"col-sm-12 col-md-6"B><"col-sm-12 col-md-6"i>>' +
-                         '<"row"<"col-sm-12"tr>>' +
-                         '<"row align-items-center"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
-                    buttons: [
-                        {
-                            extend: 'excelHtml5',
-                            text: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:4px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><polyline points="9 15 12 12 15 15"></polyline></svg> Excel',
-                            className: 'buttons-excel',
-                            exportOptions: {
-                                columns: [0, 1, 2, 3, 4, 5, 6],
-                                format: {
-                                    body: function (data, row, column, node) {
-                                        // Strip HTML tags from User column (index 1) for export
-                                        if (column === 1) {
-                                            var tempDiv = document.createElement('div');
-                                            tempDiv.innerHTML = data;
-                                            var name = tempDiv.querySelector('.user-preview-person-name');
-                                            var email = tempDiv.querySelector('.user-preview-person-email');
-                                            var result = '';
-                                            if (name) result += name.textContent.trim();
-                                            if (email) result += ' (' + email.textContent.trim() + ')';
-                                            return result || data;
-                                        }
-                                        return data;
-                                    }
-                                }
-                            },
-                            title: 'User Activity Export'
-                        },
-                        {
-                            extend: 'pdfHtml5',
-                            text: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:4px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg> PDF',
-                            className: 'buttons-pdf',
-                            exportOptions: {
-                                columns: [0, 1, 2, 3, 4, 5, 6],
-                                format: {
-                                    body: function (data, row, column, node) {
-                                        if (column === 1) {
-                                            var tempDiv = document.createElement('div');
-                                            tempDiv.innerHTML = data;
-                                            var name = tempDiv.querySelector('.user-preview-person-name');
-                                            var email = tempDiv.querySelector('.user-preview-person-email');
-                                            var result = '';
-                                            if (name) result += name.textContent.trim();
-                                            if (email) result += ' (' + email.textContent.trim() + ')';
-                                            return result || data;
-                                        }
-                                        return data;
-                                    }
-                                }
-                            },
-                            title: 'User Activity Report',
-                            orientation: 'landscape',
-                            pageSize: 'A4',
-                            customize: function (doc) {
-                                // Optional: adjust PDF styling
-                                doc.styles.tableHeader.fillColor = '#f4f6fa';
-                                doc.styles.tableHeader.color = '#343a40';
-                                doc.styles.tableHeader.bold = true;
-                            }
-                        }
-                    ],
-                    columnDefs: [
-                        {
-                            targets: [0, 7],
-                            orderable: false
-                        },
-                        {
-                            targets: 7,
-                            visible: false // Hide Action column in export via exportOptions
-                        }
-                    ],
-                    language: {
-                        search: 'Search:',
-                        searchPlaceholder: 'Search users...',
-                        lengthMenu: 'Show _MENU_ records',
-                        info: 'Showing _START_ to _END_ of _TOTAL_ records',
-                        infoEmpty: 'Showing 0 to 0 of 0 records',
-                        zeroRecords: 'No matching users found',
-                        emptyTable: 'No user records available',
-                        paginate: {
-                            previous: 'Previous',
-                            next: 'Next'
-                        },
-                        buttons: {
-                            excel: 'Excel',
-                            pdf: 'PDF'
-                        }
+        },
+        autoWidth: false,
+        pageLength: 10,
+        lengthMenu: [
+            [10, 25, 50, 100, -1],
+            [10, 25, 50, 100, 'All']
+        ],
+        order: [],
+        dom: '<"dt-top"Bf>rt<"dt-bottom"lip>',
+        buttons: [
+            {
+                extend: 'copyHtml5',
+                text: 'Copy',
+                exportOptions: {
+                    columns: [0, 1, 2, 3, 4]
+                }
+            },
+            {
+                extend: 'csvHtml5',
+                text: 'CSV',
+                title: 'Recent Activity - Users',
+                exportOptions: {
+                    columns: [0, 1, 2, 3, 4]
+                }
+            },
+            {
+                extend: 'excelHtml5',
+                text: 'Excel',
+                title: 'Recent Activity - Users',
+                exportOptions: {
+                    columns: [0, 1, 2, 3, 4]
+                }
+            },
+            {
+                extend: 'pdfHtml5',
+                text: 'PDF',
+                title: 'Recent Activity - Users',
+                orientation: 'landscape',
+                pageSize: 'A4',
+                exportOptions: {
+                    columns: [0, 1, 2, 3, 4]
+                }
+            },
+            {
+                extend: 'print',
+                text: 'Print',
+                title: 'Recent Activity - Users',
+                exportOptions: {
+                    columns: [0, 1, 2, 3, 4]
+                }
+            }
+        ],
+        language: {
+            search: 'Search:',
+            searchPlaceholder: 'Search users...',
+            lengthMenu: 'Show _MENU_ users',
+            info: 'Showing _START_ to _END_ of _TOTAL_ users',
+            infoEmpty: 'Showing 0 to 0 of 0 users',
+            zeroRecords: 'No matching users found',
+            emptyTable: 'No users available',
+            paginate: {
+                first: 'First',
+                last: 'Last',
+                next: 'Next',
+                previous: 'Previous'
+            }
+        },
+        columnDefs: [
+            {
+                targets: 0,
+                responsivePriority: 3,
+                width: '6%',
+                className: 'dt-body-center dt-head-center'
+            },
+            {
+                targets: 1,
+                responsivePriority: 1,
+                width: '34%',
+                className: 'dt-body-left dt-head-left',
+                render: function (data, type, row, meta) {
+                    // For search/filter and sort, only expose the visible
+                    // user name + email text. This strips the status-ball
+                    // span (whose class/title contained "active"/"inactive")
+                    // so searching "active" only matches the Status column.
+                    if (type === 'filter' || type === 'sort') {
+                        var $cell = $('<div>').html(data);
+                        var name = $cell.find('.dashboard-table-user-name').text().trim();
+                        var email = $cell.find('.dashboard-table-user-email').text().trim();
+                        return (name + ' ' + email).trim();
                     }
-                });
+                    return data;
+                }
+            },
+            {
+                targets: 2,
+                responsivePriority: 5,
+                width: '14%',
+                className: 'dt-body-left dt-head-left'
+            },
+            {
+                targets: 3,
+                responsivePriority: 4,
+                width: '12%',
+                className: 'dt-body-left dt-head-left',
+                render: function (data, type, row, meta) {
+                    // For search/filter and sort, only expose the visible
+                    // badge text (Active / Inactive / Deleted).
+                    if (type === 'filter' || type === 'sort') {
+                        var $cell = $('<div>').html(data);
+                        return $cell.find('.status-badge').text().trim();
+                    }
+                    return data;
+                }
+            },
+            {
+                targets: 4,
+                responsivePriority: 6,
+                width: '19%',
+                className: 'dt-body-left dt-head-left'
+            },
+            {
+                targets: 5,
+                responsivePriority: 2,
+                orderable: false,
+                searchable: false,
+                width: '15%',
+                className: 'dt-body-left dt-head-left'
+            }
+        ],
+        initComplete: function () {
+            this.api().columns.adjust();
+
+            if (this.api().responsive) {
+                this.api().responsive.recalc();
             }
         }
     });
-})();
+
+    $(window).on('resize', function () {
+        usersTable.columns.adjust();
+
+        if (usersTable.responsive) {
+            usersTable.responsive.recalc();
+        }
+    });
+
+});
 </script>

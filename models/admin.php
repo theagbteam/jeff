@@ -28,6 +28,53 @@ class ModelAdmin
 
 
 
+public function InsertTransferHistory($data)
+{
+    try {
+        $sql = "INSERT INTO transfer_history (
+                    refid,
+                    user_transfered,
+                    from_corridor,
+                    to_corridor,
+                    transfer_initilizer,
+                    date_transfered,
+                    expected_resumption_date,
+                    reason,
+                    status
+                ) VALUES (
+                    :refid,
+                    :user_transfered,
+                    :from_corridor,
+                    :to_corridor,
+                    :transfer_initilizer,
+                    :date_transfered,
+                    :expected_resumption_date,
+                    :reason,
+                    :status
+                )";
+
+        $stmt = $this->conn->prepare($sql);
+
+        return $stmt->execute([
+            ':refid'                   => $data['refid'],
+            ':user_transfered'          => $data['user_transfered'],
+            ':from_corridor'            => $data['from_corridor'],
+            ':to_corridor'              => $data['to_corridor'],
+            ':transfer_initilizer'      => $data['transfer_initilizer'],
+            ':date_transfered'          => $data['date_transfered'],
+            ':expected_resumption_date' => $data['expected_resumption_date'],
+            ':reason'                   => $data['reason'],
+            ':status'                   => $data['status']
+        ]);
+
+    } catch (PDOException $e) {
+        error_log("InsertTransferHistory Error: " . $e->getMessage());
+        return false;
+    }
+}
+
+
+
 
 public function GetWellheadStatusCounts()
 {
@@ -434,73 +481,87 @@ public function CreateCorridorAndThoseSimilar($data = []){
 
 
     public function SelectAllCategoryOfUsersAndLoginTableForAdmin($userid) {
-    try {
-        
-        $baseSql = "SELECT
-                        users.sn AS user_sn,
-                        users.date AS user_date,
-                        users.title AS user_title,
-                        users.user_image AS user_image,
-                        users.otp_request AS user_otp_request,
-                        users.userid AS user_userid,
-                        users.email AS user_email,
-                        users.phone AS user_phone,
-                        users.msg AS user_msg,
-                        users.fullname AS user_fullname,
-                        users.status AS user_status,
-                        users.msg_notification AS user_msg_notification,
+        try {
 
-                        login.sn AS login_sn,
-                        login.userid AS login_userid,
-                        login.password AS login_password,
-                        login.last_login AS login_last_login,
-                        login.role AS login_role,
-                        login.role_name AS login_role_name,
-                        login.Role_edit_user AS login_edit_user,
-                        login.Role_create_user AS login_create_user,
-                        login.Role_delete_user AS login_delete_user,
-                        login.Role_approve_user AS login_approve_user,
-                        login.Role_create_report AS login_create_report,
-                        login.Role_approve_report AS login_approve_report,
-                        login.Role_edit_report AS login_edit_report,
-                        login.Role_delete_report AS login_delete_report,
-                        login.Role_comment AS login_comment,
-                        login.status AS login_status
+$login_active   = 1;
+$login_inactive = 0;
 
-                    FROM users
+$baseSql = "SELECT
+                users.sn AS user_sn,
+                users.corridor AS user_corridor,
+                users.date AS user_date,
+                users.title AS user_title,
+                users.user_image AS user_image,
+                users.otp_request AS user_otp_request,
+                users.userid AS user_userid,
+                users.email AS user_email,
+                users.phone AS user_phone,
+                users.msg AS user_msg,
+                users.fullname AS user_fullname,
+                users.status AS user_status,
+                users.msg_notification AS user_msg_notification,
 
-                    LEFT JOIN login
-                        ON users.userid = login.userid
+                login.sn AS login_sn,
+                login.status AS login_status,
+                login.userid AS login_userid,
+                login.password AS login_password,
+                login.last_login AS login_last_login,
+                login.role AS login_role,
+                login.role_name AS login_role_name,
+                login.Role_edit_user AS login_edit_user,
+                login.Role_create_user AS login_create_user,
+                login.Role_delete_user AS login_delete_user,
+                login.Role_approve_user AS login_approve_user,
+                login.Role_create_report AS login_create_report,
+                login.Role_approve_report AS login_approve_report,
+                login.Role_edit_report AS login_edit_report,
+                login.Role_delete_report AS login_delete_report,
+                login.Role_comment AS login_comment
 
-                    WHERE users.userid != :userid AND login.role!='developer'
+            FROM users
 
-                    ORDER BY users.sn DESC";
+            LEFT JOIN login
+                ON users.userid = login.userid
 
-        $stmt = $this->conn->prepare($baseSql);
-        $stmt->execute([':userid' => $userid]);
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            WHERE users.userid != :userid
+              AND login.status IN (:login_active, :login_inactive)
 
-        // Bucket rows in one pass — O(n) instead of 4 queries
-        $results = [
-            'administrator' => [],
-            'reporter'      => [],
-            'supervisor'    => [],
-            'all'           => $rows,
-        ];
+            ORDER BY users.sn DESC";
 
-        foreach ($rows as $row) {
-            $role = $row['login_role'] ?? null;
-            if (isset($results[$role]) && $role !== 'all') {
-                $results[$role][] = $row;
-            }
-        }
+$stmt = $this->conn->prepare($baseSql);
+$stmt->execute([
+    ':userid'         => $userid,
+    ':login_active'   => $login_active,
+    ':login_inactive' => $login_inactive,
+]);
+$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        return $results;
+// Bucket rows in one pass — O(n) instead of 4 queries
+$results = [
+    'administrator' => [],
+    'reporter'      => [],
+    'supervisor'    => [],
+    'all'           => [],
+];
 
-    } catch (PDOException $e) {
-        return [];
+foreach ($rows as $row) {
+    $role = strtolower(trim($row['login_role'] ?? ''));
+
+    // Exclude developers from the "all" category
+    if ($role !== 'developer') {
+        $results['all'][] = $row;
+    }
+
+    // Keep role-specific categories unchanged
+    if (isset($results[$role]) && $role !== 'all') {
+        $results[$role][] = $row;
     }
 }
+
+return $results;} catch (PDOException $e) {
+    return [];
+}}
+
 
 
 
@@ -731,22 +792,45 @@ public function SelectCorridorsAndThoseSimilar($tb_name)
     }
 }
 
+public function getLoginStatusCounts(){
+    try {
+        $sql = "SELECT
+                    SUM(CASE WHEN login_status = -1 THEN 1 ELSE 0 END) AS deleted,
+                    SUM(CASE WHEN login_status = 1  THEN 1 ELSE 0 END) AS active,
+                    SUM(CASE WHEN login_status = 0  THEN 1 ELSE 0 END) AS inactive
+                FROM login";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute();
+
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+
+    } catch (PDOException $e) {
+        return [
+            'deleted' => 0,
+            'active'  => 0,
+            'inactive' => 0
+        ];
+    }
+}
 
 
+  public function StatusCount(){
+    $sql = "SELECT
+                COUNT(*) AS total,
+                SUM(status = 0) AS inactive,
+                SUM(status = 1) AS active,
+                SUM(status = -1) AS deleted
+            FROM login
+            WHERE role <> :role";
 
+    $stmt = $this->conn->prepare($sql);
+    $stmt->execute(['role' => 'developer']);
 
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+}
 
-
-
-
-
-
-
-
-
-
-    public function TicketCount()
-    {
+    public function TicketCount()    {
         $sql = "SELECT
                     COUNT(*) AS total,
                     SUM(status = 0) AS status_0,

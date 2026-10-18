@@ -296,6 +296,7 @@ exit;
             $user = $loginResult['user'];
             $role_name = $loginResult['user']['role_name'] ?? '';
             $role = $loginResult['user']['role'] ?? '';
+            $_SESSION['action_token']  = $loginResult['user']['action_token'] ?? '';
             if ($company_adminseniorman==$userid ){
             $_SESSION['success'] ="Welcome, you are logged in as the chief " . ucfirst($role_name);
         }else{
@@ -303,13 +304,14 @@ exit;
         }
 
             
-           $_SESSION['action_token'] = bin2hex(random_bytes(32));
+        //    $_SESSION['action_token'] = bin2hex(random_bytes(32));
 
             $userResult =  $GetTheModelClassCalledUser->SelectUsersAndLoginTableforOnePersonAfterLogin($userid);
  if ($userResult['success']) {
             $user = $userResult['user'];
 
                 $user = $userResult['user'];
+            //    $_SESSION['action_token']  = $userResult['action_token'];
                 $AbrvName = $userResult['AbrvName'];
 
                 $user_fullname =

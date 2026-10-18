@@ -1,9 +1,9 @@
-<?php include 'views/inc/admin/head.php'   ?>
+
+<?php include 'views/inc/admin/head.php' ?>
 <body>
-<?php include 'views/inc/admin/sidebar_menu.php'   ?>
+<?php include 'views/inc/admin/sidebar_menu.php' ?>
 
-
-<?php include 'views/inc/admin/top_navbar.php'   ?>
+<?php include 'views/inc/admin/top_navbar.php' ?>
 
 <!-- ============================================================
      CREATE NEW TICKET CATEGORY MODAL
@@ -15,15 +15,19 @@
                 <h5 class="modal-title" id="ticketCategoryModalLabel">Select ticket category</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
+
             <div class="modal-body">
                 <div class="ticket-category-grid">
                     <?php
                     $ticket_category_serial = 1;
                     foreach ($LoadTicketcategories as $LoadTicketcategory):
                     ?>
-                        <a class="ticket-category-item" href="index.php?action=cr_ticket&sn=<?= urlencode($LoadTicketcategory['sn'] ?? '') ?>"
+                        <a
+                            class="ticket-category-item"
+                            href="index.php?action=cr_ticket&amp;sn=<?= urlencode((string)($LoadTicketcategory['sn'] ?? '')) ?>"
+                        >
                             <span class="ticket-category-number"><?= $ticket_category_serial ?></span>
-                            <span><?= htmlspecialchars($LoadTicketcategory['name'] ?? '') ?></span>
+                            <span><?= htmlspecialchars($LoadTicketcategory['name'] ?? '', ENT_QUOTES, 'UTF-8') ?></span>
                         </a>
                     <?php
                         $ticket_category_serial++;
@@ -37,24 +41,38 @@
 
 <main class="main-content">
     <div class="content-header"></div>
-<?php if ($page_link_title=="tickets")  : ?>
-   <?php include 'views/inc/admin/ticket_categoryheader.php'   ?>
-<?php elseif ($page_link_title=="cr_ticket")  : ?>
-   <?php include 'views/inc/admin/cr_ticket.php'   ?>
-<?php elseif ($page_link_title=="user_requests")  : ?>
-   <?php include 'views/inc/admin/request_preview.php'   ?>
-<?php elseif ($page_link_title=="audit_trail")  : ?>
-   <?php include 'views/inc/admin/audit_preview.php'   ?>
-<?php elseif ($page_link_title=="run_reports")  : ?>
-   <?php include 'views/inc/admin/runreport_preview.php'   ?>
-<?php elseif ($page_link_title=="export_tickets")  : ?>
-   <?php include 'views/inc/admin/exportreport_preview.php'   ?>
-<?php elseif ($page_link_title=="transfers")  : ?>
-   <?php include 'views/inc/admin/transfer_history.php'   ?>
-<?php elseif ($page_link_title=="manage_users")  : ?>
-   <?php include 'views/inc/admin/userspreview.php'   ?>
-<?php endif;  ?>
-  
+
+<?php if ($page_link_title == "tickets") : ?>
+    <?php include 'views/inc/admin/ticket_categoryheader.php' ?>
+
+<?php elseif ($page_link_title == "cr_ticket") : ?>
+    <?php include 'views/inc/admin/cr_ticket.php' ?>
+
+<?php elseif ($page_link_title == "user_requests") : ?>
+    <?php include 'views/inc/admin/request_preview.php' ?>
+
+<?php elseif ($page_link_title == "audit_trail") : ?>
+    <?php include 'views/inc/admin/audit_preview.php' ?>
+
+<?php elseif ($page_link_title == "run_reports") : ?>
+    <?php include 'views/inc/admin/runreport_preview.php' ?>
+
+<?php elseif ($page_link_title == "export_tickets") : ?>
+    <?php include 'views/inc/admin/exportreport_preview.php' ?>
+
+<?php elseif ($page_link_title == "transfers" || $page_link_title == "tr_employee") : ?>
+    <?php include 'views/inc/admin/transfer_history.php' ?>
+
+<?php elseif ($page_link_title == "manage_users" || $page_link_title == "create_admin_user") : ?>
+    <?php include 'views/inc/admin/userspreview.php' ?>
+
+<?php elseif ($page_link_title == "user_details") : ?>
+    <?php include 'views/inc/admin/user_details.php' ?>
+
+<?php elseif ($page_link_title == "edit_user" || $page_link_title == "myprofile") : ?>
+    <?php include 'views/inc/admin/edit_user_preview.php' ?>
+
+<?php endif; ?>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -73,18 +91,37 @@
     function setTheme(theme) {
         document.documentElement.setAttribute('data-theme', theme);
         const isDark = theme === 'dark';
-        themeIcon.className = isDark ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill';
-        themeToggle.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+
+        if (themeIcon) {
+            themeIcon.className = isDark
+                ? 'bi bi-sun-fill'
+                : 'bi bi-moon-stars-fill';
+        }
+
+        if (themeToggle) {
+            themeToggle.setAttribute(
+                'aria-label',
+                isDark ? 'Switch to light mode' : 'Switch to dark mode'
+            );
+        }
     }
 
-    const initialTheme = document.documentElement.getAttribute('data-theme') || 'light';
+    const initialTheme =
+        document.documentElement.getAttribute('data-theme') || 'light';
+
     setTheme(initialTheme);
 
-    themeToggle.addEventListener('click', function () {
-        const currentTheme = document.documentElement.getAttribute('data-theme');
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        setTheme(newTheme);
-    });
+    if (themeToggle) {
+        themeToggle.addEventListener('click', function () {
+            const currentTheme =
+                document.documentElement.getAttribute('data-theme');
+
+            const newTheme =
+                currentTheme === 'dark' ? 'light' : 'dark';
+
+            setTheme(newTheme);
+        });
+    }
 
     /* ============================================================
        SIDEBAR MENU
@@ -93,28 +130,39 @@
     const sidebarToggle = document.getElementById('sidebarToggle');
 
     function toggleSidebar() {
+        if (!sidebar || !sidebarToggle) return;
+
         const isOpen = document.body.classList.toggle('sidebar-open');
+
         sidebar.classList.toggle('show', isOpen);
+
         sidebarToggle.className = isOpen
             ? 'bi bi-x-lg nav-icon'
             : 'bi bi-list nav-icon';
-        sidebarToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+
+        sidebarToggle.setAttribute(
+            'aria-expanded',
+            isOpen ? 'true' : 'false'
+        );
+
         sidebarToggle.setAttribute(
             'aria-label',
             isOpen ? 'Close sidebar' : 'Open sidebar'
         );
     }
 
-    sidebarToggle.addEventListener('click', function () {
-        toggleSidebar();
-    });
-
-    sidebarToggle.addEventListener('keydown', function (event) {
-        if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', function () {
             toggleSidebar();
-        }
-    });
+        });
+
+        sidebarToggle.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                toggleSidebar();
+            }
+        });
+    }
 
     /* ============================================================
        SIDEBAR DROPDOWNS (Reports, Users, Modules)
@@ -170,6 +218,8 @@
        ============================================================ */
     document.addEventListener('click', function (event) {
         if (
+            sidebar &&
+            sidebarToggle &&
             sidebar.classList.contains('show') &&
             !sidebar.contains(event.target) &&
             !sidebarToggle.contains(event.target)
@@ -187,7 +237,7 @@
        ============================================================ */
     document.querySelectorAll('.sidebar-nav a').forEach(function (link) {
         link.addEventListener('click', function () {
-            if (window.innerWidth <= 767.98) {
+            if (window.innerWidth <= 767.98 && sidebar && sidebarToggle) {
                 document.body.classList.remove('sidebar-open');
                 sidebar.classList.remove('show');
                 sidebarToggle.className = 'bi bi-list nav-icon';
@@ -204,6 +254,8 @@
     const userProfileTrigger = document.getElementById('userProfileTrigger');
 
     function toggleProfileDropdown(forceState) {
+        if (!userProfileDropdown || !userProfileTrigger) return;
+
         const isOpen = typeof forceState === 'boolean'
             ? forceState
             : !userProfileDropdown.classList.contains('open');
@@ -212,22 +264,25 @@
         userProfileTrigger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
     }
 
-    userProfileTrigger.addEventListener('click', function (event) {
-        event.stopPropagation();
-        toggleProfileDropdown();
-    });
-
-    userProfileTrigger.addEventListener('keydown', function (event) {
-        if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
+    if (userProfileTrigger) {
+        userProfileTrigger.addEventListener('click', function (event) {
+            event.stopPropagation();
             toggleProfileDropdown();
-        } else if (event.key === 'Escape') {
-            toggleProfileDropdown(false);
-        }
-    });
+        });
+
+        userProfileTrigger.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                toggleProfileDropdown();
+            } else if (event.key === 'Escape') {
+                toggleProfileDropdown(false);
+            }
+        });
+    }
 
     document.addEventListener('click', function (event) {
         if (
+            userProfileDropdown &&
             userProfileDropdown.classList.contains('open') &&
             !userProfileDropdown.contains(event.target)
         ) {
@@ -236,7 +291,11 @@
     });
 
     document.addEventListener('keydown', function (event) {
-        if (event.key === 'Escape' && userProfileDropdown.classList.contains('open')) {
+        if (
+            event.key === 'Escape' &&
+            userProfileDropdown &&
+            userProfileDropdown.classList.contains('open')
+        ) {
             toggleProfileDropdown(false);
         }
     });
@@ -254,7 +313,8 @@
     const ticketCategoryModalElement = document.getElementById('ticketCategoryModal');
 
     if (createTicketButton && ticketCategoryModalElement) {
-        const ticketCategoryModal = new bootstrap.Modal(ticketCategoryModalElement);
+        const ticketCategoryModal =
+            bootstrap.Modal.getOrCreateInstance(ticketCategoryModalElement);
 
         createTicketButton.addEventListener('click', function () {
             ticketCategoryModal.show();
@@ -265,6 +325,8 @@
        DATATABLE
        ============================================================ */
     $(document).ready(function () {
+        if (!$('#ticketsTable').length) return;
+
         const ticketsTable = $('#ticketsTable').DataTable({
             searching: true,
             paging: true,
@@ -407,16 +469,18 @@
             autoReloadTimer = null;
         }
 
-        if (autoReload.checked) {
+        if (autoReload && autoReload.checked) {
             autoReloadTimer = setInterval(function () {
                 window.location.reload();
             }, 49000);
         }
     }
 
-    autoReload.addEventListener('change', function () {
-        startAutoReload();
-    });
+    if (autoReload) {
+        autoReload.addEventListener('change', function () {
+            startAutoReload();
+        });
+    }
 
     window.addEventListener('beforeunload', function () {
         if (autoReloadTimer !== null) {
@@ -427,61 +491,36 @@
 </script>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
 <?php if (isset($showAlert) && $showAlert): ?>
     Swal.fire({
         title: 'Successful!',
-        text:
-            '<?= htmlspecialchars(
-                $msgtext,
-                ENT_QUOTES,
-                'UTF-8'
-            ); ?>',
+        text: <?= json_encode($msgtext, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>,
         icon: 'info',
         confirmButtonText: 'OK',
         allowOutsideClick: true,
         allowEscapeKey: true
     }).then((result) => {
-        if (
-            result.isConfirmed ||
-            result.dismiss
-        ) {
-            window.location.href =
-                '<?= htmlspecialchars(
-                    $url,
-                    ENT_QUOTES,
-                    'UTF-8'
-                ); ?>';
+        if (result.isConfirmed || result.dismiss) {
+            window.location.href = <?= json_encode($url, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
         }
     });
 <?php elseif (isset($showAlert) && !$showAlert): ?>
     Swal.fire({
         title: 'Error',
-        text:
-            '<?= htmlspecialchars(
-                $msgtext,
-                ENT_QUOTES,
-                'UTF-8'
-            ); ?>',
+        text: <?= json_encode($msgtext, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>,
         icon: 'error',
         confirmButtonText: 'OK',
         allowOutsideClick: true,
         allowEscapeKey: true
     }).then((result) => {
-        if (
-            result.isConfirmed ||
-            result.dismiss
-        ) {
-            window.location.href =
-                '<?= htmlspecialchars(
-                    $url,
-                    ENT_QUOTES,
-                    'UTF-8'
-                ); ?>';
+        if (result.isConfirmed || result.dismiss) {
+            window.location.href = <?= json_encode($url, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
         }
     });
 <?php endif; ?>
 });
 </script>
+
 </body>
 </html>

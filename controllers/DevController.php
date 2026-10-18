@@ -1405,38 +1405,49 @@ if (isset($_POST['dev_update_user'])) {
 
     $user_id =  trim($_POST['user_id']) ;
        $LoadUsersAndLoginTableForThisUser = $callUserModel->SelectUsersAndLoginTableforOnePersonAfterLogin($user_id);
-    $data = [
-        'userid' => trim($_POST['user_id'] ?? ''),
-        'title' => trim($_POST['title'] ?? ''),
-        'fullname' => trim($_POST['fullname'] ?? ''),
-        'email' => trim($_POST['email'] ?? ''),
-        'phone' => trim($_POST['phone'] ?? ''),
-        'msg_notification' => $_POST['msg_notification'] ?? '',
-        'msg' => trim($_POST['msg'] ?? ''),
-        'role' => trim($_POST['role'] ?? ''),
-        'Role_edit_user' => $_POST['Role_edit_user'] ?? '',
-        'Role_create_user' => $_POST['Role_create_user'] ?? '',
-        'Role_delete_user' => $_POST['Role_delete_user'] ?? '',
-        'Role_approve_user' => $_POST['Role_approve_user'] ?? '',
-        'Role_create_report' => $_POST['Role_create_report'] ?? '',
-        'Role_approve_report' => $_POST['Role_approve_report'] ?? '',
-        'Role_edit_report' => $_POST['Role_edit_report'] ?? '',
-        'Role_delete_report' => $_POST['Role_delete_report'] ?? '',
-        'Role_comment' => $_POST['Role_comment'] ?? '',
-        'status' => $_POST['status'] ?? ''
-    ];
+  $data = [
+    'userid'            => trim($_POST['user_id'] ?? ''),
+    'title'             => trim($_POST['title'] ?? ''),
+    'fullname'          => trim($_POST['fullname'] ?? ''),
+    'email'             => trim($_POST['email'] ?? ''),
+    'phone'             => trim($_POST['phone'] ?? ''),
+    'corridor'          => trim($_POST['corridor'] ?? ''),
+    'msg_notification'  => $_POST['msg_notification'] ?? '',
+    'msg'               => trim($_POST['msg'] ?? ''),
+    'role'              => trim($_POST['role'] ?? ''),
+    'Role_edit_user'    => $_POST['Role_edit_user'] ?? '',
+    'Role_create_user'  => $_POST['Role_create_user'] ?? '',
+    'Role_delete_user'  => $_POST['Role_delete_user'] ?? '',
+    'Role_approve_user' => $_POST['Role_approve_user'] ?? '',
+    'Role_create_report'=> $_POST['Role_create_report'] ?? '',
+    'Role_approve_report'=> $_POST['Role_approve_report'] ?? '',
+    'Role_edit_report'  => $_POST['Role_edit_report'] ?? '',
+    'Role_delete_report'=> $_POST['Role_delete_report'] ?? '',
+    'Role_comment'      => $_POST['Role_comment'] ?? '',
+    'status'            => $_POST['status'] ?? ''
+];
 
-    foreach ($data as $key => $value) {
-        if ($key === 'msg') {
-            continue;
-        }
+/*
+|--------------------------------------------------------------------------
+| Fields that are allowed to be empty
+|--------------------------------------------------------------------------
+| 'msg'      -> optional by design
+| 'corridor' -> now allowed to be empty
+*/
+$optional_fields = ['msg', 'corridor'];
 
-        if ($value === '') {
-            $_SESSION['error'] = 'All fields are required.';
-            header("Location: " . ($_SERVER['HTTP_REFERER'] ?? 'index.php'));
-            exit;
-        }
+foreach ($data as $key => $value) {
+
+    if (in_array($key, $optional_fields, true)) {
+        continue;
     }
+
+    if ($value === '') {
+        $_SESSION['error'] = 'All fields are required.';
+        header("Location: " . ($_SERVER['HTTP_REFERER'] ?? 'index.php'));
+        exit;
+    }
+}
 
     if (
         isset($_FILES['user_image']) &&
@@ -1482,7 +1493,7 @@ if (isset($_POST['dev_update_user'])) {
         $data['user_image'] = $imageName;
     }
 
-    $result = $CallDevModel->UpdateUserAccount($data);
+    $result = $callUserModel->UpdateUserAccount($data);
 
     if ($result) {
         $_SESSION['success'] = 'User information updated successfully.';
@@ -1804,8 +1815,8 @@ $AbrvName = !empty($first)? $first . (!empty($parts) ? ' ' . implode('.', array_
     
 
 //    $result = $CallDevModel->CreateAdministrator($company_userid, $fullname, $phone, $email);
- $role = "administrator";
-    $role_name = "administrator";
+ $role = $role_name =  "administrator";
+   
 // CALL CreateUserAccount WITH ARRAY
 $result = $callUserModel->CreateUserAccount([
     'company_userid' => $company_userid,
@@ -1907,6 +1918,8 @@ exit;
     
   if (session_status() === PHP_SESSION_NONE) session_start();
   $userid = $_SESSION['userid']; 
+  $user_role = $_SESSION['role']; 
+
  $callAuthMiddlewareClass = new AuthMiddleware;
  $callUserModel = new User();
  $CallDevModel = new ModelDev;
@@ -1945,11 +1958,11 @@ $_SESSION['success'] = "New chief admin assigned successfully";
 
             $username = $user['user_fullname'];
             $receiever_email = $user['user_email'];
-            $user_details = $user['AbrvName'] . "  " . $userid;;
+           
             $role = $user['login_role'];
             $role_name = $user['login_role_name'];
             $subject = "Welcome as the New Chief Administrator";
-            $action = "Assigned ". $username . " as new chief administrator";
+       
 
 $message = "Dear $username,<br><br>"
 . "We are pleased to officially welcome you as the new <strong>Chief Administrator</strong> of the $company_name web application.<br><br>"
@@ -1971,7 +1984,16 @@ $message = "Dear $username,<br><br>"
 
 
  $SendEmail = $CallMailerModel->sendmail($receiever_email,$subject,$message);
- $logResult = $callAuthMiddlewareClass->writelog($userid, $role_name,$role, $user_details, $action,$company_logfile_url);
+  $LoadOnlyAdminData = $callUserModel->SelectUsersAndLoginTableforOnePersonAfterLogin($_SESSION['userid']);
+  if ($LoadOnlyAdminData['success']) {
+
+            $user = $LoadOnlyAdminData['user'];
+            $role_name =  $user['role_name'];
+            // $role =  $user['role'];
+             $action = "Assigned ". $username . " as new chief administrator";
+             $user_details = $user['AbrvName'] . "  " . $_SESSION['userid'];;
+  }
+ $logResult = $callAuthMiddlewareClass->writelog($_SESSION['userid'], $user_role,$user_role, $user_details, $action,$company_logfile_url);
  
  }
 } else { 

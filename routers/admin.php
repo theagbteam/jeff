@@ -9,13 +9,23 @@ $userid = $_SESSION['userid'] ?? null;
 
 
 switch ($action) {
-     case 'updateuserpwd':
-        $Usercontroller->updatepassword();
-        break;
+             
         case 'get_lgas':
         $Admincontroller->getLgas();
         break;
+        case 'delete_user':
+        $Admincontroller->delete_user();
+        break;
          case 'dashboard':
+         case 'updateaccountsettings':
+         case 'create_ticket':
+         case 'create_request':
+         case 'myprofile':
+         case 'user_details':
+         case 'updateuserpwd':
+         case 'tr_employee':
+         case 'create_admin_user':
+         case 'edit_user':
         case 'cr_ticket':
         case 'tickets':
         case 'run_reports':

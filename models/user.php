@@ -19,159 +19,328 @@ class User {
 
 
 
-
-public function createTicket(array $post, array $files): array{
-    $uploadDir       = ROOT_PATH . "/views/uploads/ticket_library/";
-    $uploadUrlPrefix = 'views/uploads/ticket_library/';
-    $maxFileSize     = 992097152;
-    $allowedExt      = ['gif','jpg','jpeg','png','zip','rar','csv','doc','docx','xls','xlsx','txt','pdf','mp4'];
-
-    if (!is_dir($uploadDir)) {
-        mkdir($uploadDir, 0755, true);
-    }
-
-    $ticketId   = !empty($post['ticket_id']) ? $post['ticket_id'] : 'TKT-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(2)));
-    $now        = date('Y-m-d H:i:s');
-    $ticketDesc = trim($post['subject'] ?? 'Ticket attachments');
-    $notify     = isset($post['notify']) ? 1 : 0;
-    $show       = isset($post['show'])   ? 1 : 0;
-    $uploads    = [];
-
+public function updateSettings(array $data): bool
+{
     try {
         $this->conn->beginTransaction();
 
-        // ---- ticket_reports ----
-        $sql = "INSERT INTO ticket_reports (
-                    ticket_id, date_created, date_updated, category, name, email,
-                    priority, subject, message, phone_no, incidence_date,
-                    incidence_source, state, community, local_government,
-                    operator, zone, corridor, number_of_arrested_suspects,
-                    vehicle_arrested_destroyed, wooden_boat_speed_boat_arrested_destroyed,
-                    vessel_arrested_destroyed, location_coordinate_latitude,
-                    location_coordinate_longitude,
-                    quantity_of_crude_recovered_destroyed_ltr,
-                    quantity_of_ago_recovered_destroyed_ltr,
-                    quantity_of_pms_recovered_destroyed_ltr,
-                    description_of_reported_incidence, notify, show, due_date
-                ) VALUES (
-                    :ticket_id, :date_created, :date_updated, :category, :name, :email,
-                    :priority, :subject, :message, :phone_no, :incidence_date,
-                    :incidence_source, :state, :community, :local_government,
-                    :operator, :zone, :corridor, :n_suspects,
-                    :veh, :boat, :vessel, :lat, :lng,
-                    :qty_crude, :qty_ago, :qty_pms,
-                    :description, :notify, :show, :due_date
-                )";
+        $didUpdate = false;
 
-        $stmt = $this->conn->prepare($sql);
-        $stmt->execute([
-            ':ticket_id'        => $ticketId,
-            ':date_created'     => $now,
-            ':date_updated'     => 'Nil',
-            ':category'         => $post['category']         ?? '',
-            ':name'             => $post['name']             ?? '',
-            ':email'            => $post['email']            ?? '',
-            ':priority'         => $post['priority']         ?? '0',
-            ':subject'          => $post['subject']          ?? '',
-            ':message'          => $post['message']          ?? '',
-            ':phone_no'         => $post['phone_no']         ?? null,
-            ':incidence_date'   => $post['incidence_date']   ?? null,
-            ':incidence_source' => $post['incidence_source'] ?? null,
-            ':state'            => $post['state']            ?? null,
-            ':community'        => $post['community']        ?? null,
-            ':local_government' => $post['local_government'] ?? null,
-            ':operator'         => $post['operator']         ?? null,
-            ':zone'             => $post['zone']             ?? null,
-            ':corridor'         => $post['corridor']         ?? null,
-            ':n_suspects'       => (int)($post['number_of_arrested_suspects'] ?? 0),
-            ':veh'              => (int)($post['vehicle_arrested_destroyed'] ?? 0),
-            ':boat'             => (int)($post['wooden_boat_speed_boat_arrested_destroyed'] ?? 0),
-            ':vessel'           => (int)($post['vessel_arrested_destroyed'] ?? 0),
-            ':lat'              => $post['location_coordinate_latitude']  ?? '0',
-            ':lng'              => $post['location_coordinate_longitude'] ?? '0',
-            ':qty_crude'        => (float)($post['quantity_of_crude_recovered_destroyed_ltr'] ?? 0),
-            ':qty_ago'          => (float)($post['quantity_of_ago_recovered_destroyed_ltr']   ?? 0),
-            ':qty_pms'          => (float)($post['quantity_of_pms_recovered_destroyed_ltr']   ?? 0),
-            ':description'      => $post['description_of_reported_incidence'] ?? null,
-            ':notify'           => $notify,
-            ':show'             => $show,
-            ':due_date'         => !empty($post['due_date']) ? $post['due_date'] : null,
-        ]);
+        /* ---------------------------------------------------------
+         | LOGIN TABLE — template_mode
+         --------------------------------------------------------- */
+        if (array_key_exists('template_mode', $data) && !empty($data['userid'])) {
+            $stmt = $this->conn->prepare(
+                "UPDATE login 
+                 SET template_mode = :template_mode 
+                 WHERE userid = :userid"
+            );
+            $stmt->execute([
+                ':template_mode' => $data['template_mode'],
+                ':userid'        => (int) $data['userid'],
+            ]);
+            $didUpdate = true;
+        }
 
-        // ---- process uploads ----
-        if (!empty($files['attachment']['name'])) {
-            $names = $files['attachment']['name'];
-            $tmps  = $files['attachment']['tmp_name'];
-            $sizes = $files['attachment']['size'];
-            $errs  = $files['attachment']['error'];
+        /* ---------------------------------------------------------
+         | COMPANY TABLE — dynamic SET clause
+         | Only include columns whose keys exist in $data
+         --------------------------------------------------------- */
+        $companyMap = [
+            'company_allownotification' => 'company_allownotification',
+            'allow_signup'              => 'company_signup',
+            'auto_approval'             => 'company_acct_approval',
+        ];
 
-            for ($i = 1; $i <= 8; $i++) {
-                if (empty($names[$i]) || $errs[$i] === UPLOAD_ERR_NO_FILE) continue;
-                if ($errs[$i] !== UPLOAD_ERR_OK) throw new RuntimeException("Upload error on attachment #{$i}.");
-                if ($sizes[$i] > $maxFileSize)   throw new RuntimeException("Attachment #{$i} too large.");
+        $setParts = [];
+        $bindings = [];
 
-                $ext = strtolower(pathinfo($names[$i], PATHINFO_EXTENSION));
-                if (!in_array($ext, $allowedExt, true)) {
-                    throw new RuntimeException("Attachment #{$i} extension .{$ext} not allowed.");
-                }
-
-                $base     = preg_replace('/[^A-Za-z0-9_\-]/', '_', pathinfo($names[$i], PATHINFO_FILENAME));
-                $filename = $ticketId . '_' . $i . '_' . substr($base, 0, 60) . '.' . $ext;
-                $dest     = $uploadDir . $filename;
-
-                if (!move_uploaded_file($tmps[$i], $dest)) {
-                    throw new RuntimeException("Failed to save attachment #{$i}.");
-                }
-
-                $uploads[$i] = $uploadUrlPrefix . $filename;
+        foreach ($companyMap as $inputKey => $column) {
+            if (array_key_exists($inputKey, $data) && $data[$inputKey] !== '') {
+                $setParts[] = "$column = :$column";
+                $bindings[":$column"] = (int) $data[$inputKey];
             }
         }
 
-        // ---- upload_library ----
-        $stmtUp = $this->conn->prepare(
-            "INSERT INTO upload_library (
-                ticket_id, ticket_desc,
-                upload1, upload2, upload3, upload4,
-                upload5, upload6, upload7, upload8, status
-            ) VALUES (
-                :ticket_id, :ticket_desc,
-                :u1, :u2, :u3, :u4, :u5, :u6, :u7, :u8, 1
-            )"
-        );
-        $stmtUp->execute([
-            ':ticket_id'   => $ticketId,
-            ':ticket_desc' => $ticketDesc,
-            ':u1' => $uploads[1] ?? '',
-            ':u2' => $uploads[2] ?? '',
-            ':u3' => $uploads[3] ?? '',
-            ':u4' => $uploads[4] ?? '',
-            ':u5' => $uploads[5] ?? '',
-            ':u6' => $uploads[6] ?? '',
-            ':u7' => $uploads[7] ?? '',
-            ':u8' => $uploads[8] ?? '',
-        ]);
+        if (!empty($setParts)) {
+            $sql = "UPDATE company SET " . implode(', ', $setParts) . " WHERE sn = 1";
+            $stmtCompany = $this->conn->prepare($sql);
+            $stmtCompany->execute($bindings);
+            $didUpdate = true;
+        }
 
         $this->conn->commit();
+        return $didUpdate;
 
-        return ['success' => true, 'ticket_id' => $ticketId, 'message' => 'Ticket created successfully.'];
-    } catch (Throwable $e) {
-        if ($this->conn->inTransaction()) {
-            $this->conn->rollBack();
-        }
-        foreach ($uploads as $path) {
-            if ($path && is_file($uploadDir . basename($path))) {
-                @unlink($uploadDir . basename($path));
-            }
-        }
-        return ['success' => false, 'message' => 'Error: ' . $e->getMessage()];
+    } catch (PDOException $e) {
+        $this->conn->rollBack();
+        return false;
+    }
+}
+
+
+public function Create_request(array $data)
+{
+    $sql = "INSERT INTO request 
+                (ticket_no, ticket_userid, name, subject, complain, priority, date, ticketer_role, status)
+            VALUES 
+                (:ticket_no, :ticket_userid, :name, :subject, :complain, :priority, :date, :ticketer_role, :status)";
+
+    try {
+        $stmt = $this->conn->prepare($sql);
+
+        $stmt->bindValue(':ticket_no',     $data['request_id'],     PDO::PARAM_STR);
+        $stmt->bindValue(':ticket_userid', $data['requester_id'],   PDO::PARAM_STR);
+        $stmt->bindValue(':name',          $data['requester_name'], PDO::PARAM_STR);
+        $stmt->bindValue(':subject',       $data['subject'],        PDO::PARAM_STR);
+        $stmt->bindValue(':complain',      $data['complain'],       PDO::PARAM_STR);
+        $stmt->bindValue(':priority',      $data['priority'],       PDO::PARAM_INT);
+        $stmt->bindValue(':date',          $data['date'],           PDO::PARAM_STR);
+        $stmt->bindValue(':ticketer_role', $data['requester_role'], PDO::PARAM_STR);
+        $stmt->bindValue(':status',        $data['status'],         PDO::PARAM_INT);
+
+        return $stmt->execute();
+    } catch (PDOException $e) {
+        // Log the error in production instead of echoing
+        error_log('Create_request failed: ' . $e->getMessage());
+        return false;
     }
 }
 
 
 
+public function createTicket($data, $files, $userid){
+
+    /*
+    |--------------------------------------------------------------------------
+    | ATTACHMENTS UPLOAD
+    |--------------------------------------------------------------------------
+    */
+
+    $attachments = '';
+    $uploadedFiles = [];
+
+    if (!empty($files['attachment']['name'][1])) {
+
+        $uploadDirectory = __DIR__ . '/../views/uploads/ticket_library/';
+
+        if (!is_dir($uploadDirectory)) {
+            mkdir($uploadDirectory, 0775, true);
+        }
+
+        $allowedExtensions = [
+            'gif', 'jpg', 'jpeg', 'png', 'zip', 'rar', 'csv',
+            'doc', 'docx', 'xls', 'xlsx', 'txt', 'pdf', 'mp4'
+        ];
+
+        $attachmentNames = [];
+
+        foreach ($files['attachment']['name'] as $i => $origName) {
+
+            if (($files['attachment']['error'][$i] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+                continue;
+            }
+
+            if ($files['attachment']['error'][$i] !== UPLOAD_ERR_OK) {
+                foreach ($uploadedFiles as $f) {
+                    if (file_exists($uploadDirectory . $f)) {
+                        unlink($uploadDirectory . $f);
+                    }
+                }
+                return ['success' => false, 'message' => 'Attachment ' . $i . ' failed to upload.'];
+            }
+
+            if (count($attachmentNames) >= 8) {
+                foreach ($uploadedFiles as $f) {
+                    if (file_exists($uploadDirectory . $f)) {
+                        unlink($uploadDirectory . $f);
+                    }
+                }
+                return ['success' => false, 'message' => 'Maximum 8 attachments allowed.'];
+            }
+
+            $extension = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
+
+            if (!in_array($extension, $allowedExtensions, true)) {
+                foreach ($uploadedFiles as $f) {
+                    if (file_exists($uploadDirectory . $f)) {
+                        unlink($uploadDirectory . $f);
+                    }
+                }
+                return ['success' => false, 'message' => 'Attachment ' . $i . ' type not allowed.'];
+            }
+
+            $safeName = 'att_' . bin2hex(random_bytes(8)) . '.' . $extension;
+
+            if (!move_uploaded_file($files['attachment']['tmp_name'][$i], $uploadDirectory . $safeName)) {
+                foreach ($uploadedFiles as $f) {
+                    if (file_exists($uploadDirectory . $f)) {
+                        unlink($uploadDirectory . $f);
+                    }
+                }
+                return ['success' => false, 'message' => 'Attachment ' . $i . ' could not be saved.'];
+            }
+
+            $uploadedFiles[] = $safeName;
+            $attachmentNames[] = $safeName;
+        }
+
+        $attachments = implode(',', $attachmentNames);
+    }
 
 
+    /*
+    |--------------------------------------------------------------------------
+    | INSERT INTO ticket_reports
+    |--------------------------------------------------------------------------
+    */
 
+    $this->conn->beginTransaction();
+
+    try {
+
+        $sql = "
+            INSERT INTO ticket_reports (
+                userid,
+                ticket_id,
+                date_created,
+                date_updated,
+                category,
+                name,
+                email,
+                priority,
+                pipeline,
+                pipeline_type,
+                subject,
+                message,
+                phone_no,
+                incidence_date,
+                incidence_source,
+                state,
+                community,
+                local_government,
+                operator,
+                zone,
+                corridor,
+                number_of_arrested_suspects,
+                vehicle_arrested_destroyed,
+                wooden_boat_speed_boat_arrested_destroyed,
+                vessel_arrested_destroyed,
+                location_coordinate_latitude,
+                location_coordinate_longitude,
+                quantity_of_crude_recovered_destroyed_ltr,
+                quantity_of_ago_recovered_destroyed_ltr,
+                quantity_of_pms_recovered_destroyed_ltr,
+                dpk_recovered_destroyed_ltr,
+                illegal_storage_dump_sites,
+                description_of_reported_incidence,
+                notify,
+                `show`,
+                due_date,
+                attachments,
+                status
+            ) VALUES (
+                :userid,
+                :ticket_id,
+                :date_created,
+                :date_updated,
+                :category,
+                :name,
+                :email,
+                :priority,
+                :pipeline,
+                :pipeline_type,
+                :subject,
+                :message,
+                :phone_no,
+                :incidence_date,
+                :incidence_source,
+                :state,
+                :community,
+                :local_government,
+                :operator,
+                :zone,
+                :corridor,
+                :number_of_arrested_suspects,
+                :vehicle_arrested_destroyed,
+                :wooden_boat_speed_boat_arrested_destroyed,
+                :vessel_arrested_destroyed,
+                :location_coordinate_latitude,
+                :location_coordinate_longitude,
+                :quantity_of_crude_recovered_destroyed_ltr,
+                :quantity_of_ago_recovered_destroyed_ltr,
+                :quantity_of_pms_recovered_destroyed_ltr,
+                :dpk_recovered_destroyed_ltr,
+                :illegal_storage_dump_sites,
+                :description_of_reported_incidence,
+                :notify,
+                :show,
+                :due_date,
+                :attachments,
+                :status
+            )
+        ";
+
+        $stmt = $this->conn->prepare($sql);
+
+        $stmt->bindValue(':userid', $userid, PDO::PARAM_STR);
+        $stmt->bindValue(':ticket_id', $data['ticket_id'], PDO::PARAM_STR);
+        $stmt->bindValue(':date_created', $data['date_created'], PDO::PARAM_STR);
+        $stmt->bindValue(':date_updated', $data['date_updated'], PDO::PARAM_STR);
+        $stmt->bindValue(':category', $data['category'], PDO::PARAM_STR);
+        $stmt->bindValue(':name', $data['name'], PDO::PARAM_STR);
+        $stmt->bindValue(':email', $data['email'], PDO::PARAM_STR);
+        $stmt->bindValue(':priority', $data['priority'], PDO::PARAM_STR);
+        $stmt->bindValue(':pipeline', $data['pipeline'], PDO::PARAM_STR);
+        $stmt->bindValue(':pipeline_type', $data['pipeline_type'], PDO::PARAM_STR);
+        $stmt->bindValue(':subject', $data['subject'], PDO::PARAM_STR);
+        $stmt->bindValue(':message', $data['message'], PDO::PARAM_STR);
+        $stmt->bindValue(':phone_no', $data['phone_no'], PDO::PARAM_STR);
+        $stmt->bindValue(':incidence_date', $data['incidence_date'], PDO::PARAM_STR);
+        $stmt->bindValue(':incidence_source', $data['incidence_source'], PDO::PARAM_STR);
+        $stmt->bindValue(':state', $data['state'], PDO::PARAM_STR);
+        $stmt->bindValue(':community', $data['community'], PDO::PARAM_STR);
+        $stmt->bindValue(':local_government', $data['local_government'], PDO::PARAM_STR);
+        $stmt->bindValue(':operator', $data['operator'], PDO::PARAM_STR);
+        $stmt->bindValue(':zone', $data['zone'], PDO::PARAM_STR);
+        $stmt->bindValue(':corridor', $data['corridor'], PDO::PARAM_STR);
+        $stmt->bindValue(':number_of_arrested_suspects', $data['number_of_arrested_suspects'], PDO::PARAM_STR);
+        $stmt->bindValue(':vehicle_arrested_destroyed', $data['vehicle_arrested_destroyed'], PDO::PARAM_STR);
+        $stmt->bindValue(':wooden_boat_speed_boat_arrested_destroyed', $data['wooden_boat_speed_boat_arrested_destroyed'], PDO::PARAM_STR);
+        $stmt->bindValue(':vessel_arrested_destroyed', $data['vessel_arrested_destroyed'], PDO::PARAM_STR);
+        $stmt->bindValue(':location_coordinate_latitude', $data['location_coordinate_latitude'], PDO::PARAM_STR);
+        $stmt->bindValue(':location_coordinate_longitude', $data['location_coordinate_longitude'], PDO::PARAM_STR);
+        $stmt->bindValue(':quantity_of_crude_recovered_destroyed_ltr', $data['quantity_of_crude_recovered_destroyed_ltr'], PDO::PARAM_STR);
+        $stmt->bindValue(':quantity_of_ago_recovered_destroyed_ltr', $data['quantity_of_ago_recovered_destroyed_ltr'], PDO::PARAM_STR);
+        $stmt->bindValue(':quantity_of_pms_recovered_destroyed_ltr', $data['quantity_of_pms_recovered_destroyed_ltr'], PDO::PARAM_STR);
+        $stmt->bindValue(':dpk_recovered_destroyed_ltr', $data['dpk_recovered_destroyed_ltr'], PDO::PARAM_INT);
+        $stmt->bindValue(':illegal_storage_dump_sites', $data['illegal_storage_dump_sites'], PDO::PARAM_INT);
+        $stmt->bindValue(':description_of_reported_incidence', $data['description_of_reported_incidence'], PDO::PARAM_STR);
+        $stmt->bindValue(':notify', $data['notify'], PDO::PARAM_INT);
+        $stmt->bindValue(':show', $data['show'], PDO::PARAM_INT);
+        $stmt->bindValue(':due_date', $data['due_date'], PDO::PARAM_STR);
+        $stmt->bindValue(':attachments', $attachments, PDO::PARAM_STR);
+        $stmt->bindValue(':status', 1, PDO::PARAM_INT);
+
+        $stmt->execute();
+
+        $this->conn->commit();
+
+        return ['success' => true, 'message' => 'Ticket created successfully.'];
+
+    } catch (PDOException $e) {
+
+        $this->conn->rollBack();
+
+        foreach ($uploadedFiles as $f) {
+            if (file_exists($uploadDirectory . $f)) {
+                unlink($uploadDirectory . $f);
+            }
+        }
+
+        return ['success' => false, 'message' => 'Database error: ' . $e->getMessage()];
+    }
+}
 
 
 
@@ -292,7 +461,7 @@ public function updateuserpwd($data){
 public function GeneralSelectAnyTable($tb_name){
     try {
          $allowed_tables = [
-        'audit_trail','company','corridor','incidence_source','lgas',
+        'audit_trail','transfer_history','company','corridor','incidence_source','lgas',
         'local_government_areas','login','operator','owner','pipeline',
         'pipeline_type','priority','report_type','request','states',
         'tickets','ticket_category','users','ticket_reports','wellhead_status','zone'
@@ -514,6 +683,145 @@ public function restorerecord()
 
 
 
+public function UpdateUserAccount($data){try {
+
+    $this->conn->beginTransaction();
+
+    /*
+    |--------------------------------------------------------------------------
+    | USERS TABLE
+    |--------------------------------------------------------------------------
+    */
+
+    /*
+    |--------------------------------------------------------------------------
+    | UPDATE IMAGE FIELD ONLY IF THE IMAGE FIELD IS NOT EMPTY
+    |--------------------------------------------------------------------------
+    */
+
+    if (empty(trim($data['user_image'] ?? ''))) {
+
+        $sqlUsers = "
+            UPDATE users SET
+                title = :title,
+                fullname = :fullname,
+                email = :email,
+                phone = :phone,
+                corridor = :corridor,
+                msg_notification = :msg_notification,
+                msg = :msg,
+                status = :status
+            WHERE userid = :userid
+            LIMIT 1
+        ";
+
+    } else {
+
+        $sqlUsers = "
+            UPDATE users SET
+                title = :title,
+                fullname = :fullname,
+                email = :email,
+                phone = :phone,
+                corridor = :corridor,
+                msg_notification = :msg_notification,
+                msg = :msg,
+                user_image = :user_image,
+                status = :status
+            WHERE userid = :userid
+            LIMIT 1
+        ";
+
+    }
+
+    $stmtUsers = $this->conn->prepare($sqlUsers);
+
+    $stmtUsers->bindValue(':title', $data['title'], PDO::PARAM_STR);
+    $stmtUsers->bindValue(':fullname', $data['fullname'], PDO::PARAM_STR);
+    $stmtUsers->bindValue(':email', $data['email'], PDO::PARAM_STR);
+    $stmtUsers->bindValue(':phone', $data['phone'], PDO::PARAM_STR);
+    $stmtUsers->bindValue(':corridor', $data['corridor'], PDO::PARAM_STR);
+    $stmtUsers->bindValue(':msg_notification', $data['msg_notification'], PDO::PARAM_INT);
+    $stmtUsers->bindValue(':msg', $data['msg'], PDO::PARAM_STR);
+    $stmtUsers->bindValue(':status', $data['status'], PDO::PARAM_INT);
+    $stmtUsers->bindValue(':userid', $data['userid'], PDO::PARAM_STR);
+
+    /*
+    |--------------------------------------------------------------------------
+    | BIND IMAGE ONLY IF THE IMAGE FIELD IS NOT EMPTY
+    |--------------------------------------------------------------------------
+    */
+
+    if (!empty(trim($data['user_image'] ?? ''))) {
+        $stmtUsers->bindValue(':user_image', $data['user_image'], PDO::PARAM_STR);
+    }
+
+    $stmtUsers->execute();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | LOGIN TABLE
+    |--------------------------------------------------------------------------
+    */
+
+    $sqlLogin = "
+        UPDATE login SET
+            role = :role,
+            Role_edit_user = :Role_edit_user,
+            Role_create_user = :Role_create_user,
+            Role_delete_user = :Role_delete_user,
+            Role_approve_user = :Role_approve_user,
+            Role_create_report = :Role_create_report,
+            Role_approve_report = :Role_approve_report,
+            Role_edit_report = :Role_edit_report,
+            Role_delete_report = :Role_delete_report,
+            Role_comment = :Role_comment,
+            status = :status
+        WHERE userid = :userid
+        LIMIT 1
+    ";
+
+    $stmtLogin = $this->conn->prepare($sqlLogin);
+
+    $stmtLogin->bindValue(':role', $data['role'], PDO::PARAM_STR);
+    $stmtLogin->bindValue(':Role_edit_user', $data['Role_edit_user'], PDO::PARAM_INT);
+    $stmtLogin->bindValue(':Role_create_user', $data['Role_create_user'], PDO::PARAM_INT);
+    $stmtLogin->bindValue(':Role_delete_user', $data['Role_delete_user'], PDO::PARAM_INT);
+    $stmtLogin->bindValue(':Role_approve_user', $data['Role_approve_user'], PDO::PARAM_INT);
+    $stmtLogin->bindValue(':Role_create_report', $data['Role_create_report'], PDO::PARAM_INT);
+    $stmtLogin->bindValue(':Role_approve_report', $data['Role_approve_report'], PDO::PARAM_INT);
+    $stmtLogin->bindValue(':Role_edit_report', $data['Role_edit_report'], PDO::PARAM_INT);
+    $stmtLogin->bindValue(':Role_delete_report', $data['Role_delete_report'], PDO::PARAM_INT);
+    $stmtLogin->bindValue(':Role_comment', $data['Role_comment'], PDO::PARAM_INT);
+    $stmtLogin->bindValue(':status', $data['status'], PDO::PARAM_INT);
+    $stmtLogin->bindValue(':userid', $data['userid'], PDO::PARAM_STR);
+
+    $stmtLogin->execute();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | COMMIT
+    |--------------------------------------------------------------------------
+    */
+
+    $this->conn->commit();
+
+    return true;
+
+} catch (PDOException $e) {
+
+    if ($this->conn->inTransaction()) {
+        $this->conn->rollBack();
+    }
+
+    return false;
+}}
+
+
+
+
 public function SelectUsersAndLoginTableforOnePersonAfterLogin($user_id)
 {
     try {
@@ -534,6 +842,7 @@ public function SelectUsersAndLoginTableforOnePersonAfterLogin($user_id)
             users.msg_notification AS user_msg_notification,
 
             login.sn AS login_sn,
+            login.template_mode AS login_TemplateMode,
             login.userid AS login_userid,
             login.password AS login_password,
             login.last_login AS login_last_login,
@@ -652,7 +961,7 @@ public function clearMsgNotification($userid) {
 
 
 
-public function login($userid, $password) {
+public function login($userid,$password) {
     $table_login = "login";
 
     $stmt = $this->conn->prepare(

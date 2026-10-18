@@ -59,14 +59,65 @@ class Admincontroller {
 
 
 
+
+
+
+
+
+
+
+
+
 public function page_dashboard() {
+    
   if (session_status() === PHP_SESSION_NONE) session_start();
-  $userid =$_SESSION['userid']; 
+   $template_mode = "auto";
+    $userid =$_SESSION['userid']; 
    $role_name = $role = $_SESSION['role'] ;
     $LoadAllNigeriaStates = $this->stateModel->getAll();
    $callUserModel = new User();
-   $tb_name = "priority";
-   $LoadPriorityColumnForSelect =  $callUserModel->GeneralSelectAnyTable($tb_name);
+  $CallModelAdmin = new ModelAdmin;
+ 
+  $CallMailerModel = new Mailer;
+
+        $callAuthMiddlewareClass = new AuthMiddleware;
+        $callCompanyModel = new CompanyModel() ;
+         $company_settings = $callCompanyModel->web_settings();
+
+// Get user  status counts
+$statusCounts = $CallModelAdmin->StatusCount();
+
+$totalUsers         = (int) ($statusCounts['total'] ?? 0);
+$totalInactiveUsers = (int) ($statusCounts['inactive'] ?? 0);
+$totalActiveUsers   = (int) ($statusCounts['active'] ?? 0);
+$totalDeletedUsers  = (int) ($statusCounts['deleted'] ?? 0);
+
+
+  if (isset($_GET['token_edit'])) { 
+    $token = $_GET['token_edit']; 
+    $user_id = base64_decode($token, true);
+    $LoadAParticularUsersAndLoginTableForAdmin=$callUserModel->SelectUsersAndLoginTableforOnePersonAfterLogin($user_id);
+        }
+//   if (isset($_GET['token_profile'])) { 
+//     $token = $_GET['token_profile']; 
+//     $user_id = base64_decode($token, true);
+//     $LoadAParticularUsersAndLoginTableForAdmin=$callUserModel->SelectUsersAndLoginTableforOnePersonAfterLogin($user_id);
+//         }
+  if (isset($_GET['token_userdetails'])) { 
+    $token = $_GET['token_userdetails']; 
+    $user_id = base64_decode($token, true);
+    $LoadAParticularUsersAndLoginTableForAdmin=$callUserModel->SelectUsersAndLoginTableforOnePersonAfterLogin($user_id);
+    
+    }
+ 
+         $CheifAdminCrown ="";
+           $company_adminseniorman  = $company_settings['company_adminseniorman'] ;
+         $LoadAllUsersAndLoginTableForAdmin = $CallModelAdmin-> SelectAllCategoryOfUsersAndLoginTableForAdmin($userid);
+   $tb_name = "request"; $LoadAllRequest =  $callUserModel->GeneralSelectAnyTable($tb_name);
+   $tb_name = "corridor"; $LoadCorridorColumnForSelect =  $callUserModel->GeneralSelectAnyTable($tb_name);
+   $tb_name = "audit_trail"; $LoadAuditTrail =  $callUserModel->GeneralSelectAnyTable($tb_name);
+   $tb_name = "transfer_history"; $LoadTransferHistory =  $callUserModel->GeneralSelectAnyTable($tb_name);
+   $tb_name = "priority"; $LoadPriorityColumnForSelect =  $callUserModel->GeneralSelectAnyTable($tb_name);
    $tb_name = "incidence_source";$LoadIncidenceSourceColumnForSelect=$callUserModel->GeneralSelectAnyTable($tb_name);
    $tb_name = "operator";$LoadOperatorColumnForSelect=$callUserModel->GeneralSelectAnyTable($tb_name);
    $tb_name = "zone";$LoadZoneColumnForSelect=$callUserModel->GeneralSelectAnyTable($tb_name);
@@ -105,11 +156,15 @@ if ($checkIfCrSn) {
  $page_name ="Create Tickets";
 }elseif ($page_link_title =="export_tickets") {
 $page_name ="Export Tickets";
-}elseif ($page_link_title =="manage_users") {
+}elseif ($page_link_title =="edit_user") {
+$page_name ="View user";
+}elseif ($page_link_title =="myprofile") {
+$page_name ="My profile";
+}elseif ($page_link_title =="manage_users"|| $page_link_title =="create_admin_user"|| $page_link_title =="user_details") {
 $page_name ="Manage Users";
 }elseif ($page_link_title =="user_requests") {
 $page_name ="All Request";
-}elseif ($page_link_title =="transfers") {
+}elseif ($page_link_title =="transfers" || $page_link_title =="tr_employee") {
 $page_name ="Transfer History";
 }elseif ($page_link_title =="user_library") {
 $page_name ="Upload Library";
@@ -118,14 +173,10 @@ $page_name ="Audit Trail";
 }else{
    $page_link_title="tickets";
   $page_name ="Tickets";
-$tb_name = "ticket_reports";
-$LoadAllTickets =  $callUserModel->GeneralSelectAnyTable($tb_name);
+$tb_name = "ticket_reports";$LoadAllTickets =  $callUserModel->GeneralSelectAnyTable($tb_name);
 }   
-    $CallModelAdmin = new ModelAdmin;
-        $callAuthMiddlewareClass = new AuthMiddleware;
-        $callCompanyModel = new CompanyModel() ;
-         $company_settings = $callCompanyModel->web_settings();
-         $company_adminseniorman  = $company_settings['company_adminseniorman'] ;
+    
+       
           $CF_VerificationSiteUrl = $company_settings['cloudfare_verifyurl'] ?? '';
         $CF_SecretKey = $company_settings['cloudfare_secretkey'] ?? '';
         $CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
@@ -155,17 +206,36 @@ header("Location: index?action=compulsory_cp");
 // $ticketCounts['status_1']
 
 // $ticketCounts['status_2']
+
+// Admin personal records
  $LoadUsersAndLoginTableForAdmin = $callUserModel->SelectUsersAndLoginTableforOnePersonAfterLogin($userid);
          if ($LoadUsersAndLoginTableForAdmin['success']) {
             $user = $LoadUsersAndLoginTableForAdmin['user'];
            $user_corridor = $user['user_corridor']; 
-           $user_email  = $user['user_email']; 
+ $template_mode = ($user['login_TemplateMode'] ?? '') !== '' ? $user['login_TemplateMode'] : 'auto';
+          $admin_e= $user_email  = $user['user_email']; 
            $user_phone  = $user['user_phone']; 
-           $fullname = $user['user_fullname']; 
-           $role = $_SESSION['role'] = $user['login_role']; 
-           $role_name  = $user['login_role_name']; 
-           $AbrvName = $user['AbrvName'];
+          $admin_fn= $fullname = $user['user_fullname']; 
+         $admin_lr=  $role = $_SESSION['role'] = $user['login_role']; 
+          $admin_lrn= $role_name  = $user['login_role_name']; 
+          $admin_abr= $AbrvName = $user['AbrvName'];
            $last_login = $user['login_last_login'];
+// user roles
+$login_delete_report = $user['login_delete_report'];
+$login_approve_report = $user['login_approve_report'];
+$login_edit_report = $user['login_edit_report'];
+$login_approve_report = $user['login_approve_report'];
+$login_create_report = $user['login_create_report'];
+$login_approve_user = $user['login_approve_user'];
+$login_delete_user = $user['login_delete_user'];
+$login_create_user = $user['login_create_user'];
+$login_edit_user = $user['login_edit_user'];
+
+
+
+
+
+
             $user_image = ($user['user_image'] ?? "") === "" ? "noimage2.png" : $user['user_image'];
 if ($user['user_msg_notification']==1){
     $_SESSION['msg_notification'] = 1;
@@ -197,7 +267,26 @@ $callUserModel->clearMsgNotification($userid);
       $company_online = $company_settings['company_online'] ?? 0;
 
       $company_Allow_signup = $company_settings['company_signup'] ?? 0;
+      if ($company_Allow_signup==0){
+        $company_Allow_signup_text="Disallow";
+      }else{
+       $company_Allow_signup_text="Allow";
 
+      }
+      $company_acct_approval = $company_settings['company_acct_approval'] ?? 0;
+      if ($company_acct_approval==0){
+        $company_acct_approval_text="Disallow";
+      }else{
+       $company_acct_approval_text="Allow";
+
+      }
+      $company_allownotification = $company_settings['company_allownotification'] ?? 0;
+      if ($company_allownotification==0){
+        $company_allownotification_text="Disallow";
+      }else{
+       $company_allownotification_text="Allow";
+
+      }
       $company_alias = $company_settings['company_alias'] ?? 'Page';
 
        $company_logo = $company_settings['company_logo'] ?? '';
@@ -208,33 +297,12 @@ $callUserModel->clearMsgNotification($userid);
 
             $loginurl = $company_url."/index.php?action=login" ;
 
- 
-
-       require ROOT_PATH . "/views/users/admin/dashboard.php";
-
-  }
 
 
 
 
-    /* ==========================
-       UPDATE PASSWORD
-    ========================== */
-public function updatepassword(){
+ if (isset($_POST['updateuserpwd'])) {
 
-    $callusermodel = new User();
-    $AuthMiddlewareModel = new AuthMiddleware();
-    $callCompanyModel = new CompanyModel();
-    $company_settings = $callCompanyModel->web_settings();
-    $CallMailerModel = new Mailer;
- $AuthMiddlewareModel->IfSessionDeactiveAutologout();
-  $LoadAllNigeriaStates = $this->stateModel->getAll();
-    $company_logfile_url = $company_settings['company_logfile_url'] ?? '';
-    $CF_VerificationSiteUrl = $company_settings['cloudfare_verifyurl'] ?? '';
-    $CF_SecretKey = $company_settings['cloudfare_secretkey'] ?? '';
-    $CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
-
-    if (isset($_POST['update_user_password'])) {
 
         $userid = $_SESSION['userid'];
         $role_name = $role = $_SESSION['role'];
@@ -262,13 +330,13 @@ public function updatepassword(){
             exit;
         }
 
-        $result = $callusermodel->updateuserpwd($data);
+        $result = $callUserModel->updateuserpwd($data);
 
         if ($result === "Password updated successfully.") {
 
             $_SESSION['success'] = $result;
 
-            $userResult = $callusermodel->SelectUserTableForOne($userid);
+            $userResult = $callUserModel->SelectUserTableForOne($userid);
 
             if (
                 !empty($userResult['success']) &&
@@ -311,7 +379,7 @@ public function updatepassword(){
                 "Best regards,<br>" .
                 "The Support Team";
 
-            $logResult = $AuthMiddlewareModel->writelog(
+            $logResult = $callAuthMiddlewareClass->writelog(
                 $userid,
                 $role_name,
                 $role,
@@ -338,21 +406,7 @@ public function updatepassword(){
 
             header("Location: " .($_SERVER['HTTP_REFERER'] ?? 'index.php?action=dashboard')); exit;
         }
-    }
-
-    if ($AuthMiddlewareModel->IsThisAfirstTimeLogin()) {
-
-        require ROOT_PATH . "/views//users/compulsory_changepassword.php";
-
-    } else {
-
-        // header(
-        //     "Location: " .
-        //     ($_SERVER['HTTP_REFERER'] ?? 'index.php?action=dashboard')
-        // );
-
-        // exit;
-    }
+    
 }
 
 
@@ -361,768 +415,594 @@ public function updatepassword(){
 
 
 
-public function CompanyDetails(): array{
 
-   
-
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-
-        $_SESSION['error'] = 'Invalid request method.';
-
-        header("Location: index?action=settings");
-
-        exit;
-
-    }
-
- $CallDevModel = new ModelDev();
- $AuthMiddlewareModel = new AuthMiddleware();
-  $company_settings = $CallDevModel->web_settings();
-  $CF_VerificationSiteUrl = $company_settings['cloudfare_verifyurl'] ?? '';
- $CF_SecretKey = $company_settings['cloudfare_secretkey'] ?? '';
-$CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
-//   $AuthMiddlewareModel->ValidateTurnstile($CF_SecretKey,$CF_VerificationSiteUrl);  
-    $data = [
-
-        'company_url' => trim($_POST['company_url'] ?? ''),
-
-        'company_logfile_url' => trim($_POST['company_logfile_url'] ?? ''),
-
-        'company_userid' => $_POST['company_userid'] ?? '',
-
-        'company_signup' => $_POST['company_signup'] ?? 0,
-
-        'company_status' => $_POST['company_status'] ?? 0,
-
-        'company_acct_approval' => $_POST['company_acct_approval'] ?? 0,
-
-        'company_auto_ticketing' => $_POST['company_auto_ticketing'] ?? 0,
-
-        'company_map' => trim($_POST['company_map'] ?? ''),
-
-        'company_name' => trim($_POST['company_name'] ?? ''),
-
-        'company_alias' => trim($_POST['company_alias'] ?? ''),
-
-        'company_email' => trim($_POST['company_email'] ?? ''),
-
-        'company_phone' => trim($_POST['company_phone'] ?? ''),
-
-        'company_phone2' => trim($_POST['company_phone2'] ?? ''),
-
-        'company_address' => trim($_POST['company_address'] ?? ''),
-
-        'company_address2' => trim($_POST['company_address2'] ?? ''),
-
-        'company_care' => trim($_POST['company_care'] ?? ''),
-
-        'company_care2' => trim($_POST['company_care2'] ?? ''),
-
-        'company_copyright' => trim($_POST['company_copyright'] ?? ''),
-
-        'company_copyrightlink' => trim($_POST['company_copyrightlink'] ?? ''),
-
-        'company_poweredby' => trim($_POST['company_poweredby'] ?? ''),
-
-        'company_logo' => null,
-
-        'company_favicon' => null
-
-    ];
-
-    if (
-
-        empty($data['company_url']) ||
-
-        !filter_var($data['company_url'], FILTER_VALIDATE_URL) ||
-
-        !preg_match('/^https?:\/\//i', $data['company_url'])
-
-    ) {
-
-        $_SESSION['error'] = 'Invalid company URL.';
-
-        header("Location: index?action=settings");
-
-        exit;
-
-    }
-
-    if (
-
-        $data['company_userid'] === '' ||
-
-        !ctype_digit((string) $data['company_userid'])
-
-    ) {
-
-        $_SESSION['error'] = 'Invalid company user ID.';
-
-        header("Location: index?action=settings");
-
-        exit;
-
-    }
-
-    $data['company_userid'] = (int) $data['company_userid'];
-
-    if ($data['company_userid'] > 2147483647) {
-
-        $_SESSION['error'] = 'Invalid company user ID.';
-
-        header("Location: index?action=settings");
-
-        exit;
-
-    }
-
-    $booleanFields = [
-
-        'company_signup',
-
-        'company_status',
-
-        'company_acct_approval',
-
-        'company_auto_ticketing'
-
-    ];
-
-    foreach ($booleanFields as $field) {
-
-        if (!in_array((string) $data[$field], ['0', '1'], true)) {
-
-            $_SESSION['error'] = 'Invalid value supplied for ' . $field . '.';
-
-            header("Location: index?action=settings");
-
-            exit;
-
-        }
-
-        $data[$field] = (int) $data[$field];
-
-    }
-
-    if (
-
-        empty($data['company_email']) ||
-
-        !filter_var($data['company_email'], FILTER_VALIDATE_EMAIL)
-
-    ) {
-
-        $_SESSION['error'] = 'Invalid company email address.';
-
-        header("Location: index?action=settings");
-
-        exit;
-
-    }
-
-    if (
-
-        empty($data['company_phone']) ||
-
-        !preg_match('/^\+?[0-9]{7,15}$/', $data['company_phone'])
-
-    ) {
-
-        $_SESSION['error'] = 'Invalid company phone number.';
-
-        header("Location: index?action=settings");
-
-        exit;
-
-    }
-
-    if (
-
-        $data['company_phone2'] !== '' &&
-
-        !preg_match('/^\+?[0-9]{7,15}$/', $data['company_phone2'])
-
-    ) {
-
-        $_SESSION['error'] = 'Invalid alternative phone number.';
-
-        header("Location: index?action=settings");
-
-        exit;
-
-    }
-
-    if (
-
-        $data['company_copyrightlink'] !== '' &&
-
-        (
-
-            !filter_var(
-
-                $data['company_copyrightlink'],
-
-                FILTER_VALIDATE_URL
-
-            ) ||
-
-            !preg_match(
-
-                '/^https?:\/\//i',
-
-                $data['company_copyrightlink']
-
-            )
-
-        )
-
-    ) {
-
-        $_SESSION['error'] = 'Invalid copyright link.';
-
-        header("Location: index?action=settings");
-
-        exit;
-
-    }
-
-    /*
-
-     * COMPANY LOGO
-
-     */
-
-    if (
-
-        isset($_FILES['user_image']) &&
-
-        $_FILES['user_image']['error'] !== UPLOAD_ERR_NO_FILE
-
-    ) {
-
-        if ($_FILES['user_image']['error'] !== UPLOAD_ERR_OK) {
-
-            $_SESSION['error'] = 'Failed to upload company logo.';
-
-            header("Location: index?action=settings");
-
-            exit;
-
-        }
-
-        if ($_FILES['user_image']['size'] > 2 * 1024 * 1024) {
-
-            $_SESSION['error'] = 'Company logo must not exceed 2MB.';
-
-            header("Location: index?action=settings");
-
-            exit;
-
-        }
-
-        $allowedLogoTypes = [
-
-            'image/png' => 'png',
-
-            'image/jpeg' => 'jpg',
-
-            'image/webp' => 'webp'
-
-        ];
-
-        $finfo = new finfo(FILEINFO_MIME_TYPE);
-
-        $mimeType = $finfo->file(
-
-            $_FILES['user_image']['tmp_name']
-
-        );
-
-        if (!isset($allowedLogoTypes[$mimeType])) {
-
-            $_SESSION['error'] = 'Invalid company logo file type.';
-
-            header("Location: index?action=settings");
-
-            exit;
-
-        }
-
-        $uploadDirectory = __DIR__ . '/../views/uploads/img/';
-
-        if (!is_dir($uploadDirectory)) {
-
-            if (!mkdir($uploadDirectory, 0755, true)) {
-
-                $_SESSION['error'] = 'Unable to create logo upload directory.';
-
-                header("Location: index?action=settings");
-
-                exit;
-
-            }
-
-        }
-
-        try {
-
-            $logoName =
-
-                'company_logo_' .
-
-                bin2hex(random_bytes(8)) .
-
-                '.' .
-
-                $allowedLogoTypes[$mimeType];
-
-        } catch (Exception $e) {
-
-            $_SESSION['error'] = 'Unable to generate logo filename.';
-
-            header("Location: index?action=settings");
-
-            exit;
-
-        }
-
-        $logoPath = $uploadDirectory . $logoName;
-
-        if (
-
-            !move_uploaded_file(
-
-                $_FILES['user_image']['tmp_name'],
-
-                $logoPath
-
-            )
-
-        ) {
-
-            $_SESSION['error'] = 'Unable to save company logo.';
-
-            header("Location: index?action=settings");
-
-            exit;
-
-        }
-
-        $data['company_logo'] = $logoName;
-
-    }
-
-    /*
-
-     * FAVICON
-
-     */
-
-    if (
-
-        isset($_FILES['favicon_image']) &&
-
-        $_FILES['favicon_image']['error'] !== UPLOAD_ERR_NO_FILE
-
-    ) {
-
-        if ($_FILES['favicon_image']['error'] !== UPLOAD_ERR_OK) {
-
-            $_SESSION['error'] = 'Failed to upload favicon.';
-
-            header("Location: index?action=settings");
-
-            exit;
-
-        }
-
-        if ($_FILES['favicon_image']['size'] > 1 * 1024 * 1024) {
-
-            $_SESSION['error'] = 'Favicon must not exceed 1MB.';
-
-            header("Location: index?action=settings");
-
-            exit;
-
-        }
-
-        $allowedFaviconTypes = [
-
-            'image/png' => 'png',
-
-            'image/x-icon' => 'ico',
-
-            'image/vnd.microsoft.icon' => 'ico',
-
-            'image/jpeg' => 'jpg',
-
-            'image/webp' => 'webp'
-
-        ];
-
-        $finfo = new finfo(FILEINFO_MIME_TYPE);
-
-        $mimeType = $finfo->file(
-
-            $_FILES['favicon_image']['tmp_name']
-
-        );
-
-        if (!isset($allowedFaviconTypes[$mimeType])) {
-
-            $_SESSION['error'] = 'Invalid favicon file type.';
-
-            header("Location: index?action=settings");
-
-            exit;
-
-        }
-
-        $uploadDirectory = __DIR__ . '/../views/uploads/img/';
-
-        if (!is_dir($uploadDirectory)) {
-
-            if (!mkdir($uploadDirectory, 0755, true)) {
-
-                $_SESSION['error'] = 'Unable to create favicon upload directory.';
-
-                header("Location: index?action=settings");
-
-                exit;
-
-            }
-
-        }
-
-        try {
-
-            $faviconName =
-
-                'favicon_' .
-
-                bin2hex(random_bytes(8)) .
-
-                '.' .
-
-                $allowedFaviconTypes[$mimeType];
-
-        } catch (Exception $e) {
-
-            $_SESSION['error'] = 'Unable to generate favicon filename.';
-
-            header("Location: index?action=settings");
-
-            exit;
-
-        }
-
-        $faviconPath = $uploadDirectory . $faviconName;
-
-        if (
-
-            !move_uploaded_file(
-
-                $_FILES['favicon_image']['tmp_name'],
-
-                $faviconPath
-
-            )
-
-        ) {
-
-            $_SESSION['error'] = 'Unable to save favicon.';
-
-            header("Location: index?action=settings");
-
-            exit;
-
-        }
-
-        $data['company_favicon'] = $faviconName;
-
-    }
-
-    $result = $CallDevModel->updateCompanyDetails($data);
-
-    if (
-
-        isset($result['success']) &&
-
-        $result['success'] === true
-
-    ) {
-
-        $_SESSION['success'] = $result['message'];
-
-        unset($_SESSION['error']);
-
-    } else {
-
-        $_SESSION['error'] =
-
-            $result['message'] ??
-
-            'Failed to update company details.';
-
-        unset($_SESSION['success']);
-
-    }
-
-    header("Location: index?action=settings");
-
+if (isset($_POST['initiate_transfer'])) {
+$action_token = trim($_POST['action_token'] ?? '');
+$session_token = $_SESSION['action_token'] ?? '';
+
+if (
+    $action_token === '' ||
+    $session_token === '' ||
+    !hash_equals($session_token, $action_token)
+) {
+    $_SESSION['error'] = "Invalid authorization token.";
+    header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php'));
     exit;
+}
+$employee_userid= trim($_POST['employee_userid'] ?? '');
+ $userResult=$callUserModel->SelectUsersAndLoginTableforOnePersonAfterLogin($employee_userid);
+    if ($userResult['success']) {
+   $current_corridor = $userResult['user']['user_corridor'];
+    $user_fn = $userResult['user']['user_fullname'] ?? '';
+    $user_AbrvName= $userResult['user']['AbrvName'] ?? '';
+     $receiveraddress = $userResult['user']['user_email'] ?? '';
+$TrRef_ID = 'TRF' . date('YmdHis') . random_int(1000, 9999);
 
+
+   $data = [
+        'refid' => $TrRef_ID,
+        'user_transfered'           => $user_fn,
+        'from_corridor'             => $current_corridor, // Fetch employee's current corridor
+        'to_corridor'               => trim($_POST['to_corridor'] ?? ''),
+        'transfer_initilizer'       => $admin_fn, // Current logged-in user
+        'date_transfered'            => date('Y-m-d H:i:s'),
+        'expected_resumption_date'  => trim($_POST['effective_date'] ?? ''),
+        'reason'                     => trim($_POST['transfer_reason'] ?? ''),
+        'status'                     => '1'
+    ];
+
+
+if ($current_corridor == $_POST['to_corridor']) {
+    
+      $_SESSION['error'] = $user_fn . " is already stationed at " . $_POST['to_corridor'] . " corridor";
+ header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php')); exit;
+
+}
+
+    $resultadmin = $CallModelAdmin->InsertTransferHistory($data);
+
+    if ($resultadmin) {
+         $_SESSION['success'] = "Transfer initiated successfully";
+
+$user_details = $admin_abr . " - " . $_SESSION['userid'];
+$action = "Initiated the transfer of ". $user_fn . " to " . $_POST['to_corridor'] . " corridor";
+  
+    $data = [
+        'the_tablename' => "users",
+        'column_value'  =>$_POST['to_corridor'],
+        'column_name'   => "corridor",
+        'where_column'  => "userid",
+        'where_value'   => $employee_userid
+    ];
+
+    $UpdateTransferedUserCorridor = $callUserModel->GeneralUpdateAnyTableColumnWithThisValue($data);
+ $logResult = $callAuthMiddlewareClass->writelog($_SESSION['userid'], $admin_lrn,$admin_lr, $user_details, $action,$company_logfile_url);
+$subject = "You Have Been Transferred";
+
+$message = "Hello $user_fn,<br><br>"
+
+         . "This is to inform you that you have been transferred from <strong>$current_corridor</strong> corridor to <strong>" . htmlspecialchars($_POST['to_corridor'] ?? '', ENT_QUOTES, 'UTF-8') . "</strong> corridor.<br><br>"
+
+         . "<strong>Reference ID:</strong> " . htmlspecialchars($TrRef_ID, ENT_QUOTES, 'UTF-8') . "<br>"
+         . "<strong>Date of Transfer:</strong> " . date('Y-m-d H:i:s') . "<br>"
+         . "<strong>Effective Date of Resumption:</strong> " . htmlspecialchars($_POST['effective_date'] ?? '', ENT_QUOTES, 'UTF-8') . "<br>"
+         . "<strong>Reason for Transfer:</strong> " . htmlspecialchars($_POST['transfer_reason'] ?? '', ENT_QUOTES, 'UTF-8') . "<br><br>"
+
+         . "Please take note of your new corridor assignment and resume your duties on the effective resumption date stated above.<br><br>"
+
+         . "If you have any questions regarding this transfer, please contact your administrator or the Support Team.<br><br>"
+
+         . "Best regards,<br>"
+         . "The Support Team";
+      $SendEmail = $CallMailerModel->sendmail($receiveraddress,$subject, $message);
+
+
+
+
+
+
+
+
+
+    } else {
+        $_SESSION['error'] = "Error initiating transfer";
+    }
+
+
+}else{
+    $_SESSION['error'] = "There was an error processing  this request";
+  }
+
+  header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php')); exit;
+
+}
+
+
+
+// Update acount settings
+if (isset($_POST['update_settings'])) {
+    $data = [
+        'template_mode' => trim($_POST['template_mode'] ?? ''),
+        'company_allownotification' => trim($_POST['company_allownotification'] ?? $company_allownotification),
+        'allow_signup' => trim($_POST['allow_signup'] ?? $company_Allow_signup),
+        'auto_approval' => trim($_POST['auto_approval'] ?? $company_acct_approval),
+        'userid'        => (int) $_SESSION['userid'],
+    ];
+if (in_array('', $data, true)) {
+        $_SESSION['error'] = 'All fields are required.';
+}else{
+
+    if ($callUserModel->updateSettings($data)) {
+        $_SESSION['success'] = 'Account settings updated successfully';
+        $action = "Updated account settings";
+        $user_details = $admin_abr . " - " . $_SESSION['userid'];
+          $logResult = $callAuthMiddlewareClass->writelog($_SESSION['userid'], $_SESSION['role'],$_SESSION['role'], $user_details, $action,$company_logfile_url);
+
+        
+    } else {
+         $_SESSION['error']  = 'Could not update settings.';
+    }
+}
+     header("Location: " . ($_SERVER['HTTP_REFERER'] ?? 'index.php')); exit;
+}
+
+
+// create ticket
+
+ if (isset($_POST['CreateNewTicket'])) {
+
+    $userid = $_SESSION['userid'];
+
+    $data = [
+       'ticket_id' => 'TKT' . date('YmdHis') . substr((string) microtime(true), -6) ,
+        'date_created'                              => date('Y-m-d H:i:s'),
+        'date_updated'                              => 'Nil',
+        'category'                                  => trim($_POST['category'] ?? ''),
+        'priority'                                  => trim($_POST['priority'] ?? ''),
+        'pipeline'                                  => trim($_POST['pipeline'] ?? ''),
+        'pipeline_type'                             => trim($_POST['pipeline_type'] ?? ''),
+        'subject'                                   => trim($_POST['subject'] ?? ''),
+        'message'                                   => trim($_POST['message'] ?? ''),
+        'name'                                      => trim($_POST['name'] ?? ''),
+        'email'                                     => trim($_POST['email'] ?? ''),
+        'phone_no'                                  => trim($_POST['phone_no'] ?? ''),
+        'incidence_date'                            => trim($_POST['incidence_date'] ?? ''),
+        'incidence_source'                          => trim($_POST['incidence_source'] ?? ''),
+        'state'                                     => trim($_POST['state'] ?? ''),
+        'community'                                 => trim($_POST['community'] ?? ''),
+        'local_government'                          => trim($_POST['local_government'] ?? ''),
+        'operator'                                  => trim($_POST['operator'] ?? ''),
+        'zone'                                      => trim($_POST['zone'] ?? ''),
+        'corridor'                                  => trim($_POST['corridor'] ?? ''),
+        'number_of_arrested_suspects'               => trim($_POST['number_of_arrested_suspects'] ?? '0'),
+        'vehicle_arrested_destroyed'                => trim($_POST['vehicle_arrested_destroyed'] ?? '0'),
+        'wooden_boat_speed_boat_arrested_destroyed' => trim($_POST['wooden_boat_speed_boat_arrested_destroyed'] ?? '0'),
+        'vessel_arrested_destroyed'                 => trim($_POST['vessel_arrested_destroyed'] ?? '0'),
+        'location_coordinate_latitude'              => trim($_POST['location_coordinate_latitude'] ?? ''),
+        'location_coordinate_longitude'             => trim($_POST['location_coordinate_longitude'] ?? ''),
+        'quantity_of_crude_recovered_destroyed_ltr' => trim($_POST['quantity_of_crude_recovered_destroyed_ltr'] ?? '0'),
+        'quantity_of_ago_recovered_destroyed_ltr'   => trim($_POST['quantity_of_ago_recovered_destroyed_ltr'] ?? '0'),
+        'quantity_of_pms_recovered_destroyed_ltr'   => trim($_POST['quantity_of_pms_recovered_destroyed_ltr'] ?? '0'),
+        'dpk_recovered_destroyed_ltr'               => trim($_POST['dpk_recovered_destroyed_ltr'] ?? '0'),
+        'illegal_storage_dump_sites'                => trim($_POST['illegal_storage_dump_sites'] ?? '0'),
+        'description_of_reported_incidence'         => trim($_POST['description_of_reported_incidence'] ?? ''),
+        'notify'                                    => isset($_POST['notify']) ? 1 : 0,
+        'show'                                      => isset($_POST['show']) ? 1 : 0,
+        'due_date'                                  => trim($_POST['due_date'] ?? ''),
+    ];
+
+
+
+$raw = trim($_POST['incidence_date'] ?? '');
+
+if ($raw === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $raw)) {
+    // reject — don't insert
+    $_SESSION['error'] =$errors[] = 'Incident date is required.';
+     header("Location: " . ($_SERVER['HTTP_REFERER'] ?? 'index.php'));
+    exit;
+} 
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Fields that are allowed to be empty
+    |--------------------------------------------------------------------------
+    | 'community', 'phone_no', 'due_date', 'description_of_reported_incidence'
+    */
+
+    $optional_fields = [
+        'due_date',
+        'date_updated',
+        'due_date',
+        'description_of_reported_incidence'
+    ];
+
+    /*
+    |--------------------------------------------------------------------------
+    | Human readable labels for each field (used in error messages)
+    |--------------------------------------------------------------------------
+    */
+
+    $field_labels = [
+        'ticket_id'                                 => 'Ticket ID',
+        'date_created'                              => 'Date Created',
+        'category'                                  => 'Category',
+        'priority'                                  => 'Priority',
+        'pipeline'                                  => 'Pipeline',
+        'pipeline_type'                             => 'Pipeline Type',
+        'subject'                                   => 'Subject',
+        'message'                                   => 'Message',
+        'name'                                      => 'Name',
+        'email'                                     => 'Email',
+        'phone_no'                                  => 'Phone No',
+        'incidence_date'                            => 'Incident Date',
+        'incidence_source'                          => 'Incident Source',
+        'state'                                     => 'State',
+        'community'                                 => 'Community',
+        'local_government'                          => 'Local Government',
+        'operator'                                  => 'Operator',
+        'zone'                                      => 'Zone',
+        'corridor'                                  => 'Corridor',
+        'number_of_arrested_suspects'               => 'Number of Arrested Suspects',
+        'vehicle_arrested_destroyed'                => 'Vehicle Arrested/Destroyed',
+        'wooden_boat_speed_boat_arrested_destroyed' => 'Wooden Boat / Speed Boat Arrested/Destroyed',
+        'vessel_arrested_destroyed'                 => 'Vessel Arrested/Destroyed',
+        'location_coordinate_latitude'              => 'Latitude',
+        'location_coordinate_longitude'             => 'Longitude',
+        'quantity_of_crude_recovered_destroyed_ltr' => 'Quantity of Crude Recovered/Destroyed (Ltr)',
+        'quantity_of_ago_recovered_destroyed_ltr'   => 'Quantity of AGO Recovered/Destroyed (Ltr)',
+        'quantity_of_pms_recovered_destroyed_ltr'   => 'Quantity of PMS Recovered/Destroyed (Ltr)',
+        'dpk_recovered_destroyed_ltr'               => 'DPK Recovered/Destroyed (Ltr)',
+        'illegal_storage_dump_sites'                => 'Illegal Storage/Dump Sites',
+        'description_of_reported_incidence'         => 'Description of Reported Incidence',
+        'due_date'                                  => 'Due Date',
+    ];
+
+    $missing_fields = [];
+
+    foreach ($data as $key => $value) {
+
+        if (in_array($key, $optional_fields, true)) {
+            continue;
+        }
+
+        if ($value === '') {
+            $missing_fields[] = $field_labels[$key] ?? $key;
+        }
+    }
+
+    if (!empty($missing_fields)) {
+        $_SESSION['error'] = 'The following required fields are empty: ' . implode(', ', $missing_fields) . '.';
+        header("Location: " . ($_SERVER['HTTP_REFERER'] ?? 'index.php'));
+        exit;
+    }
+
+    if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+        $_SESSION['error'] = 'Invalid email address.';
+        header("Location: " . ($_SERVER['HTTP_REFERER'] ?? 'index.php'));
+        exit;
+    }
+
+    if (!is_numeric($data['location_coordinate_latitude']) ||
+        $data['location_coordinate_latitude'] < -90 ||
+        $data['location_coordinate_latitude'] > 90) {
+        $_SESSION['error'] = 'Latitude must be between -90 and 90.';
+        header("Location: " . ($_SERVER['HTTP_REFERER'] ?? 'index.php'));
+        exit;
+    }
+
+    if (!is_numeric($data['location_coordinate_longitude']) ||
+        $data['location_coordinate_longitude'] < -180 ||
+        $data['location_coordinate_longitude'] > 180) {
+        $_SESSION['error'] = 'Longitude must be between -180 and 180.';
+        header("Location: " . ($_SERVER['HTTP_REFERER'] ?? 'index.php'));
+        exit;
+    }
+
+    $result = $callUserModel->createTicket($data, $_FILES, $userid);
+
+    if ($result['success']) {
+        $_SESSION['success'] = $result['message'];
+        header("Location: index.php?action=tickets");
+        exit;
+    }
+
+    $_SESSION['error'] = $result['message'];
+    header("Location: " . ($_SERVER['HTTP_REFERER'] ?? 'index.php'));
+    exit;}
+
+
+
+
+
+// create request for admin
+
+
+
+if (isset($_POST['create_request']) ){
+$tb_name = "request";
+
+$priority = trim($_POST['priority'] ?? '');
+$subject  = trim($_POST['subject']  ?? '');
+$complain = trim($_POST['complain'] ?? '');
+
+if ($priority === '' || $subject === '' || $complain === '') {
+    $_SESSION['error'] = 'Priority, subject and complain are required.';
+    header('Location: index?action=user_requests');
+    exit;
+}
+
+if (!in_array($priority, ['0', '1', '2'], true)) {
+    $_SESSION['error'] = 'Invalid priority value.';
+    header('Location: index?action=user_requests');
+    exit;
+}
+
+
+
+$request_id = 'URQ' . date('YmdHis') . substr((string) microtime(true), -6);
+
+$data = [
+    'request_id' => 'RQ' . date('YmdHis') . substr((string) microtime(true), -6) ,
+    'requester_id'   => $_SESSION['userid'],
+    'requester_name' => $admin_fn,
+    'subject'        => $subject,
+    'complain'       => $complain,
+    'priority'       => (int) $priority,
+    'date'           => date('Y-m-d H:i:s'),
+    'requester_role' => $_SESSION['role'],
+    'status'         => 0,
+];
+
+$inserted = $callUserModel->Create_request($data);
+
+if ($inserted) {
+    $_SESSION['success'] = 'Request ' . $request_id . ' created successfully.';
+} else {
+    $_SESSION['error'] = 'Failed to create request. Please try again.';
+}
+
+header('Location: index?action=user_requests');
+exit;
 }
 
 
 
 
 
-public function updateMailerDetails(): array{
-
-   
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-
-        $_SESSION['error'] = 'Invalid request method.';
-
-        header("Location: index?action=settings");
-
-        exit;
-
-    }
 
 
- $CallDevModel = new ModelDev();
- $AuthMiddlewareModel = new AuthMiddleware();
-  $company_settings = $CallDevModel->web_settings();
-  $CF_VerificationSiteUrl = $company_settings['cloudfare_verifyurl'] ?? '';
- $CF_SecretKey = $company_settings['cloudfare_secretkey'] ?? '';
-$CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
-//   $AuthMiddlewareModel->ValidateTurnstile($CF_SecretKey,$CF_VerificationSiteUrl); 
 
-    $data = [
 
-        'company_mailer_host' => trim(
+// create user account
 
-            $_POST['company_mailer_host'] ?? ''
+if (isset($_POST['create_user_account'])) {
+  
+ $action_token= trim($_POST['action_token'] ?? '');
+ if ($action_token!=$_SESSION['action_token']){
+   $_SESSION['error']= "Bots are not allowed";
 
-        ),
+  header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php')); exit;
+ }
 
-        'company_mailer_email' => trim(
+ $title= trim($_POST['title'] ?? '');
 
-            $_POST['company_mailer_email'] ?? ''
-
-        ),
-
-        'company_mailer_port' => trim(
-
-            $_POST['company_mailer_port'] ?? ''
-
-        ),
-
-        'company_mailer_password' => $_POST['company_mailer_password'] ?? '',
-
-        'company_mailer_secure' => strtolower(
-
-            trim($_POST['company_mailer_secure'] ?? '')
-
-        ),
-
-        'company_banner' => trim(
-
-            $_POST['company_banner_text'] ?? ''
-
-        )
-
+    $fullname = trim($_POST['name'] ?? '');
+    $parts = explode(' ', trim($AbrvName));$first = array_shift($parts);$AbrvName = !empty($first)? $first . (!empty($parts) ? ' ' . implode('.', array_map(fn($p) => strtoupper($p[0]), $parts)) : '') : 'User';
+    $phone    = trim($_POST['phone'] ?? '');
+    $receiveraddress =  $email    = trim($_POST['email'] ?? '');
+    $role =   trim($_POST['role'] ?? '');
+$data = [
+        'company_userid' => $company_userid,
+        'title'          => trim($_POST['title'] ?? ''),
+        'fullname'       => trim($_POST['fullname'] ?? ''),
+        'phone'          => trim($_POST['phone'] ?? ''),
+        'role'           => trim($_POST['role'] ?? ''),
+        'role_name'      => trim($_POST['role'] ?? ''),
+        'email'          => trim($_POST['email'] ?? ''),
+        'user_corridor'  => trim($_POST['user_corridor'] ?? '')
     ];
 
+$result = $callUserModel-> CreateUserAccount($data) ;
+
+    if (!empty($result['success'])) {
+
+          $userrefid = $result['userid'];
+
+$user_details = $admin_abr . " - " . $_SESSION['userid'];
+
+  $action = "Created a new "  . $role  ." account for " . $_POST['fullname'] ;
+
+   
+ $logResult = $callAuthMiddlewareClass->writelog($_SESSION['userid'], $admin_lrn,$admin_lr, $user_details, $action,$company_logfile_url);
+
+       $subject = "Account created successfully" ;             
+
+$message = "Hello $fullname,<br><br>"
+
+         . "Your administrator account has been created successfully.<br><br>"
+
+         . "Your registration has been completed, and your account is now ready for use.<br><br>"
+
+         . "<strong>Reference ID:</strong> $userrefid<br>"
+
+         . "<strong>Default Password:</strong> Your phone number used during registration<br><br>"
+
+         . "Please use your Reference ID and default password to log in to your account. For your security, we strongly recommend changing your default password after your first successful login.<br><br>"
+
+         . "<div style='text-align:center; margin:25px 0;'>"
+
+         . "<a href='$loginurl' style='display:inline-block; padding:12px 25px; background-color:#0d6efd; color:#ffffff; text-decoration:none; border-radius:5px; font-weight:bold;'>"
+
+         . "Login to Your Account"
+
+         . "</a>"
+
+         . "</div>"
+
+         . "If you did not register for this account, please contact the Support Team immediately.<br><br>"
+
+         . "Best regards,<br>"
+
+         . "The Support Team";
+
+      $SendEmail = $CallMailerModel->sendmail($receiveraddress,$subject, $message);
+      $_SESSION['success']= "New " . $role. " account created successfully";
+
+  header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php')); exit;
+
+}  }
+
+
+
+
+
+
+
+
+ if (isset($_POST['dev_update_user'])) {// $callAuthMiddlewareClass->ValidateTurnstile($CF_SecretKey,$CF_VerificationSiteUrl);
+
+
+    $user_id =  trim($_POST['user_id']) ;
+   
+       $LoadUsersAndLoginTableForThisUser = $callUserModel->SelectUsersAndLoginTableforOnePersonAfterLogin($user_id);
+  $data = [
+    'userid'            => trim($_POST['user_id'] ?? ''),
+    'title'             => trim($_POST['title'] ?? ''),
+    'fullname'          => trim($_POST['fullname'] ?? ''),
+    'email'             => trim($_POST['email'] ?? ''),
+    'phone'             => trim($_POST['phone'] ?? ''),
+    'corridor'          => trim($_POST['corridor'] ?? ''),
+    'msg_notification'  => $_POST['msg_notification'] ?? '',
+    'msg'               => trim($_POST['msg'] ?? ''),
+   
+    'role'              => trim($_POST['role'] ?? ''),
+    'Role_edit_user'    => $_POST['Role_edit_user'] ?? '',
+    'Role_create_user'  => $_POST['Role_create_user'] ?? '',
+    'Role_delete_user'  => $_POST['Role_delete_user'] ?? '',
+    'Role_approve_user' => $_POST['Role_approve_user'] ?? '',
+    'Role_create_report'=> $_POST['Role_create_report'] ?? '',
+    'Role_approve_report'=> $_POST['Role_approve_report'] ?? '',
+    'Role_edit_report'  => $_POST['Role_edit_report'] ?? '',
+    'Role_delete_report'=> $_POST['Role_delete_report'] ?? '',
+    'Role_comment'      => $_POST['Role_comment'] ?? '',
+    'status'            => $_POST['status'] ?? '',
+    'user_image'        => ''
+];
+
+/*
+|--------------------------------------------------------------------------
+| Fields that are allowed to be empty
+|--------------------------------------------------------------------------
+| 'msg'      -> optional by design
+| 'corridor' -> now allowed to be empty
+*/
+$optional_fields = ['msg', 'corridor', 'user_image'];
+
+foreach ($data as $key => $value) {
+
+    if (in_array($key, $optional_fields, true)) {
+        continue;
+    }
+
+    if ($value === '') {
+        $_SESSION['error'] = 'All fields are required.';
+        header("Location: " . ($_SERVER['HTTP_REFERER'] ?? 'index.php'));
+        exit;
+    }
+}
+
     if (
-
-        isset($_FILES['company_banner']) &&
-
-        $_FILES['company_banner']['error'] === UPLOAD_ERR_OK
-
+        isset($_FILES['user_image']) &&
+        $_FILES['user_image']['error'] === UPLOAD_ERR_OK
     ) {
 
-        $banner = $_FILES['company_banner'];
+        $image = $_FILES['user_image'];
 
         $allowedTypes = [
-
-            'image/png',
-
             'image/jpeg',
-
+            'image/png',
+            'image/jpg',
             'image/webp'
-
         ];
 
-        $finfo = finfo_open(FILEINFO_MIME_TYPE);
-
-        $mimeType = finfo_file($finfo, $banner['tmp_name']);
-
-        finfo_close($finfo);
-
-        if (!in_array($mimeType, $allowedTypes, true)) {
-
-            $_SESSION['error'] = 'Invalid banner file. Please select a PNG, JPG, JPEG or WEBP image.';
-
-            header("Location: index?action=settings");
-
+        if (!in_array($image['type'], $allowedTypes, true)) {
+            $_SESSION['error'] = 'Invalid image format.';
+            header("Location: " . ($_SERVER['HTTP_REFERER'] ?? 'index.php'));
             exit;
-
-        }
-
-        $imageSize = getimagesize($banner['tmp_name']);
-
-        if (
-
-            $imageSize === false ||
-
-            $imageSize[0] !== 1400 ||
-
-            $imageSize[1] !== 370
-
-        ) {
-
-            $_SESSION['error'] = 'Invalid banner dimensions. Please select an image exactly 1400px X 370px.';
-
-            header("Location: index?action=settings");
-
-            exit;
-
         }
 
         $extension = strtolower(
-
-            pathinfo($banner['name'], PATHINFO_EXTENSION)
-
+            pathinfo($image['name'], PATHINFO_EXTENSION)
         );
 
-        $bannerName = 'banner.' . $extension;
+        $imageName = $data['userid'] . '_' . time() . '.' . $extension;
 
-        $uploadDirectory = __DIR__ . '/../views/uploads/img/';
+        $uploadDirectory = __DIR__ . '/../views/uploads/img/profile/';
 
         if (!is_dir($uploadDirectory)) {
-
             mkdir($uploadDirectory, 0755, true);
-
         }
 
         if (!move_uploaded_file(
-
-            $banner['tmp_name'],
-
-            $uploadDirectory . $bannerName
-
+            $image['tmp_name'],
+            $uploadDirectory . $imageName
         )) {
-
-            $_SESSION['error'] = 'Failed to upload mail banner.';
-
-            header("Location: index?action=settings");
-
+            $_SESSION['error'] = 'Unable to upload user image.';
+            header("Location: " . ($_SERVER['HTTP_REFERER'] ?? 'index.php'));
             exit;
-
         }
 
-        $data['company_banner'] = $bannerName;
-
+        $data['user_image'] = $imageName;
     }
 
-    if ($data['company_mailer_host'] === '') {
+    $result = $callUserModel->UpdateUserAccount($data);
 
-        $_SESSION['error'] = 'Mailer host is required.';
-
-        header("Location: index?action=settings");
-
-        exit;
-
-    }
-
-    if (
-
-        !filter_var(
-
-            $data['company_mailer_email'],
-
-            FILTER_VALIDATE_EMAIL
-
-        )
-
-    ) {
-
-        $_SESSION['error'] = 'Invalid mailer email address.';
-
-        header("Location: index?action=settings");
-
-        exit;
-
-    }
-
-    if (
-
-        !ctype_digit((string)$data['company_mailer_port']) ||
-
-        (int)$data['company_mailer_port'] < 1 ||
-
-        (int)$data['company_mailer_port'] > 65535
-
-    ) {
-
-        $_SESSION['error'] = 'Invalid mailer port.';
-
-        header("Location: index?action=settings");
-
-        exit;
-
-    }
-
-    if ($data['company_mailer_password'] === '') {
-
-        $_SESSION['error'] = 'Mailer password is required.';
-
-        header("Location: index?action=settings");
-
-        exit;
-
-    }
-
-    if (
-
-        $data['company_mailer_secure'] !== 'tls' &&
-
-        $data['company_mailer_secure'] !== 'ssl'
-
-    ) {
-
-        $_SESSION['error'] = 'Mailer security must be TLS or SSL.';
-
-        header("Location: index?action=settings");
-
-        exit;
-
-    }
-
-    $result = $CallDevModel->updateMailerDetails($data);
-
-    if ($result['success'] === true) {
-
-        $_SESSION['success'] = $result['message'];
-
-        unset($_SESSION['error']);
+    if ($result) {
+        $_SESSION['success'] = 'User information updated successfully.';
+        header("Location: index.php?action=manage_users");exit;
 
     } else {
+        $_SESSION['error'] = 'Unable to update user information.';
 
-        $_SESSION['error'] = $result['message'];
-
-        unset($_SESSION['success']);
-
+        if (
+            isset($imageName) &&
+            isset($uploadDirectory) &&
+            file_exists($uploadDirectory . $imageName)
+        ) {
+            unlink($uploadDirectory . $imageName);
+        }
     }
 
-    header("Location: index?action=settings");
+    header("Location: " . ($_SERVER['HTTP_REFERER'] ?? 'index.php'));exit;}
 
-    exit;
 
-}
+       require ROOT_PATH . "/views/users/admin/dashboard.php";
+  
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
 
 
 public function page_viewlog() {
@@ -1354,729 +1234,93 @@ $AbrvName = !empty($first)? $first . (!empty($parts) ? ' ' . implode('.', array_
 
 
 
- /* ==========================
 
-       totalrequest
 
-    ========================== */
 
-    public function page_totalrequest() {
 
-  if (session_status() === PHP_SESSION_NONE) session_start();
 
-    //  $_SESSION['msg']  = "";
 
-    // $_SESSION['msg_notification']=0;
 
-  $userid =$_SESSION['userid']; 
 
-   $callUserModel = new User();
 
-    $CallDevModel = new ModelDev;
 
-   $callAuthMiddlewareClass = new AuthMiddleware;
 
-     $CallMailerModel = new Mailer;
 
 
 
- $LoadUsersAndRequestTable  = $CallDevModel->SelectUsersAndrequestTable();
 
 
 
 
 
- $result = $callUserModel->SelectUserTableForOne($userid);
 
-        if ($result['success']) {
 
-            $user = $result['user'];
 
-     if ($user['msg_notification']==1){
 
-                $_SESSION['msg_notification'] = 1;
+public function delete_user() {
+    if (session_status() === PHP_SESSION_NONE) session_start();
 
-                 $_SESSION['msg'] = $user['msg'];
-
-              $callUserModel->clearMsgNotification($userid);
-
-            }
-
-            $AbrvName = $user['fullname'];
-
-     $user_image = ($user['user_image'] ?? "") === "" ? "noimage2.png" : $user['user_image'];
-
-        } else {
-
-            echo $result['error'];
-
-        }
-
-$parts = explode(' ', trim($AbrvName));
-
-$first = array_shift($parts);
-
-$AbrvName = !empty($first)? $first . (!empty($parts) ? ' ' . implode('.', array_map(fn($p) => strtoupper($p[0]), $parts)) : '') : 'User';
-
-   $user_details = $AbrvName . " - " . $userid;
-
-  $role_name = $role = $_SESSION['role'] ;
-
-$result = $callAuthMiddlewareClass->SelectloginTableForOne($userid);
-
-if ($result['success']) {
-
-    $user = $result['user'];
-
-    $role_name = $user['role_name'];
-
-
-
-}
-
-     $callCompanyModel = new CompanyModel() ;
-
-      $company_settings = $callCompanyModel ->web_settings();
-     $CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
-
-      $company_logfile_url  = $company_settings['company_logfile_url'] ;
-
-      $company_userid  = $company_settings['company_userid'] ;
-
-       $company_copyright  = $company_settings['company_copyright'] ?? '2025';
-
-       $company_poweredby  = $company_settings['company_poweredby'] ?? 'AgbTeam';
-
-       $company_copyrightlink  = $company_settings['company_copyrightlink'] ?? 'https://www.agbng.com';
-
-       $company_settings = $callCompanyModel->web_settings();
-
-      $company_online = $company_settings['company_online'] ?? 0;
-
-      $company_Allow_signup = $company_settings['company_signup'] ?? 0;
-
-      $company_alias = $company_settings['company_alias'] ?? 'Page';
-
-       $company_logo = $company_settings['company_logo'] ?? '';
-
-       $company_favicon = $company_settings['company_favicon'] ?? '';
-
-        $loginurl = $company_settings['company_url'] ."/index.php?action=login" ;
-
-
-
-if (isset($_POST['requestreply'])) {
-
-    // Check that ALL required fields were posted
-
-    $requiredFields = [
-
-        'sn',
-
-        'table_name',
-
-        'ticketer_email',
-
-        'ticket_no',
-
-        'ticketer_name',
-
-        'ticket_status',
-
-        'status'
-
-    ];
-
-    $allPosted = true;
-
-    foreach ($requiredFields as $field) {
-
-        if (!isset($_POST[$field]) || $_POST[$field] === '') {
-
-            $allPosted = false;
-
-            break;
-
-        }
-
+    $callUserModel = new User();
+    $callAuthMiddlewareClass = new AuthMiddleware;
+    $callAuthMiddlewareClass->IfSessionDeactiveAutologout();
+$token = '';
+if (isset($_GET['token'])) {
+    $token = $_GET['token'] ?? '';
+     if ((!$token) || ($token == "")) {
+        header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php')); exit;
     }
 
-    if (!$allPosted) {
 
-       $_SESSION['error'] = "Error receiving the fields, please try again";
-
- header("Location: index?action=totalrequest");
-
- exit;
-
-    } else {
-
-  // Get posted values
-
-        $ticketer_email = $_POST['ticketer_email'];
-
-        $ticket_no      = $_POST['ticket_no'];
-        $ticket_new_status      = $_POST['status'];
-        
-
-if ($ticket_new_status == 0) {
-
-    $ticket_status_text = "NEW";
-
-} elseif ($ticket_new_status == 1) {
-
-    $ticket_status_text = "OPENED";
-
-} elseif ($ticket_new_status == 2) {
-
-    $ticket_status_text = "IN PROGRESS";
-
-} elseif ($ticket_new_status == 3) {
-
-    $ticket_status_text = "REPLIED";
-
-} elseif ($ticket_new_status == 4) {
-
-    $ticket_status_text = "RESOLVED";
-
-}
-
-
-        $ticketer_name  = $_POST['ticketer_name'];
-
-               // All fields are posted, execute model
-
-        $result = $CallDevModel->requestReply($_POST);
-
-        if ($result) {
-
-            $_SESSION['success'] = "Updated successfully";
-
-$action = "Updated ticket ". $ticketer_name . " - " . $ticket_no ;
-
-$logResult = $callAuthMiddlewareClass->writelog($userid, $role_name,$role, $user_details, $action,$company_logfile_url);
-
-$subject = "Ticket complain updated" ;             
-
-$message = "Hello $ticketer_name,<br><br>"
-
-         . "There has been an update regarding your request.<br><br>"
-
-         . "<strong>Complain/Request ID:</strong> $ticket_no<br>"
-
-         . "<strong>New Status:</strong>$ticket_status_text<br>"
-
-         . "<strong>Email:</strong> $ticketer_email<br><br>"
-
-         . "Our Support Team has reviewed your request and there is a new update available. "
-
-         . "Please log in to your account to view the latest information and any further instructions regarding your complain or request.<br><br>"
-
-         . "<div style='text-align:center; margin:25px 0;'>"
-
-         . "<a href='$loginurl' style='display:inline-block; padding:12px 25px; background-color:#0d6efd; color:#ffffff; text-decoration:none; border-radius:5px; font-weight:bold;'>"
-
-         . "View Complaint Update"
-
-         . "</a>"
-
-         . "</div>"
-
-         . "If you have any questions or require further assistance, please contact the Support Team and reference your Complaint ID: <strong>$ticket_no</strong>.<br><br>"
-
-         . "Best regards,<br>"
-
-         . "The Support Team";
-
-
-
-      $SendEmail = $CallMailerModel->sendmail(
-
-                        $ticketer_email,
-
-                        $subject,
-
-                        $message
-
-                    );
-
- header("Location: index?action=totalrequest");
-
- exit;
-
-        } else {
-
-           $_SESSION['error'] ="Model was executed, but the update failed.";
-
- header("Location: index?action=totalrequest");
-
- exit;
-
-        }
-
-    }
-
-}
-
-
-
-
-
- $page_name = "total request";
-
-       require ROOT_PATH . "/views/users/dev/totalrequest.php";
-
- }
-
-
-
-
-
-
-public function page_edit_user(){  
-  if (session_status() === PHP_SESSION_NONE) session_start();
-  $token = $_GET['token'] ?? '';
-    $user_id = base64_decode($token, true);
-    $userid =$_SESSION['userid']; 
-
-   $callUserModel = new User();
-$callAuthMiddlewareClass = new AuthMiddleware;
-    $CallDevModel = new ModelDev;
-     $callCompanyModel = new CompanyModel() ;
-      $company_settings = $callCompanyModel ->web_settings();
- $CF_VerificationSiteUrl = $company_settings['cloudfare_verifyurl'] ?? '';
-        $CF_SecretKey = $company_settings['cloudfare_secretkey'] ?? '';
-        $CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
-//Update user record code starts here
-if (isset($_POST['dev_update_user'])) {
    
-// $callAuthMiddlewareClass->ValidateTurnstile($CF_SecretKey,$CF_VerificationSiteUrl);
 
+    $user_sn_encrypted   = $_GET['user_sn']   ?? '';
+    $login_sn_encrypted  = $_GET['login_sn']  ?? '';
+    $users_column_name   = $_GET['users_column'] ?? '';
+    $login_column_name   = $_GET['login_column'] ?? '';
 
-    $user_id =  trim($_POST['user_id']) ;
-       $LoadUsersAndLoginTableForThisUser = $callUserModel->SelectUsersAndLoginTableforOnePerson($user_id);
-    $data = [
-        'userid' => trim($_POST['user_id'] ?? ''),
-        'title' => trim($_POST['title'] ?? ''),
-        'fullname' => trim($_POST['fullname'] ?? ''),
-        'email' => trim($_POST['email'] ?? ''),
-        'phone' => trim($_POST['phone'] ?? ''),
-        'msg_notification' => $_POST['msg_notification'] ?? '',
-        'msg' => trim($_POST['msg'] ?? ''),
-        'role' => trim($_POST['role'] ?? ''),
-        'Role_edit_user' => $_POST['Role_edit_user'] ?? '',
-        'Role_create_user' => $_POST['Role_create_user'] ?? '',
-        'Role_delete_user' => $_POST['Role_delete_user'] ?? '',
-        'Role_approve_user' => $_POST['Role_approve_user'] ?? '',
-        'Role_create_report' => $_POST['Role_create_report'] ?? '',
-        'Role_approve_report' => $_POST['Role_approve_report'] ?? '',
-        'Role_edit_report' => $_POST['Role_edit_report'] ?? '',
-        'Role_delete_report' => $_POST['Role_delete_report'] ?? '',
-        'Role_comment' => $_POST['Role_comment'] ?? '',
-        'status' => $_POST['status'] ?? ''
-    ];
+    $user_sn  = (int) base64_decode($user_sn_encrypted);
+    $login_sn = (int) base64_decode($login_sn_encrypted);
+    $users_column_name = base64_decode($users_column_name);
+    $login_column_name = base64_decode($login_column_name);
 
-    foreach ($data as $key => $value) {
-        if ($key === 'msg') {
-            continue;
-        }
-
-        if ($value === '') {
-            $_SESSION['error'] = 'All fields are required.';
-            header("Location: " . ($_SERVER['HTTP_REFERER'] ?? 'index.php'));
-            exit;
-        }
+    if ($login_sn <= 0 || $user_sn <= 0) {
+        header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php')); exit;
     }
 
-    if (
-        isset($_FILES['user_image']) &&
-        $_FILES['user_image']['error'] === UPLOAD_ERR_OK
-    ) {
+    $column_name  = "status";
+    $column_value = -1;
+    $where_column = "sn";
 
-        $image = $_FILES['user_image'];
+    $data = [
+        'the_tablename' => $login_column_name,
+        'column_value'  => $column_value,
+        'column_name'   => $column_name,
+        'where_column'  => $where_column,
+        'where_value'   => $login_sn
+    ];
 
-        $allowedTypes = [
-            'image/jpeg',
-            'image/png',
-            'image/jpg',
-            'image/webp'
+    $delete_UserInLogin = $callUserModel->GeneralUpdateAnyTableColumnWithThisValue($data);
+
+    if ($delete_UserInLogin) {
+
+        $data = [
+            'the_tablename' => $users_column_name,
+            'column_value'  => $column_value,
+            'column_name'   => $column_name,
+            'where_column'  => $where_column,
+            'where_value'   => $user_sn
         ];
 
-        if (!in_array($image['type'], $allowedTypes, true)) {
-            $_SESSION['error'] = 'Invalid image format.';
-            header("Location: " . ($_SERVER['HTTP_REFERER'] ?? 'index.php'));
-            exit;
-        }
+        $delete_UserInUsers = $callUserModel->GeneralUpdateAnyTableColumnWithThisValue($data);
 
-        $extension = strtolower(
-            pathinfo($image['name'], PATHINFO_EXTENSION)
-        );
-
-        $imageName = $data['userid'] . '_' . time() . '.' . $extension;
-
-        $uploadDirectory = __DIR__ . '/../views/uploads/img/profile/';
-
-        if (!is_dir($uploadDirectory)) {
-            mkdir($uploadDirectory, 0755, true);
-        }
-
-        if (!move_uploaded_file(
-            $image['tmp_name'],
-            $uploadDirectory . $imageName
-        )) {
-            $_SESSION['error'] = 'Unable to upload user image.';
-            header("Location: " . ($_SERVER['HTTP_REFERER'] ?? 'index.php'));
-            exit;
-        }
-
-        $data['user_image'] = $imageName;
+        $_SESSION['success'] = "Record deleted successfully";
     }
 
-    $result = $CallDevModel->UpdateUserAccount($data);
-
-    if ($result) {
-        $_SESSION['success'] = 'User information updated successfully.';
-    } else {
-        $_SESSION['error'] = 'Unable to update user information.';
-
-        if (
-            isset($imageName) &&
-            isset($uploadDirectory) &&
-            file_exists($uploadDirectory . $imageName)
-        ) {
-            unlink($uploadDirectory . $imageName);
-        }
-    }
-
-    header("Location: " . ($_SERVER['HTTP_REFERER'] ?? 'index.php'));
-    exit;
-}
-
-//code ends here
-
-
-  if ($user_id === false || $user_id === '') {
-    $_SESSION['error'] = "Invalid token";
-    // header("Location: " . ($_SERVER['HTTP_REFERER'] ?? 'index.php'));
-    // exit;
-}
-
-
-//    $_SESSION['msg']  = "";
-
-//     $_SESSION['msg_notification']=0;
-
-  
-
-$result = $callUserModel->SelectUsersAndLoginTableforOnePerson($user_id);
-
-
-//  $result = $callUserModel->SelectUsersAndLoginTableforOnePerson($user_id);
-
-        if ($result['success']) {
-
-            $user = $result['user'];
-
-            $LoadUsersAndLoginTable = [$user];
-
-            $AbrvName = $user['user_fullname'];
-
-            if ($user['user_msg_notification']==1){
-
-                $_SESSION['msg_notification'] = 1;
-
-                 $_SESSION['msg'] = $user['user_msg'];
-
-              $callUserModel->clearMsgNotification($userid);
-
-            }
-
-
-
-     $user_image = ($user['user_image'] ?? "") === "" ? "noimage2.png" : $user['user_image'];
-
-        } else {
-
-            echo $result['error'];
-
-        }
-
-$parts = explode(' ', trim($AbrvName));
-
-$first = array_shift($parts);
-
-$AbrvName = !empty($first)? $first . (!empty($parts) ? ' ' . implode('.', array_map(fn($p) => strtoupper($p[0]), $parts)) : '') : 'User';
-
-  $role_name = $role = $_SESSION['role'] ;
-
-$result = $callAuthMiddlewareClass->SelectloginTableForOne($userid);
-
-if ($result['success']) {
-
-    $user = $result['user'];
-
-    $role_name = $user['role_name'];
-
-
+    header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'dashboard.php')); exit;
 
 }
-
-    
-          $company_logfile_url  = $company_settings['company_logfile_url'] ;
-
-      $company_logfile_url  = $company_settings['company_logfile_url'] ;
-
-      $company_userid  = $company_settings['company_userid'] ;
-
-       $company_copyright  = $company_settings['company_copyright'] ?? '2025';
-
-       $company_poweredby  = $company_settings['company_poweredby'] ?? 'AgbTeam';
-
-       $company_copyrightlink  = $company_settings['company_copyrightlink'] ?? 'https://www.agbng.com';
-
-       $company_settings = $callCompanyModel->web_settings();
-
-      $company_online = $company_settings['company_online'] ?? 0;
-
-      $company_Allow_signup = $company_settings['company_signup'] ?? 0;
-
-      $company_alias = $company_settings['company_alias'] ?? 'Page';
-
-       $company_logo = $company_settings['company_logo'] ?? '';
-
-       $company_favicon = $company_settings['company_favicon'] ?? '';
-
-         $company_url = $company_settings['company_url'] ?? '';
-
-            $loginurl = $company_url."/index.php?action=login" ;
-
-
-        $page_name = "Manage user";
-
-       require ROOT_PATH . "/views/users/dev/manage_user.php";
-
-  }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-public function create_admin_user() {
- if (session_status() === PHP_SESSION_NONE) session_start();
-     $callCompanyModel = new CompanyModel() ;
-      $callUserModel = new User();
-    $callAuthMiddlewareClass = new AuthMiddleware;
-    $CallMailerModel = new Mailer;
-    $CallDevModel = new ModelDev;
-      $company_settings = $callCompanyModel ->web_settings();
-      $CF_VerificationSiteUrl = $company_settings['cloudfare_verifyurl'] ?? '';
-        $CF_SecretKey = $company_settings['cloudfare_secretkey'] ?? '';
-        $CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
-if (isset($_POST['dev_create_admin'])) {
-// $callAuthMiddlewareClass->ValidateTurnstile($CF_SecretKey,$CF_VerificationSiteUrl);
-
-   $userid =$_SESSION['userid']; 
- 
- $role_name = $role = $_SESSION['role'] ;
- 
-    
-      $company_logfile_url  = $company_settings['company_logfile_url'] ;
-
-      $company_userid  = $company_settings['company_userid'] ;
-
-       $company_copyright  = $company_settings['company_copyright'] ?? '2025';
-
-       $company_poweredby  = $company_settings['company_poweredby'] ?? 'AgbTeam';
-
-       $company_copyrightlink  = $company_settings['company_copyrightlink'] ?? 'https://www.agbng.com';
-
-    //    $company_settings = $callCompanyModel->web_settings();
-
-      $company_online = $company_settings['company_online'] ?? 0;
-
-      $company_Allow_signup = $company_settings['company_signup'] ?? 0;
-
-      $company_alias = $company_settings['company_alias'] ?? 'Page';
-
-       $company_logo = $company_settings['company_logo'] ?? '';
-
-       $company_favicon = $company_settings['company_favicon'] ?? '';
-
-         $company_url = $company_settings['company_url'] ?? '';
-
-            $loginurl = $company_url."/index.php?action=login" ;
-//    $_SESSION['msg']  = "";
-
-//     $_SESSION['msg_notification']=0;
-
- $result = $callUserModel->SelectUserTableForOne($userid);
-
-        if ($result['success']) {
-
-            $user = $result['user'];
-
-            $AbrvName = $user['fullname'];
-  
-        }
     
 
-   $LoadUsersAndLoginTableForAdmin = $callUserModel->SelectUsersAndLoginTable($userid);
-
-    
-
-    $title= trim($_POST['title'] ?? '');
-
-    $fullname = trim($_POST['name'] ?? '');
-    $parts = explode(' ', trim($AbrvName));
-
-$first = array_shift($parts);
-
-$AbrvName = !empty($first)? $first . (!empty($parts) ? ' ' . implode('.', array_map(fn($p) => strtoupper($p[0]), $parts)) : '') : 'User';
-
-
-    $phone    = trim($_POST['phone'] ?? '');
-
-   $receiveraddress =  $email    = trim($_POST['email'] ?? '');
-
-    
-
-//    $result = $CallDevModel->CreateAdministrator($company_userid, $fullname, $phone, $email);
-
-$result = $callUserModel->CreateUserAccount(
-
-            $company_userid,
-
-            $title,
-
-            $fullname,
-
-            $phone,
-
-            $role,
-
-            $role_name,
-
-            $email
-
-        );
-
-    if (!empty($result['success'])) {
-
-          $userrefid = $result['userid'];
-
-    //    $generatedPassword = $result['phone'];
-
-    $_SESSION['success'] = "Created successfully" ;
-
-  $user_details = $AbrvName . " - " . $userid;
-
-  $action = "Created new administrator";
-
-   $user_details = $AbrvName . "  " . $userid;
-
- $logResult = $callAuthMiddlewareClass->writelog($userid, $role_name,$role, $user_details, $action,$company_logfile_url);
-
-       $subject = "Account created successfully" ;             
-
-$message = "Hello $fullname,<br><br>"
-
-         . "Your administrator account has been created successfully.<br><br>"
-
-         . "Your registration has been completed, and your account is now ready for use.<br><br>"
-
-         . "<strong>Reference ID:</strong> $userrefid<br>"
-
-         . "<strong>Default Password:</strong> Your phone number used during registration<br><br>"
-
-         . "Please use your Reference ID and default password to log in to your account. For your security, we strongly recommend changing your default password after your first successful login.<br><br>"
-
-         . "<div style='text-align:center; margin:25px 0;'>"
-
-         . "<a href='$loginurl' style='display:inline-block; padding:12px 25px; background-color:#0d6efd; color:#ffffff; text-decoration:none; border-radius:5px; font-weight:bold;'>"
-
-         . "Login to Your Account"
-
-         . "</a>"
-
-         . "</div>"
-
-         . "If you did not register for this account, please contact the Support Team immediately.<br><br>"
-
-         . "Best regards,<br>"
-
-         . "The Support Team";
-
-      $SendEmail = $CallMailerModel->sendmail(
-
-                        $receiveraddress,
-
-                        $subject,
-
-                        $message
-
-                    );
-
-
-
-  header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php')); exit;
-
-        // Successfully created
-
-    } else {
-
-        if (!empty($result['phone_exists'])) {
-
-            $_SESSION['error'] = "Phone number already exists.";
-            header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php')); exit;
-
-        } elseif (!empty($result['email_exists'])) {
-
-            $_SESSION['error'] = "Email address already exists.";
-header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php')); exit;
-        } else {
-
-            $_SESSION['error'] = $result['error'];
-header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php')); exit;
-        }
-
-    }
-
-
-
 }
 
 }
@@ -2084,530 +1328,3 @@ header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php')); exit;
 
 
 
-
-
-public function page_users() {
-
-  if (session_status() === PHP_SESSION_NONE) session_start();
-  $userid =$_SESSION['userid']; 
- $callAuthMiddlewareClass = new AuthMiddleware;
- $callUserModel = new User();
-
-    $CallDevModel = new ModelDev;
-      $callCompanyModel = new CompanyModel() ;
-
-      $company_settings = $callCompanyModel ->web_settings();
-//    $_SESSION['msg']  = "";
-
-//     $_SESSION['msg_notification']=0;
-
-  
-
-   
-      $CF_VerificationSiteUrl = $company_settings['cloudfare_verifyurl'] ?? '';
-        $CF_SecretKey = $company_settings['cloudfare_secretkey'] ?? '';
-        $CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
-
-   $LoadUsersAndLoginTableForAdmin = $callUserModel->SelectUsersAndLoginTable($userid);
-
-     
-
-   $roleCounts = $CallDevModel->getRoleCounts();
-
-   $CountTickets = $CallDevModel->TicketCount();
-
-  $totalrequests = $CallDevModel->GetRequestSum();
-
-
-
-// $totaldev = $roleCounts['developers'];
-
-$totalreporters = $roleCounts['reporters'];
-
-$totaladmin = $roleCounts['administrators'];
-
-$totalsupervisor = $roleCounts['supervisors'];
-
-// $Ticket = $CallDevModel->TicketCount();
-
- $counttickets = $CountTickets['total'];
-
-// $ticketCounts['status_0']
-
-// $ticketCounts['status_1']
-
-// $ticketCounts['status_2']
-
- $result = $callUserModel->SelectUserTableForOne($userid);
-
-        if ($result['success']) {
-
-            $user = $result['user'];
-
-            $AbrvName = $user['fullname'];
-
-            if ($user['msg_notification']==1){
-
-                $_SESSION['msg_notification'] = 1;
-
-                 $_SESSION['msg'] = $user['msg'];
-
-              $callUserModel->clearMsgNotification($userid);
-
-            }
-
-
-
-     $user_image = ($user['user_image'] ?? "") === "" ? "noimage2.png" : $user['user_image'];
-
-        } else {
-
-            echo $result['error'];
-
-        }
-
-$parts = explode(' ', trim($AbrvName));
-
-$first = array_shift($parts);
-
-$AbrvName = !empty($first)? $first . (!empty($parts) ? ' ' . implode('.', array_map(fn($p) => strtoupper($p[0]), $parts)) : '') : 'User';
-
-  $role_name = $role = $_SESSION['role'] ;
-
-$result = $callAuthMiddlewareClass->SelectloginTableForOne($userid);
-
-if ($result['success']) {
-
-    $user = $result['user'];
-
-    $role_name = $user['role_name'];
-
-
-
-}
-
-   
-    //   $CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
-
-      $company_logfile_url  = $company_settings['company_logfile_url'] ;
-
-      $company_userid  = $company_settings['company_userid'] ;
-
-       $company_copyright  = $company_settings['company_copyright'] ?? '2025';
-
-       $company_poweredby  = $company_settings['company_poweredby'] ?? 'AgbTeam';
-
-       $company_copyrightlink  = $company_settings['company_copyrightlink'] ?? 'https://www.agbng.com';
-
-       $company_settings = $callCompanyModel->web_settings();
-
-      $company_online = $company_settings['company_online'] ?? 0;
-
-      $company_Allow_signup = $company_settings['company_signup'] ?? 0;
-
-      $company_alias = $company_settings['company_alias'] ?? 'Page';
-
-       $company_logo = $company_settings['company_logo'] ?? '';
-
-       $company_favicon = $company_settings['company_favicon'] ?? '';
-
-         $company_url = $company_settings['company_url'] ?? '';
-
-            $loginurl = $company_url."/index.php?action=login" ;
-
-
-
-        $page_name = "users";
-
-       require ROOT_PATH . "/views/users/dev/users.php";
-
-  }
-
-
-
-
-public function page_corridorsAndItlikes() {
-
-  if (session_status() === PHP_SESSION_NONE) session_start();
-   $userid =$_SESSION['userid']; 
-
-   $callUserModel = new User();
-
-    $CallDevModel = new ModelDev;
-     $callCompanyModel = new CompanyModel() ;
-     $CallMailerModel = new Mailer() ;
-      $callAuthMiddlewareClass = new AuthMiddleware;
-      $company_settings = $callCompanyModel ->web_settings();
-       $CF_VerificationSiteUrl = $company_settings['cloudfare_verifyurl'] ?? '';
-        $CF_SecretKey = $company_settings['cloudfare_secretkey'] ?? '';
-        $CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
-   $page_name = $tb_name = $_GET['action'] ?? '';
-    if ($tb_name==""){
-header('Location: index.php');
- exit;
-
-    }
-
-
-
-if ($tb_name == "corridors") {
-       $page_name = $tb_name = "corridor";
-     } elseif ($tb_name == "owners") {
-    $tb_name = $page_name = "owner";
-} elseif ($tb_name == "incidence_source") {
-    $page_name = "Incidence Source";
-} elseif ($tb_name == "operator") {
-    $page_name = "operator";
-} elseif ($tb_name == "report_types") {
-      $page_name = "report types";
-    $tb_name = "report_type";
-  
-} elseif ($tb_name == "wellhead_status") {
-    $page_name = "wellhead status";
-} elseif ($tb_name == "priority") {
-    $page_name = "priority";
-
-} elseif ($tb_name == "zones") {
-    $tb_name = $page_name = "zone";
-} elseif ($tb_name == "pipelines") {
-    $tb_name = $page_name = "pipeline";
-} elseif ($tb_name == "pipeline_types") {
-   $page_name = "pipeline type";
-    $tb_name = "pipeline_type";
-}
-
-    
-
-//    $_SESSION['msg']  = "";
-
-//     $_SESSION['msg_notification']=0;
-
- 
-
-   $LoadUsersAndLoginTableForAdmin = $callUserModel->SelectUsersAndLoginTable($userid);
-
-     
-
-   $roleCounts = $CallDevModel->getRoleCounts();
-
-   $CountTickets = $CallDevModel->TicketCount();
-
-  $totalrequests = $CallDevModel->GetRequestSum();
-
-
-
-// $totaldev = $roleCounts['developers'];
-
-$totalreporters = $roleCounts['reporters'];
-
-$totaladmin = $roleCounts['administrators'];
-
-$totalsupervisor = $roleCounts['supervisors'];
-
-// $Ticket = $CallDevModel->TicketCount();
-
- $counttickets = $CountTickets['total'];
-
-// $ticketCounts['status_0']
-
-// $ticketCounts['status_1']
-
-// $ticketCounts['status_2']
-
- $result = $callUserModel->SelectUserTableForOne($userid);
-
-        if ($result['success']) {
-
-            $user = $result['user'];
-
-            $AbrvName = $user['fullname'];
-
-            if ($user['msg_notification']==1){
-
-                $_SESSION['msg_notification'] = 1;
-
-                 $_SESSION['msg'] = $user['msg'];
-
-              $callUserModel->clearMsgNotification($userid);
-
-            }
-
-
-
-     $user_image = ($user['user_image'] ?? "") === "" ? "noimage2.png" : $user['user_image'];
-
-        } else {
-
-            echo $result['error'];
-
-        }
-
-$parts = explode(' ', trim($AbrvName));
-
-$first = array_shift($parts);
-
-$AbrvName = !empty($first)? $first . (!empty($parts) ? ' ' . implode('.', array_map(fn($p) => strtoupper($p[0]), $parts)) : '') : 'User';
-
-  $role_name = $role = $_SESSION['role'] ;
-
-$result = $callAuthMiddlewareClass->SelectloginTableForOne($userid);
-
-if ($result['success']) {
-
-    $user = $result['user'];
-
-    $role_name = $user['role_name'];
-
-
-
-}
-
-
-      $ticketer_email  = $company_settings['company_email'] ;
-      $company_logfile_url  = $company_settings['company_logfile_url'] ;
-
-      $company_userid  = $company_settings['company_userid'] ;
-
-       $company_copyright  = $company_settings['company_copyright'] ?? '2025';
-
-       $company_poweredby  = $company_settings['company_poweredby'] ?? 'AgbTeam';
-
-       $company_copyrightlink  = $company_settings['company_copyrightlink'] ?? 'https://www.agbng.com';
-
-       $company_settings = $callCompanyModel->web_settings();
-
-      $company_online = $company_settings['company_online'] ?? 0;
-
-      $company_Allow_signup = $company_settings['company_signup'] ?? 0;
-
-      $company_alias = $company_settings['company_alias'] ?? 'Page';
-
-       $company_logo = $company_settings['company_logo'] ?? '';
-
-       $company_favicon = $company_settings['company_favicon'] ?? '';
-
-         $company_url = $company_settings['company_url'] ?? '';
-
-            $loginurl = $company_url."/index.php?action=login" ;
-
-
-if (isset($_POST['create_corridor'])) {
-    // $callAuthMiddlewareClass->ValidateTurnstile($CF_SecretKey,$CF_VerificationSiteUrl); 
-   $the_tb= trim($_POST['tb'] ?? '');
-   $corridor_name= trim($_POST['corridor_name'] ?? '');
-   $corridor_name = trim($_POST['corridor_name'] ?? ''); if ($corridor_name === '') { $_SESSION['error'] = 'Corridor name is required'; header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php')); exit; }
-   $create_corridors_result = $CallDevModel->CreateCorridorAndThoseSimilar($corridor_name, $userid,$role,$the_tb);
-
-if ($create_corridors_result['status']) {
- $action = "Created a new " . $page_name . " module";
-   $user_details = $AbrvName . "  " . $userid;
- $logResult = $callAuthMiddlewareClass->writelog($userid, $role_name,$role, $user_details, $action,$company_logfile_url);
-    $_SESSION['success'] = $create_corridors_result['message'];
-     $subject = "New web application module" ;
-$message = "Dear Team,<br><br>"
- . "We are pleased to inform you that, as requested, a new <strong>$page_name</strong> module (<strong>$corridor_name</strong>) has been added to the web application to further improve the platform and enhance its functionality.<br><br>"
-
- . "The new module has been integrated into the ticket creation page to provide additional functionality and improve the efficiency of our existing processes.<br><br>"
-
- . "When creating a new ticket, reporters will now find a new <strong>$page_name</strong> option within the available listings, allowing them to select the appropriate option when submitting a ticket.<br><br>"
-
- . "<div style='text-align:center; margin:25px 0;'>"
-
- . "<a href='$loginurl' style='display:inline-block; padding:12px 25px; background-color:#0d6efd; color:#ffffff; text-decoration:none; border-radius:5px; font-weight:bold;'>"
-
- . "Access Web Application"
-
- . "</a>"
-
- . "</div>"
-
- . "We encourage everyone to make use of the new module and provide feedback where necessary as we continue to improve the system and its functionality.<br><br>"
-
- . "For any questions, clarification, or technical assistance, please contact the Support Team.<br><br>"
-
- . "Best regards,<br>"
-
- . "The I.T Support Team";
-
-
- $SendEmail = $CallMailerModel->sendmail(
-
-                        $ticketer_email,
-
-                        $subject,
-
-                        $message
-
-                    );
-
-
-
-
-
-header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php')); exit;
-} else {
-
-    $_SESSION['error'] = $create_corridors_result['message'];
-header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php')); exit;
-}
-}
-// $table_name = "corridor";
-
-
-
-
-
-$LoadCorridorsAndItLikes = $CallDevModel->SelectCorridorsAndThoseSimilar($tb_name);
-       require ROOT_PATH . "/views/users/dev/corridors.php";
-
-  }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-public function page_settings() {
-
-  if (session_status() === PHP_SESSION_NONE) session_start();
-
-  $callCompanyModel = new CompanyModel() ;
-
-      $company_settings = $callCompanyModel ->web_settings();
- $CF_VerificationSiteUrl = $company_settings['cloudfare_verifyurl'] ?? '';
-        $CF_SecretKey = $company_settings['cloudfare_secretkey'] ?? '';
-        $CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
-  $userid =$_SESSION['userid']; 
-
-   $callUserModel = new User();
-
-    $CallDevModel = new ModelDev;
-
-   $LoadUsersAndLoginTable = $callUserModel->SelectUsersAndLoginTable($userid);
-
-      $callAuthMiddlewareClass = new AuthMiddleware;
-
- $result = $callUserModel->SelectUserTableForOne($userid);
-
-        if ($result['success']) {
-
-            $user = $result['user'];
-
-            $AbrvName = $user['fullname'];
-
-            if ($user['msg_notification']==1){
-
-                $_SESSION['msg_notification'] = 1;
-
-                 $_SESSION['msg'] = $user['msg'];
-
-              $callUserModel->clearMsgNotification($userid);
-
-            }
-
-
-
-     $user_image = ($user['user_image'] ?? "") === "" ? "noimage2.png" : $user['user_image'];
-
-        } else {
-
-            echo $result['error'];
-
-        }
-
-$parts = explode(' ', trim($AbrvName));
-
-$first = array_shift($parts);
-
-$AbrvName = !empty($first)? $first . (!empty($parts) ? ' ' . implode('.', array_map(fn($p) => strtoupper($p[0]), $parts)) : '') : 'User';
-
-  $page_name = "settings";
-
-  $role_name = $role = $_SESSION['role'] ;
-
-$result = $callAuthMiddlewareClass->SelectloginTableForOne($userid);
-
-if ($result['success']) {
-
-    $user = $result['user'];
-
-    $role_name = $user['role_name'];
-
-}
-
-
-//   $CF_SiteKey = $company_settings['cloudfare_sitekey'] ?? '';
-      $company_logfile_url  = $company_settings['company_logfile_url'] ;
-
-      $company_userid  = $company_settings['company_userid'] ;
-
-       $company_copyright  = $company_settings['company_copyright'] ?? '2025';
-
-       $company_poweredby  = $company_settings['company_poweredby'] ?? 'AgbTeam';
-
-       $company_copyrightlink  = $company_settings['company_copyrightlink'] ?? 'https://www.agbng.com';
-
-    //    $company_settings = $callCompanyModel->web_settings();
-
-      $company_online = $company_settings['company_online'] ?? 0;
-
-      $company_Allow_signup = $company_settings['company_signup'] ?? 0;
-
-      $company_alias = $company_settings['company_alias'] ?? 'Page';
-
-       $company_logo = $company_settings['company_logo'] ?? '';
-
-       $company_favicon = $company_settings['company_favicon'] ?? '';
-
-         $company_url = $company_settings['company_url'] ?? '';
-
-            $loginurl = $company_url."/index.php?action=login" ;
-
-
-
-       require ROOT_PATH . "/views/users/dev/settings.php";
-
-  }
-
-
-
-}

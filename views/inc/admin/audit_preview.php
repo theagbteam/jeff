@@ -2,268 +2,219 @@
 <?php
 
 $table_name = "audit_trail";
-$audit_trail_sn = 0;
+$audit_sn=0;
 
 ?>
 
 <!-- =========================================================
-     AUDIT TRAIL MANAGEMENT
+    AUDIT TRAIL MANAGEMENT
 ========================================================= -->
 
 <div class="row audit-trail-row">
-
     <div class="col-12 grid-margin stretch-card">
-
         <div class="card audit-trail-card">
-
             <div class="card-body">
 
                 <!-- HEADER -->
-
                 <div class="audit-trail-heading">
-
                     <div>
                         <h4 class="card-title mb-1">Audit Trail Management</h4>
-
                         <p class="text-muted mb-0">
                             Monitor user activities, recorded actions, dates and IP addresses.
                         </p>
                     </div>
 
-                    <div class="audit-trail-total">
-                        <i class="mdi mdi-shield-check-outline"></i>
-                        <span>
-                            Total Records:
-                            <strong><?= number_format(is_array($LoadAuditTrailTable ?? null) ? count($LoadAuditTrailTable) : 0) ?></strong>
-                        </span>
-                    </div>
+                    <div class="audit-trail-header-actions">
+                        <div class="audit-trail-total">
+                            <i class="mdi mdi-shield-check-outline"></i>
+                            <span>
+                                Total Records:
+                                <strong><?= number_format(
+                                    is_array($LoadAuditTrail ?? null)
+                                        ? count($LoadAuditTrail)
+                                        : 0
+                                ) ?></strong>
+                            </span>
+                        </div>
 
+                        <div id="auditTrailExportButton"></div>
+                    </div>
                 </div>
 
                 <!-- TOOLBAR -->
-
                 <div class="audit-trail-toolbar">
-
                     <div class="audit-trail-search-box">
                         <i class="mdi mdi-magnify"></i>
-
-                        <input type="search"
-                               id="auditTrailSearch"
-                               placeholder="Search audit trail..."
-                               aria-label="Search audit trail">
+                        <input
+                            type="search"
+                            id="auditTrailSearch"
+                            placeholder="Search audit trail..."
+                            aria-label="Search audit trail"
+                            autocomplete="off"
+                        >
                     </div>
 
                     <div class="audit-trail-filters">
-
-                        <select id="auditTrailActionFilter"
-                                class="audit-trail-filter"
-                                aria-label="Filter by action">
-
+                        <select
+                            id="auditTrailActionFilter"
+                            class="audit-trail-filter"
+                            aria-label="Filter by action"
+                        >
                             <option value="">All Actions</option>
-
                         </select>
 
-                        <input type="date"
-                               id="auditTrailDateFilter"
-                               class="audit-trail-filter"
-                               aria-label="Filter by date">
+                        <input
+                            type="date"
+                            id="auditTrailDateFilter"
+                            class="audit-trail-filter"
+                            aria-label="Filter by date"
+                        >
 
-                        <button type="button"
-                                id="clearAuditTrailFilters"
-                                class="audit-trail-clear-btn">
-
+                        <button
+                            type="button"
+                            id="clearAuditTrailFilters"
+                            class="audit-trail-clear-btn"
+                        >
                             <i class="mdi mdi-filter-remove-outline"></i>
                             Clear Filters
-
                         </button>
-
                     </div>
-
                 </div>
 
                 <!-- TABLE -->
-
                 <div class="audit-trail-table-wrapper">
-
-                    <table class="table audit-trail-table"
-                           id="dashboardDataTable">
-
+                    <table
+                        class="table audit-trail-table"
+                        id="auditTrailDataTable"
+                        style="width:100%"
+                    >
                         <thead>
-
                             <tr>
                                 <th>S/N</th>
                                 <th>Date &amp; Time</th>
                                 <th>User ID</th>
-                                <th>Full Name</th>
+                                <th>Employee</th>
                                 <th>Role</th>
-                                <th>Role Name</th>
                                 <th>Action</th>
                                 <th>IP Address</th>
                             </tr>
-
                         </thead>
 
                         <tbody>
+                            <?php if (!empty($LoadAuditTrail) && is_array($LoadAuditTrail)): ?>
 
-                            <?php if (!empty($LoadAuditTrailTable) && is_array($LoadAuditTrailTable)): ?>
-
-                                <?php foreach ($LoadAuditTrailTable as $audit_trail): ?>
+                                <?php foreach ($LoadAuditTrail as $audit_trail): ?>
 
                                     <?php
-
-                                    $audit_date = trim((string)($audit_trail['date'] ?? ''));
-                                    $audit_userid = (string)($audit_trail['userid'] ?? '');
-                                    $audit_full_name = (string)($audit_trail['full_name'] ?? '');
-                                    $audit_role = (string)($audit_trail['role'] ?? '');
-                                    $audit_role_name = (string)($audit_trail['role_name'] ?? '');
-                                    $audit_action = (string)($audit_trail['Action'] ?? '');
-                                    $audit_ip = (string)($audit_trail['ip'] ?? '');
-
-                                    $formatted_audit_date = 'N/A';
-
-                                    if ($audit_date !== '' && strtotime($audit_date) !== false) {
-                                        $formatted_audit_date = date('d M Y, h:i:s A', strtotime($audit_date));
-                                    }
-
-                                    $audit_date_filter = '';
-
-                                    if ($audit_date !== '' && strtotime($audit_date) !== false) {
-                                        $audit_date_filter = date('Y-m-d', strtotime($audit_date));
-                                    }
-
+                                    $audit_sn = $audit_sn + 1;
                                     ?>
 
                                     <tr>
-
                                         <!-- SERIAL NUMBER -->
-
-                                        <td>
-                                            <span class="audit-trail-serial"></span>
+                                        <td data-order="0">
+                                            <span class="audit-trail-serial"><?= $audit_sn ?></span>
                                         </td>
 
                                         <!-- DATE -->
+                                        <?php
+                                        $rawDate = $audit_trail['date'] ?? '';
+                                        $dateWords = $rawDate;
+                                        $dateSearch = $rawDate;
+                                        $dateIso = '';
 
-                                        <td data-order="<?= htmlspecialchars(
-                                            $audit_date !== '' && strtotime($audit_date) !== false
-                                                ? (string)strtotime($audit_date)
-                                                : '0',
-                                            ENT_QUOTES,
-                                            'UTF-8'
-                                        ) ?>"
-                                            data-date="<?= htmlspecialchars(
-                                                $audit_date_filter,
-                                                ENT_QUOTES,
-                                                'UTF-8'
-                                            ) ?>">
+                                        if (!empty($rawDate)) {
+                                            $timestamp = strtotime($rawDate);
 
-                                            <span class="audit-trail-date">
+                                            if ($timestamp !== false) {
+                                                $dateWords = date('l, jS F Y \a\t g:i A', $timestamp);
+                                                $dateIso = date('Y-m-d', $timestamp);
+                                                $dateSearch = trim($dateWords . ' ' . $rawDate . ' ' . $dateIso);
+                                            }
+                                        }
+                                        ?>
+
+                                        <td data-search="<?= htmlspecialchars($dateSearch, ENT_QUOTES, 'UTF-8') ?>">
+                                            <span class="audit-trail-date" data-date="<?= htmlspecialchars($dateIso, ENT_QUOTES, 'UTF-8') ?>">
                                                 <i class="mdi mdi-calendar-clock"></i>
-
-                                                <?= htmlspecialchars(
-                                                    $formatted_audit_date,
-                                                    ENT_QUOTES,
-                                                    'UTF-8'
-                                                ) ?>
+                                                <?= htmlspecialchars($dateWords, ENT_QUOTES, 'UTF-8') ?>
                                             </span>
-
                                         </td>
 
                                         <!-- USER ID -->
-
                                         <td>
-                                            <span class="audit-trail-userid">
-                                                <?= htmlspecialchars(
-                                                    $audit_userid !== '' ? $audit_userid : 'N/A',
-                                                    ENT_QUOTES,
-                                                    'UTF-8'
-                                                ) ?>
-                                            </span>
+                                            <?php
+                                            $auditUserId = $audit_trail['userid'] ?? '';
+                                            $auditRole = strtolower(trim($audit_trail['role'] ?? ''));
+
+                                            // Disable the link for developers OR for the company senior manager
+                                            $disableLink = ($auditRole === 'developer') || ($auditUserId === $company_adminseniorman);
+                                            ?>
+
+                                            <?php if ($disableLink): ?>
+                                                <span
+                                                    class="audit-trail-userid is-disabled"
+                                                    title="Viewing user details is not permitted for this account"
+                                                    aria-disabled="true"
+                                                >
+                                                    <?= htmlspecialchars($auditUserId, ENT_QUOTES, 'UTF-8') ?>
+                                                </span>
+                                            <?php else: ?>
+                                                <a
+                                                    href="index?action=user_details&token_userdetails=<?= urlencode(base64_encode($auditUserId)) ?>"
+                                                    class="audit-trail-userid"
+                                                    title="View user details"
+                                                >
+                                                    <?= htmlspecialchars($auditUserId, ENT_QUOTES, 'UTF-8') ?>
+                                                </a>
+                                            <?php endif; ?>
                                         </td>
 
                                         <!-- FULL NAME -->
-
                                         <td>
                                             <div class="audit-trail-user">
-
                                                 <div class="audit-trail-avatar">
                                                     <i class="mdi mdi-account-outline"></i>
                                                 </div>
 
                                                 <span class="audit-trail-fullname">
-                                                    <?= htmlspecialchars(
-                                                        $audit_full_name !== '' ? $audit_full_name : 'N/A',
-                                                        ENT_QUOTES,
-                                                        'UTF-8'
-                                                    ) ?>
+                                                    <?= $audit_trail['full_name'] ?>
                                                 </span>
-
                                             </div>
                                         </td>
 
                                         <!-- ROLE -->
-
                                         <td>
                                             <span class="audit-trail-role">
-                                                <?= htmlspecialchars(
-                                                    $audit_role !== '' ? $audit_role : 'N/A',
-                                                    ENT_QUOTES,
-                                                    'UTF-8'
-                                                ) ?>
+                                                <?= $audit_trail['role_name'] ?>
                                             </span>
                                         </td>
 
-                                        <!-- ROLE NAME -->
-
-                                        <td>
-                                            <?= htmlspecialchars(
-                                                $audit_role_name !== '' ? $audit_role_name : 'N/A',
-                                                ENT_QUOTES,
-                                                'UTF-8'
-                                            ) ?>
-                                        </td>
-
                                         <!-- ACTION -->
-
                                         <td>
                                             <span class="audit-trail-action">
                                                 <i class="mdi mdi-history"></i>
-
-                                                <?= htmlspecialchars(
-                                                    $audit_action !== '' ? $audit_action : 'N/A',
-                                                    ENT_QUOTES,
-                                                    'UTF-8'
-                                                ) ?>
+                                                <?= $audit_trail['Action'] ?>
                                             </span>
                                         </td>
 
                                         <!-- IP ADDRESS -->
-
                                         <td>
                                             <span class="audit-trail-ip">
                                                 <i class="mdi mdi-ip-network-outline"></i>
-
-                                                <?= htmlspecialchars(
-                                                    $audit_ip !== '' ? $audit_ip : 'N/A',
-                                                    ENT_QUOTES,
-                                                    'UTF-8'
-                                                ) ?>
+                                                <?= $audit_trail['ip'] ?>
                                             </span>
                                         </td>
-
                                     </tr>
 
                                 <?php endforeach; ?>
 
                             <?php endif; ?>
-
                         </tbody>
-
                     </table>
-
                 </div>
 
+                <!-- FOOTER -->
                 <div class="audit-trail-footer">
-
                     <span id="auditTrailResultCount">
                         Audit trail records
                     </span>
@@ -272,24 +223,19 @@ $audit_trail_sn = 0;
                         <i class="mdi mdi-shield-lock-outline"></i>
                         Activity monitoring
                     </span>
-
                 </div>
 
             </div>
-
         </div>
-
     </div>
-
 </div>
 
 
 <!-- =========================================================
-     AUDIT TRAIL STYLES
+    AUDIT TRAIL STYLES
 ========================================================= -->
 
 <style>
-
 .audit-trail-row {
     max-width: 100%;
     min-width: 0;
@@ -357,6 +303,31 @@ $audit_trail_sn = 0;
 
 .audit-trail-total strong {
     color: #3b6fd4;
+}
+
+/* EXPORT BUTTON BESIDE TOTAL RECORDS */
+.audit-trail-header-actions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+#auditTrailExportButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#auditTrailExportButton .dt-buttons {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+#auditTrailExportButton .dt-button {
+    margin: 0 !important;
 }
 
 .audit-trail-toolbar {
@@ -530,6 +501,12 @@ $audit_trail_sn = 0;
     white-space: nowrap;
 }
 
+.audit-trail-userid.is-disabled {
+    color: #8b95a5;
+    cursor: not-allowed;
+    text-decoration: none;
+}
+
 .audit-trail-user {
     display: flex;
     align-items: center;
@@ -620,14 +597,30 @@ $audit_trail_sn = 0;
     font-size: 16px;
 }
 
-/* DATATABLES EXPORT BUTTONS */
+/* DATATABLES */
+
+.audit-trail-card .audit-dt-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.audit-trail-card .audit-dt-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+}
 
 .audit-trail-card .dt-buttons {
     display: inline-flex;
     align-items: center;
     flex-wrap: wrap;
     gap: 7px;
-    margin-bottom: 15px;
 }
 
 .audit-trail-card .dt-buttons .dt-button {
@@ -655,7 +648,7 @@ $audit_trail_sn = 0;
 }
 
 .audit-trail-card .dataTables_length {
-    margin-bottom: 12px;
+    margin: 0;
     color: #6b7280;
     font-size: 12px;
 }
@@ -671,13 +664,13 @@ $audit_trail_sn = 0;
 }
 
 .audit-trail-card .dataTables_info {
-    padding-top: 15px;
+    padding-top: 8px;
     color: #6b7280;
     font-size: 12px;
 }
 
 .audit-trail-card .dataTables_paginate {
-    padding-top: 10px;
+    padding-top: 0;
 }
 
 .audit-trail-card .dataTables_paginate .paginate_button {
@@ -845,7 +838,6 @@ $audit_trail_sn = 0;
 }
 
 @media (max-width: 767px) {
-
     .audit-trail-card > .card-body {
         padding: 14px;
     }
@@ -876,6 +868,12 @@ $audit_trail_sn = 0;
         flex: 1;
     }
 
+    .audit-trail-card .audit-dt-top,
+    .audit-trail-card .audit-dt-bottom {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
     .audit-trail-card .dt-buttons {
         width: 100%;
     }
@@ -884,10 +882,13 @@ $audit_trail_sn = 0;
         flex: 1;
     }
 
+    .audit-trail-header-actions {
+        justify-content: flex-start;
+        width: 100%;
+    }
 }
 
 @media (max-width: 480px) {
-
     .audit-trail-card > .card-body {
         padding: 11px;
     }
@@ -906,202 +907,152 @@ $audit_trail_sn = 0;
         min-height: 40px;
     }
 
+    .audit-trail-header-actions {
+        align-items: flex-start;
+    }
 }
-
 </style>
 
 
 <!-- =========================================================
-     DATATABLES EXPORT DEPENDENCIES
-     Keep your existing jQuery and DataTables core imports.
-     Load these extensions after DataTables core.
+    DATATABLES EXPORT DEPENDENCIES
+    Dependencies are loaded in order and only when missing.
+    Export is PDF only.
 ========================================================= -->
 
-<link rel="stylesheet"
-      href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
-
-<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
-
-<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
-
-<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
-
-
-<!-- =========================================================
-     AUDIT TRAIL JAVASCRIPT
-========================================================= -->
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
 
 <script>
-
 (function () {
-
     'use strict';
 
+    function loadScript(src) {
+        return new Promise(function (resolve, reject) {
+            var script = document.createElement('script');
+            script.src = src;
+            script.async = true;
+            script.onload = resolve;
+            script.onerror = function () {
+                reject(new Error('Unable to load required script: ' + src));
+            };
+            document.head.appendChild(script);
+        });
+    }
+
+    function ensureScript(test, src) {
+        return test() ? Promise.resolve() : loadScript(src);
+    }
+
     function initialiseAuditTrail() {
+        var $ = window.jQuery;
+        var tableElement = document.getElementById('auditTrailDataTable');
 
-        if (!window.jQuery || !jQuery.fn || !jQuery.fn.DataTable) {
-            console.error('Audit Trail: jQuery DataTables is not loaded.');
+        if (!tableElement || !$ || !$.fn || !$.fn.DataTable) {
+            console.error('Audit Trail: jQuery or DataTables core is unavailable.');
             return;
         }
 
-        if (!jQuery.fn.dataTable.Buttons) {
-            console.error('Audit Trail: DataTables Buttons extension is not loaded.');
+        var dateFilter = document.getElementById('auditTrailDateFilter');
+        var actionFilter = document.getElementById('auditTrailActionFilter');
+        var searchInput = document.getElementById('auditTrailSearch');
+        var clearButton = document.getElementById('clearAuditTrailFilters');
+        var resultCount = document.getElementById('auditTrailResultCount');
+
+        if (!dateFilter || !actionFilter || !searchInput || !clearButton || !resultCount) {
+            console.error('Audit Trail: One or more search controls are missing.');
             return;
         }
 
-        const $ = window.jQuery;
-        const tableElement = document.getElementById('dashboardDataTable');
-
-        if (!tableElement) {
-            return;
-        }
-
+        /* Reuse an existing instance instead of abandoning this page's controls. */
         if ($.fn.DataTable.isDataTable(tableElement)) {
-            return;
+            $(tableElement).DataTable().destroy();
+            $(tableElement).find('tbody tr').show();
         }
 
-        const $table = $(tableElement);
+        var ACTION_COLUMN = 5;
+        var DATE_COLUMN = 1;
 
-        const dateFilter = document.getElementById('auditTrailDateFilter');
-        const actionFilter = document.getElementById('auditTrailActionFilter');
-        const searchInput = document.getElementById('auditTrailSearch');
-        const clearButton = document.getElementById('clearAuditTrailFilters');
-        const resultCount = document.getElementById('auditTrailResultCount');
+        /* Populate the action dropdown from the original table rows. */
+        actionFilter.innerHTML = '<option value="">All Actions</option>';
 
-        /*
-         * Build the action dropdown from the actual audit records.
-         */
+        var actions = new Set();
 
-        const actions = new Set();
-
-        $table.find('tbody tr').each(function () {
-
-            const action = $(this).find('td').eq(6).text().trim();
-
-            if (action && action !== 'N/A') {
-                actions.add(action);
-            }
-
+        $(tableElement).find('tbody tr').each(function () {
+            var action = $(this).find('td').eq(ACTION_COLUMN).text().trim();
+            if (action && action !== 'N/A') actions.add(action);
         });
 
-        Array.from(actions)
-            .sort(function (a, b) {
-                return a.localeCompare(b);
-            })
-            .forEach(function (action) {
-
-                const option = document.createElement('option');
-
-                option.value = action;
-                option.textContent = action;
-
-                actionFilter.appendChild(option);
-
-            });
-
-        /*
-         * Custom filters for date and action.
-         */
-
-        $.fn.dataTable.ext.search.push(function (
-            settings,
-            data,
-            dataIndex
-        ) {
-
-            if (settings.nTable !== tableElement) {
-                return true;
-            }
-
-            const row = settings.aoData[dataIndex].nTr;
-
-            if (!row) {
-                return true;
-            }
-
-            const selectedDate = dateFilter.value;
-            const selectedAction = actionFilter.value;
-
-            const rowDate = row.cells[1]
-                ? row.cells[1].getAttribute('data-date') || ''
-                : '';
-
-            const rowAction = row.cells[6]
-                ? row.cells[6].textContent.trim()
-                : '';
-
-            const matchesDate =
-                !selectedDate || rowDate === selectedDate;
-
-            const matchesAction =
-                !selectedAction || rowAction === selectedAction;
-
-            return matchesDate && matchesAction;
-
+        Array.from(actions).sort(function (a, b) {
+            return a.localeCompare(b);
+        }).forEach(function (action) {
+            var option = document.createElement('option');
+            option.value = action;
+            option.textContent = action;
+            actionFilter.appendChild(option);
         });
 
-        const dataTable = $table.DataTable({
+        /* Remove any previous copy of this page's custom filter before registering it. */
+        $.fn.dataTable.ext.search = $.fn.dataTable.ext.search.filter(function (fn) {
+            return !fn._auditTrailFilter;
+        });
 
-            /*
-             * Use all eight columns in every table row.
-             * Serial numbers are recalculated for the current page.
-             */
+        var auditTrailFilter = function (settings, data, dataIndex) {
+            if (settings.nTable !== tableElement) return true;
 
+            var row = settings.aoData[dataIndex] ? settings.aoData[dataIndex].nTr : null;
+            if (!row) return true;
+
+            var dateNode = row.cells[DATE_COLUMN]
+                ? row.cells[DATE_COLUMN].querySelector('[data-date]')
+                : null;
+
+            var rowDate = dateNode ? (dateNode.getAttribute('data-date') || '') : '';
+
+            var rowAction = row.cells[ACTION_COLUMN]
+                ? row.cells[ACTION_COLUMN].textContent.trim()
+                : '';
+
+            return (!dateFilter.value || rowDate === dateFilter.value) &&
+                   (!actionFilter.value || rowAction === actionFilter.value);
+        };
+
+        auditTrailFilter._auditTrailFilter = true;
+        $.fn.dataTable.ext.search.push(auditTrailFilter);
+
+        var exportColumns = [0, 1, 2, 3, 4, 5, 6];
+        var filename = 'audit_trail_' + new Date().toISOString().slice(0, 10);
+
+        var dataTable = $(tableElement).DataTable({
             autoWidth: false,
             processing: false,
-            deferRender: true,
-            order: [[1, 'desc']],
+            deferRender: false,
+            retrieve: false,
+            order: [[DATE_COLUMN, 'desc']],
             pageLength: 10,
-            lengthMenu: [
-                [10, 25, 50, 100, -1],
-                [10, 25, 50, 100, 'All']
-            ],
-
-            dom:
-                '<"audit-dt-top"B l>' +
-                'rt' +
-                '<"audit-dt-bottom"ip>',
+            lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'All']],
+            dom: '<"audit-dt-top"Bl>rt<"audit-dt-bottom"ip>',
+            searching: true,
+            search: { caseInsensitive: true, smart: true },
 
             buttons: [
-
-                {
-                    extend: 'excelHtml5',
-                    text: '<i class="mdi mdi-microsoft-excel"></i> Excel',
-                    title: 'Audit Trail Report',
-                    filename: 'audit_trail_' + new Date().toISOString().slice(0, 10),
-                    exportOptions: {
-                        columns: [0, 1, 2, 3, 4, 5, 6, 7],
-                        modifier: {
-                            search: 'applied',
-                            order: 'applied',
-                            page: 'all'
-                        }
-                    }
-                },
-
                 {
                     extend: 'pdfHtml5',
                     text: '<i class="mdi mdi-file-pdf-box"></i> PDF',
                     title: 'Audit Trail Report',
-                    filename: 'audit_trail_' + new Date().toISOString().slice(0, 10),
+                    filename: filename,
                     orientation: 'landscape',
                     pageSize: 'A3',
+
                     exportOptions: {
-                        columns: [0, 1, 2, 3, 4, 5, 6, 7],
+                        columns: exportColumns,
                         modifier: {
                             search: 'applied',
                             order: 'applied',
                             page: 'all'
                         }
                     },
-                    customize: function (doc) {
 
+                    customize: function (doc) {
                         doc.defaultStyle.fontSize = 8;
 
                         doc.styles.title = {
@@ -1119,58 +1070,13 @@ $audit_trail_sn = 0;
                         };
 
                         doc.content.forEach(function (item) {
-
                             if (item.table) {
-
-                                item.table.widths = [
-                                    '5%',
-                                    '17%',
-                                    '11%',
-                                    '17%',
-                                    '10%',
-                                    '13%',
-                                    '17%',
-                                    '10%'
-                                ];
-
+                                item.table.widths = ['5%', '17%', '11%', '17%', '10%', '23%', '17%'];
                                 item.layout = 'lightHorizontalLines';
-
                             }
-
                         });
-
-                    }
-                },
-
-                {
-                    extend: 'csvHtml5',
-                    text: '<i class="mdi mdi-file-delimited-outline"></i> CSV',
-                    title: 'Audit Trail Report',
-                    filename: 'audit_trail_' + new Date().toISOString().slice(0, 10),
-                    exportOptions: {
-                        columns: [0, 1, 2, 3, 4, 5, 6, 7],
-                        modifier: {
-                            search: 'applied',
-                            order: 'applied',
-                            page: 'all'
-                        }
-                    }
-                },
-
-                {
-                    extend: 'print',
-                    text: '<i class="mdi mdi-printer-outline"></i> Print',
-                    title: 'Audit Trail Report',
-                    exportOptions: {
-                        columns: [0, 1, 2, 3, 4, 5, 6, 7],
-                        modifier: {
-                            search: 'applied',
-                            order: 'applied',
-                            page: 'all'
-                        }
                     }
                 }
-
             ],
 
             columnDefs: [
@@ -1195,80 +1101,133 @@ $audit_trail_sn = 0;
             },
 
             drawCallback: function () {
+                var api = this.api();
+                var pageInfo = api.page.info();
 
-                const api = this.api();
-                const pageInfo = api.page.info();
-
-                api.column(0, {
+                api.rows({
                     page: 'current',
-                    search: 'applied',
-                    order: 'applied'
-                }).nodes().each(function (cell, index) {
-
-                    cell.innerHTML =
-                        '<span class="audit-trail-serial">' +
-                        (pageInfo.start + index + 1) +
-                        '</span>';
-
+                    order: 'applied',
+                    search: 'applied'
+                }).nodes().each(function (rowNode, index) {
+                    if (rowNode.cells[0]) {
+                        rowNode.cells[0].innerHTML =
+                            '<span class="audit-trail-serial">' +
+                            (pageInfo.start + index + 1) +
+                            '</span>';
+                    }
                 });
 
                 resultCount.textContent =
                     'Showing ' + pageInfo.recordsDisplay +
                     ' matching audit trail record(s)';
-
             }
-
         });
 
-        /*
-         * Global search.
-         */
-
-        searchInput.addEventListener('input', function () {
+        $(searchInput).off('.auditTrail').on('input.auditTrail search.auditTrail', function () {
             dataTable.search(this.value).draw();
         });
 
-        /*
-         * Action and date filters.
-         */
-
-        actionFilter.addEventListener('change', function () {
+        $(actionFilter).off('.auditTrail').on('change.auditTrail', function () {
             dataTable.draw();
         });
 
-        dateFilter.addEventListener('change', function () {
+        $(dateFilter).off('.auditTrail').on('change.auditTrail', function () {
             dataTable.draw();
         });
 
-        /*
-         * Clear every filter.
-         */
-
-        clearButton.addEventListener('click', function () {
-
+        $(clearButton).off('.auditTrail').on('click.auditTrail', function () {
             searchInput.value = '';
             dateFilter.value = '';
             actionFilter.value = '';
-
             dataTable.search('').draw();
-
         });
 
+        /* Move the PDF export button beside Total Records. */
+        var buttonsContainer = dataTable.buttons().container();
+
+        $('#auditTrailExportButton').empty().append(buttonsContainer);
+
+        buttonsContainer.css({
+            display: 'flex',
+            visibility: 'visible',
+            opacity: '1',
+            gap: '7px',
+            flexWrap: 'wrap'
+        });
+
+        buttonsContainer.find('.dt-button').css({
+            display: 'inline-flex',
+            visibility: 'visible',
+            opacity: '1'
+        });
+
+        if (searchInput.value) {
+            dataTable.search(searchInput.value).draw();
+        }
+    }
+
+    function startAuditTrail() {
+        var urls = {
+            jquery: 'https://code.jquery.com/jquery-3.7.1.min.js',
+            datatables: 'https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js',
+            pdfmake: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js',
+            vfs: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js',
+            buttons: 'https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js',
+            html5: 'https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js'
+        };
+
+        ensureScript(function () {
+            return !!window.jQuery;
+        }, urls.jquery)
+
+        .then(function () {
+            return ensureScript(function () {
+                return !!(window.jQuery && window.jQuery.fn && window.jQuery.fn.DataTable);
+            }, urls.datatables);
+        })
+
+        .then(function () {
+            return ensureScript(function () {
+                return !!(window.pdfMake && window.pdfMake.createPdf);
+            }, urls.pdfmake);
+        })
+
+        .then(function () {
+            return ensureScript(function () {
+                return !!(window.pdfMake && window.pdfMake.vfs);
+            }, urls.vfs);
+        })
+
+        .then(function () {
+            return ensureScript(function () {
+                return !!(window.jQuery.fn.dataTable && window.jQuery.fn.dataTable.Buttons);
+            }, urls.buttons);
+        })
+
+        .then(function () {
+            return ensureScript(function () {
+                return !!window.jQuery.fn.dataTable.ext.buttons.pdfHtml5;
+            }, urls.html5);
+        })
+
+        .then(initialiseAuditTrail)
+
+        .catch(function (error) {
+            console.error('Audit Trail initialization failed:', error);
+
+            var count = document.getElementById('auditTrailResultCount');
+
+            if (count) {
+                count.textContent =
+                    'DataTable could not load. Check your internet connection or browser console.';
+            }
+        });
     }
 
     if (document.readyState === 'loading') {
-
-        document.addEventListener(
-            'DOMContentLoaded',
-            initialiseAuditTrail
-        );
-
+        document.addEventListener('DOMContentLoaded', startAuditTrail, { once: true });
     } else {
-
-        initialiseAuditTrail();
-
+        startAuditTrail();
     }
-
 })();
-
 </script>

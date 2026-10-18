@@ -186,7 +186,7 @@ $user_name = $user['user_fullname'] ?? 'N/A';
                             </label>
 
                             <input
-                                type="text"
+                                type="text" readonly
                                 class="form-control"
                                 id="userid"
                                 name="user_id"
@@ -206,7 +206,7 @@ $user_name = $user['user_fullname'] ?? 'N/A';
                             </label>
 
                             <input
-                                type="email"
+                                type="email" 
                                 class="form-control"
                                 id="email"
                                 name="email"
@@ -233,6 +233,9 @@ $user_name = $user['user_fullname'] ?? 'N/A';
                                 value="<?= htmlspecialchars($user['user_phone'] ?? ''); ?>"
                                 required
                             >
+                            <input   type="hidden"  name="corridor" value="<?= $user['user_corridor'] ?>">
+                                
+                            
 
                         </div>
 

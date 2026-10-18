@@ -21,13 +21,13 @@ background-color: slategray;
         </li>
         <!-- <li><a href="#"><span>Knowledgebase</span></a></li> -->
         <li>
-            <div class="dropdown-toggle <?php if ($page_link_title=='transfers' || $page_link_title=='manage_users' || $page_link_title=='user_requests') {echo 'dropdown_active';} ?>" id="usersToggle" role="button" tabindex="0" aria-expanded="false">
+            <div class="dropdown-toggle <?php if ($page_link_title=='transfers' || $page_link_title=='manage_users' || $page_link_title=='user_requests' || $page_link_title=='edit_user') {echo 'dropdown_active';} ?>" id="usersToggle" role="button" tabindex="0" aria-expanded="false">
                 <span>Users</span>
                 <!-- <i class="bi bi-chevron-down nav-arrow"></i> -->
             </div>
             <div class="dropdown-menu" id="usersMenu">
-                <a href="index.php?action=manage_users" class="<?php if ($page_link_title=='manage_users') {echo 'active';} ?>">Manage users</a>
-                <a href="index.php?action=user_requests" class="<?php if ($page_link_title=='user_requests') {echo 'active';} ?>">User requests</a>
+                <a href="index.php?action=manage_users" class="<?php if ($page_link_title=='manage_users' || $page_link_title=='edit_user') {echo 'active';} ?>">Manage users</a>
+                <!-- <a href="index.php?action=user_requests" class="<?php if ($page_link_title=='user_requests') {echo 'active';} ?>">User requests</a> -->
                 <a href="index.php?action=transfers" class="<?php if ($page_link_title=='transfers') {echo 'active';} ?>">Transfer users </a>
                 <!-- <a href="index.php?action=promotions">Promotions </a> -->
                 </div>

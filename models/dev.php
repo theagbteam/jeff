@@ -28,109 +28,6 @@ class ModelDev
 
 
 
-public function UpdateUserAccount($data){
-try {
-
-    $this->conn->beginTransaction();
-
-    /*
-    |--------------------------------------------------------------------------
-    | USERS TABLE
-    |--------------------------------------------------------------------------
-    */
-
-    $sqlUsers = "
-        UPDATE users SET
-            title = :title,
-            fullname = :fullname,
-            email = :email,
-            phone = :phone,
-            msg_notification = :msg_notification,
-            msg = :msg,
-            user_image = :user_image,
-            status = :status
-        WHERE userid = :userid
-        LIMIT 1
-    ";
-
-    $stmtUsers = $this->conn->prepare($sqlUsers);
-
-    $stmtUsers->bindValue(':title', $data['title'], PDO::PARAM_STR);
-    $stmtUsers->bindValue(':fullname', $data['fullname'], PDO::PARAM_STR);
-    $stmtUsers->bindValue(':email', $data['email'], PDO::PARAM_STR);
-    $stmtUsers->bindValue(':phone', $data['phone'], PDO::PARAM_STR);
-    $stmtUsers->bindValue(':msg_notification', $data['msg_notification'], PDO::PARAM_INT);
-    $stmtUsers->bindValue(':msg', $data['msg'], PDO::PARAM_STR);
-    $stmtUsers->bindValue(':user_image', $data['user_image'], PDO::PARAM_STR);
-    $stmtUsers->bindValue(':status', $data['status'], PDO::PARAM_INT);
-    $stmtUsers->bindValue(':userid', $data['userid'], PDO::PARAM_STR);
-
-    $stmtUsers->execute();
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | LOGIN TABLE
-    |--------------------------------------------------------------------------
-    */
-
-    $sqlLogin = "
-        UPDATE login SET
-            role = :role,
-            Role_edit_user = :Role_edit_user,
-            Role_create_user = :Role_create_user,
-            Role_delete_user = :Role_delete_user,
-            Role_approve_user = :Role_approve_user,
-            Role_create_report = :Role_create_report,
-            Role_approve_report = :Role_approve_report,
-            Role_edit_report = :Role_edit_report,
-            Role_delete_report = :Role_delete_report,
-            Role_comment = :Role_comment,
-            status = :status
-        WHERE userid = :userid
-        LIMIT 1
-    ";
-
-    $stmtLogin = $this->conn->prepare($sqlLogin);
-
-    $stmtLogin->bindValue(':role', $data['role'], PDO::PARAM_STR);
-    $stmtLogin->bindValue(':Role_edit_user', $data['Role_edit_user'], PDO::PARAM_INT);
-    $stmtLogin->bindValue(':Role_create_user', $data['Role_create_user'], PDO::PARAM_INT);
-    $stmtLogin->bindValue(':Role_delete_user', $data['Role_delete_user'], PDO::PARAM_INT);
-    $stmtLogin->bindValue(':Role_approve_user', $data['Role_approve_user'], PDO::PARAM_INT);
-    $stmtLogin->bindValue(':Role_create_report', $data['Role_create_report'], PDO::PARAM_INT);
-    $stmtLogin->bindValue(':Role_approve_report', $data['Role_approve_report'], PDO::PARAM_INT);
-    $stmtLogin->bindValue(':Role_edit_report', $data['Role_edit_report'], PDO::PARAM_INT);
-    $stmtLogin->bindValue(':Role_delete_report', $data['Role_delete_report'], PDO::PARAM_INT);
-    $stmtLogin->bindValue(':Role_comment', $data['Role_comment'], PDO::PARAM_INT);
-    $stmtLogin->bindValue(':status', $data['status'], PDO::PARAM_INT);
-    $stmtLogin->bindValue(':userid', $data['userid'], PDO::PARAM_STR);
-
-    $stmtLogin->execute();
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | COMMIT
-    |--------------------------------------------------------------------------
-    */
-
-    $this->conn->commit();
-
-    return true;
-
-} catch (PDOException $e) {
-
-    if ($this->conn->inTransaction()) {
-        $this->conn->rollBack();
-    }
-
-    return false;
-}
-
-
-}
-
 
 
 public function CreateCorridorAndThoseSimilar($data = []){
@@ -473,13 +370,11 @@ public function WipeDevDatabaseWithExceptions()
         $preserveEntirely = [
             'states',
             'lgas',
-            'local_government_areas',
-        ];
+            ];
 
         // Tables to wipe, in child→parent order (so FKs, if added later, stay happy)
         $wipeTables = [
-            'tickets',
-            'ticket_category',
+           'ticket_category',
             'request',
             'report_type',
             'priority',
@@ -858,7 +753,7 @@ public function SelectCorridorsAndThoseSimilar($tb_name)
                     SUM(status = 0) AS status_0,
                     SUM(status = 1) AS status_1,
                     SUM(status = 2) AS status_2
-                FROM tickets";
+                FROM ticket_reports";
 
         $stmt = $this->conn->prepare($sql);
         $stmt->execute();

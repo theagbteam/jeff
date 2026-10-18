@@ -52,16 +52,18 @@ $ticket_status = '';
         <button type="button"
                 class="request-btn request-btn-danger"
                 id="deleteSelectedBtn"
+                style="display: none;"
                 disabled>
             <i class="mdi mdi-delete-outline"></i>
             Delete Selected
         </button>
 
-        <a href="index?action=totalrequests"
-           class="request-btn request-btn-primary">
-            <i class="mdi mdi-format-list-bulleted"></i>
-            All Requests (<?= number_format($TotalNoTickets ?? 0) ?>)
-        </a>
+        <button type="button"
+                class="request-btn request-btn-primary"
+                id="createRequestBtn">
+            <i class="mdi mdi-plus-circle-outline"></i>
+            Create Request
+        </button>
 
         <label class="request-auto-reload">
             <input type="checkbox" id="autoReload">
@@ -135,28 +137,27 @@ $ticket_status = '';
 
                 <div class="request-table-wrapper">
 
-                    <table class="dashboard-datatable request-table"
+                    <table class="request-management-datatable request-table"
                            id="dashboardDataTable">
 
                         <thead>
 
                             <tr>
 
-                                <th class="request-checkbox-cell">
+                                <!-- <th class="request-checkbox-cell">
                                     <input type="checkbox"
                                            id="selectAll"
                                            aria-label="Select all requests">
-                                </th>
+                                </th> -->
 
-                                <th>S/N</th>
+                                <th style="text-align: center;">S/N</th>
                                 <th>Ticket ID</th>
-                                <th>Requester</th>
-                                <th>Category</th>
+                                <th>User</th>
+                                <th>Name</th>
                                 <th>Subject / Complaint</th>
                                 <th>Priority</th>
                                 <th>Date &amp; Time</th>
                                 <th>Status</th>
-                                <th>Action</th>
 
                             </tr>
 
@@ -164,11 +165,11 @@ $ticket_status = '';
 
                         <tbody>
 
-                        <?php if (!empty($LoadUsersAndRequestTable) && is_array($LoadUsersAndRequestTable)): ?>
+                        <?php if (!empty($LoadAllRequest) && is_array($LoadAllRequest)): ?>
 
                             <?php $sn = 1; ?>
 
-                            <?php foreach ($LoadUsersAndRequestTable as $totalrequest): ?>
+                            <?php foreach ($LoadAllRequest as $totalrequest): ?>
 
                                 <?php
 
@@ -177,16 +178,22 @@ $ticket_status = '';
 
                                     $totalrequest_sn = $ticket_sn;
 
-                                    $ticketer_name = $totalrequest['user_fullname'] ?? 'N/A';
-                                    $ticketer_email = $totalrequest['user_email'] ?? 'N/A';
-                                    $ticketer_role = $totalrequest['ticket_category'] ?? 'N/A';
+                                    $ticket_userid = $totalrequest['ticket_userid'] ?? '';
 
-                                    $ticket_subject = $totalrequest['ticket_subject'] ?? 'N/A';
-                                    $ticket_complain = $totalrequest['ticket_complain'] ?? 'N/A';
+                                    $ticketer_name = $ticket_userid !== '' ? ($ticket_userid) : 'N/A';
+                                    $ticketer_email = '';
 
-                                    $ticket_priority = $totalrequest['ticket_priority'] ?? 0;
-                                    $ticket_date = $totalrequest['ticket_date'] ?? '';
-                                    $ticket_status = $totalrequest['ticket_status'] ?? '';
+                                    $ticketer_role = $totalrequest['category'] ?? 'N/A';
+
+                                    $ticket_subject = $totalrequest['subject'] ?? 'N/A';
+                                    $ticket_complain = $totalrequest['complain'] ?? 'N/A';
+
+                                    $ticket_priority = $totalrequest['priority'] ?? 0;
+                                    $ticket_date = $totalrequest['date'] ?? '';
+                                    $ticket_status = $totalrequest['status'] ?? '';
+
+                                    /* Name column — map from the table's name field */
+                                    $ticket_name = $totalrequest['name'] ?? 'N/A';
 
                                     $status_map = [
                                         0 => ['New', 'pending'],
@@ -225,17 +232,17 @@ $ticket_status = '';
                                 <tr>
 
                                     <!-- SELECT -->
-                                    <td class="request-checkbox-cell">
+                                    <!-- <td class="request-checkbox-cell">
 
                                         <input type="checkbox"
                                                class="request-checkbox"
                                                value="<?= $safe_ticket_sn ?>"
                                                aria-label="Select request <?= $safe_ticket_no ?>">
 
-                                    </td>
+                                    </td> -->
 
                                     <!-- SERIAL NUMBER -->
-                                    <td>
+                                    <td style="text-align: center;">
                                         <span class="request-serial">
                                             <?= $sn++ ?>
                                         </span>
@@ -248,7 +255,7 @@ $ticket_status = '';
                                         </strong>
                                     </td>
 
-                                    <!-- REQUESTER -->
+                                    <!-- USER (REQUESTER) -->
                                     <td>
 
                                         <div class="dashboard-table-user">
@@ -281,12 +288,12 @@ $ticket_status = '';
 
                                     </td>
 
-                                    <!-- CATEGORY -->
+                                    <!-- NAME -->
                                     <td>
 
                                         <span class="dashboard-role">
                                             <?= htmlspecialchars(
-                                                ucfirst((string)$ticketer_role),
+                                                ucfirst((string)$ticket_name),
                                                 ENT_QUOTES,
                                                 'UTF-8'
                                             ) ?>
@@ -379,121 +386,6 @@ $ticket_status = '';
 
                                     </td>
 
-                                    <!-- ACTIONS -->
-                                    <td>
-
-                                        <div class="request-action-group">
-
-                                            <?php if ((int)$ticket_status !== -1 && (int)$ticket_status !== 4): ?>
-
-                                                <button type="button"
-                                                        class="dashboard-table-action request-action-reply"
-                                                        title="Update request status"
-                                                        aria-label="Update request status"
-                                                        onclick="showReplyModal(
-                                                            <?= htmlspecialchars(
-                                                                json_encode((string)$totalrequest_sn),
-                                                                ENT_QUOTES,
-                                                                'UTF-8'
-                                                            ) ?>,
-                                                            <?= htmlspecialchars(
-                                                                json_encode(
-                                                                    (string)$ticket_subject,
-                                                                    JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP
-                                                                ),
-                                                                ENT_QUOTES,
-                                                                'UTF-8'
-                                                            ) ?>,
-                                                            <?= htmlspecialchars(
-                                                                json_encode((string)$ticket_status),
-                                                                ENT_QUOTES,
-                                                                'UTF-8'
-                                                            ) ?>,
-                                                            <?= htmlspecialchars(
-                                                                json_encode((string)$ticketer_email),
-                                                                ENT_QUOTES,
-                                                                'UTF-8'
-                                                            ) ?>,
-                                                            <?= htmlspecialchars(
-                                                                json_encode((string)$ticket_no),
-                                                                ENT_QUOTES,
-                                                                'UTF-8'
-                                                            ) ?>,
-                                                            <?= htmlspecialchars(
-                                                                json_encode((string)$ticketer_name),
-                                                                ENT_QUOTES,
-                                                                'UTF-8'
-                                                            ) ?>
-                                                        )">
-
-                                                    <i class="mdi mdi-reply"></i>
-
-                                                </button>
-
-                                            <?php endif; ?>
-
-                                            <?php if ((int)$ticket_status === -1): ?>
-
-                                                <button type="button"
-                                                        class="dashboard-table-action request-action-restore"
-                                                        title="Restore request"
-                                                        aria-label="Restore request"
-                                                        onclick="showRestoreModal(
-                                                            <?= htmlspecialchars(
-                                                                json_encode((string)$totalrequest_sn),
-                                                                ENT_QUOTES,
-                                                                'UTF-8'
-                                                            ) ?>,
-                                                            <?= htmlspecialchars(
-                                                                json_encode((string)$ticket_no),
-                                                                ENT_QUOTES,
-                                                                'UTF-8'
-                                                            ) ?>,
-                                                            <?= htmlspecialchars(
-                                                                json_encode($table_name),
-                                                                ENT_QUOTES,
-                                                                'UTF-8'
-                                                            ) ?>
-                                                        )">
-
-                                                    <i class="mdi mdi-recycle"></i>
-
-                                                </button>
-
-                                            <?php else: ?>
-
-                                                <button type="button"
-                                                        class="dashboard-table-action request-action-delete"
-                                                        title="Delete request"
-                                                        aria-label="Delete request"
-                                                        onclick="showDeleteModal(
-                                                            <?= htmlspecialchars(
-                                                                json_encode((string)$totalrequest_sn),
-                                                                ENT_QUOTES,
-                                                                'UTF-8'
-                                                            ) ?>,
-                                                            <?= htmlspecialchars(
-                                                                json_encode((string)$ticket_no),
-                                                                ENT_QUOTES,
-                                                                'UTF-8'
-                                                            ) ?>,
-                                                            <?= htmlspecialchars(
-                                                                json_encode($table_name),
-                                                                ENT_QUOTES,
-                                                                'UTF-8'
-                                                            ) ?>
-                                                        )">
-
-                                                    <i class="mdi mdi-delete-outline"></i>
-
-                                                </button>
-
-                                            <?php endif; ?>
-
-                                        </div>
-
-                                    </td>
-
                                 </tr>
 
                             <?php endforeach; ?>
@@ -502,7 +394,7 @@ $ticket_status = '';
 
                             <tr>
 
-                                <td colspan="10" class="request-empty-state">
+                                <td colspan="9" class="request-empty-state">
 
                                     <div class="request-empty-icon">
                                         <i class="mdi mdi-inbox-outline"></i>
@@ -600,6 +492,105 @@ $ticket_status = '';
             </button>
 
         </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     CREATE REQUEST MODAL
+========================================================= -->
+
+<div id="createRequestModal"
+     class="request-modal-overlay"
+     aria-hidden="true">
+
+    <div class="request-modal-box"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="createRequestModalTitle">
+
+        <button type="button"
+                class="request-modal-close"
+                onclick="closeCreateRequestModal()"
+                aria-label="Close">
+            &times;
+        </button>
+
+        <div class="request-modal-centered-icon">
+            <i class="mdi mdi-plus-circle-outline"></i>
+        </div>
+
+        <h3 id="createRequestModalTitle" class="request-modal-title">
+            Create Request
+        </h3>
+
+        <form method="POST"
+              action="index.php?action=create_request" enctype="application/x-www-form-urlencoded">
+
+            <div class="request-form-group">
+
+                <label for="createPriority">Priority</label>
+
+                <select name="priority"
+                        id="createPriority"
+                        class="request-form-control"
+                        required>
+
+                    <option value="">Select priority</option>
+                    <option value="2">High</option>
+                    <option value="1">Medium</option>
+                    <option value="0">Low</option>
+
+                </select>
+
+            </div>
+
+            <div class="request-form-group">
+
+                <label for="createSubject">Subject</label>
+
+                <input type="text"
+                       name="subject"
+                       id="createSubject"
+                       class="request-form-control"
+                       required>
+
+            </div>
+
+            <div class="request-form-group">
+
+                <label for="createComplain">Complain / Request</label>
+
+                <textarea name="complain"
+                          id="createComplain"
+                          class="request-form-control"
+                          rows="5"
+                          required></textarea>
+
+            </div>
+<input  type="hidden" name="create_request" >
+            <div class="request-modal-actions">
+
+                <button type="button"
+                        class="request-modal-btn request-modal-btn-secondary"
+                        onclick="closeCreateRequestModal()">
+                    Cancel
+                </button>
+
+                <button type="submit"
+                        name="create_request"
+                        class="request-modal-btn request-modal-btn-primary">
+
+                    <i class="mdi mdi-send"></i>
+                    Create
+
+                </button>
+
+            </div>
+
+        </form>
 
     </div>
 
@@ -1033,8 +1024,10 @@ $ticket_status = '';
 }
 
 .request-serial {
+    display: inline-block;
     color: #94a3b8;
     font-weight: 600;
+    text-align: center;
 }
 
 .request-ticket-id {
@@ -1443,6 +1436,11 @@ $ticket_status = '';
     color: #334155;
     font-size: 13px;
     color-scheme: light;
+}
+
+textarea.request-form-control {
+    padding: 10px 12px;
+    resize: vertical;
 }
 
 .request-form-control:focus {
@@ -2025,7 +2023,7 @@ $ticket_status = '';
 
             const rowText = row.textContent.toLowerCase();
 
-            const statusElement = row.cells[8];
+            const statusElement = row.cells[7];
 
             const rowStatus = statusElement
                 ? statusElement.textContent.trim().toLowerCase()
@@ -2226,6 +2224,21 @@ $ticket_status = '';
         closeModal('complaintModal');
     };
 
+    window.showCreateRequestModal = function () {
+        openModal('createRequestModal');
+    };
+
+    window.closeCreateRequestModal = function () {
+        closeModal('createRequestModal');
+    };
+
+    document.getElementById('createRequestBtn').addEventListener(
+        'click',
+        function () {
+            window.showCreateRequestModal();
+        }
+    );
+
     window.showReplyModal = function (
         ticketSn,
         subject,
@@ -2351,6 +2364,10 @@ $ticket_status = '';
                         window.closeComplaintModal();
                         break;
 
+                    case 'createRequestModal':
+                        window.closeCreateRequestModal();
+                        break;
+
                     case 'replyModal':
                         window.closeReplyModal();
                         break;
@@ -2378,6 +2395,10 @@ $ticket_status = '';
 
         if (document.getElementById('complaintModal').classList.contains('show')) {
             window.closeComplaintModal();
+        }
+
+        if (document.getElementById('createRequestModal').classList.contains('show')) {
+            window.closeCreateRequestModal();
         }
 
         if (document.getElementById('replyModal').classList.contains('show')) {

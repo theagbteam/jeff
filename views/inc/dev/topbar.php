@@ -406,7 +406,7 @@
 
  <div class="mb-3">
 
-                        <label
+                        <!-- <label
                             for="adminTitle"
                             class="form-label"
                         >
@@ -429,7 +429,9 @@
     <?php endforeach; ?>
                     
                     
-                    </select>
+                    </select> -->
+
+                    <input type="hidden" name="user_corridor" value="General">
 
 </div>
 
