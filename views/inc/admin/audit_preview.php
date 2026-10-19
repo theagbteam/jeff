@@ -199,10 +199,17 @@ $audit_sn=0;
 
                                         <!-- IP ADDRESS -->
                                         <td>
-                                            <span class="audit-trail-ip">
+                                            <?php $auditIp = trim((string)($audit_trail['ip'] ?? '')); ?>
+                                            <a
+                                                href="https://whatismyipaddress.com/ip/<?= rawurlencode($auditIp) ?>"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                class="audit-trail-ip"
+                                                title="View IP address details on WhatIsMyIPAddress.com"
+                                            >
                                                 <i class="mdi mdi-ip-network-outline"></i>
-                                                <?= $audit_trail['ip'] ?>
-                                            </span>
+                                                <?= htmlspecialchars($auditIp, ENT_QUOTES, 'UTF-8') ?>
+                                            </a>
                                         </td>
                                     </tr>
 
@@ -570,6 +577,11 @@ $audit_sn=0;
     white-space: nowrap;
 }
 
+.audit-trail-ip:hover {
+    color: #3b6fd4;
+    text-decoration: underline;
+}
+
 .audit-trail-ip i {
     color: #3b6fd4;
     font-size: 15px;
@@ -790,13 +802,17 @@ $audit_sn=0;
     color: #8bb8ff;
 }
 
-:root[data-theme="dark"] .audit-trail-role {
-    border-color: #29364a;
-    background: #172438;
+:root[data-theme="dark"] .audit-trail-ip {
     color: #a7b6cb;
 }
 
-:root[data-theme="dark"] .audit-trail-ip {
+:root[data-theme="dark"] .audit-trail-ip:hover {
+    color: #8bb8ff;
+}
+
+:root[data-theme="dark"] .audit-trail-role {
+    border-color: #29364a;
+    background: #172438;
     color: #a7b6cb;
 }
 

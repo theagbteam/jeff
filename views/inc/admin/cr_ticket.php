@@ -1057,7 +1057,7 @@
                 <div class="form-field">
                     <label for="subject">Subject <span class="required">*</span></label>
                     <input type="text" id="subject" name="subject" maxlength="70"
-                           value="Illegal Connection" placeholder="Brief subject" required
+                           value="" placeholder="Brief subject" required
                            pattern=".{3,70}"
                            title="Subject must be between 3 and 70 characters">
                 </div>

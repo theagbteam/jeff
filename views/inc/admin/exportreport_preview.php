@@ -1,4 +1,3 @@
-
 <?php
 $template_mode = 'auto';
 
@@ -16,8 +15,20 @@ if (isset($_SESSION['error'])) {
     unset($_SESSION['error']);
 }
 
-$tickets = isset($LoadTicketsTable) && is_array($LoadTicketsTable)
-    ? $LoadTicketsTable
+/*
+|--------------------------------------------------------------------------
+| Tickets data
+|--------------------------------------------------------------------------
+| Loaded in the controller:
+|   $tb_name = "ticket_reports";
+|   $LoadAllTickets = $callUserModel->GeneralSelectAnyTable($tb_name);
+|
+| Expected columns:
+|   date_created, date_updated, ticket_id, name, priority,
+|   corridor, subject, category, status_text, incidence_date
+*/
+$tickets = isset($LoadAllTickets) && is_array($LoadAllTickets)
+    ? $LoadAllTickets
     : [];
 
 function exportTicketValue($ticket, $keys, $default = '')
@@ -210,6 +221,11 @@ function exportTicketDateTime($value)
         color: #ffffff;
     }
 
+    .export-tickets-btn:disabled {
+        opacity: .6;
+        cursor: not-allowed;
+    }
+
     .export-table-wrapper {
         width: 100%;
         overflow-x: auto;
@@ -396,7 +412,7 @@ function exportTicketDateTime($value)
                         </label>
 
                         <select id="exportDatePreset" class="export-filter-control">
-                            <option value="this_month" selected>This month (October)</option>
+                            <option value="this_month" selected>This month (<?php echo date('F'); ?>)</option>
                             <option value="today">Today</option>
                             <option value="yesterday">Yesterday</option>
                             <option value="last_7_days">Last 7 days</option>
@@ -455,12 +471,20 @@ function exportTicketDateTime($value)
 
                         <select id="exportStatus" class="export-filter-control">
                             <option value="">All statuses</option>
-                            <option value="new">New</option>
-                            <option value="waiting reply">Waiting reply</option>
-                            <option value="replied">Replied</option>
-                            <option value="resolved">Resolved</option>
-                            <option value="in progress">In Progress</option>
-                            <option value="on hold">On Hold</option>
+                            <?php
+                            $statusOptions = [];
+                            foreach ($tickets as $ticketRow) {
+                                $rowStatus = trim((string) exportTicketValue($ticketRow, ['status_text', 'status']));
+                                if ($rowStatus !== '') {
+                                    $statusOptions[strtolower($rowStatus)] = $rowStatus;
+                                }
+                            }
+                            ksort($statusOptions);
+                            foreach ($statusOptions as $statusValue => $statusLabel): ?>
+                                <option value="<?php echo htmlspecialchars($statusValue, ENT_QUOTES, 'UTF-8'); ?>">
+                                    <?php echo htmlspecialchars(ucfirst($statusLabel), ENT_QUOTES, 'UTF-8'); ?>
+                                </option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
 
@@ -471,10 +495,20 @@ function exportTicketDateTime($value)
 
                         <select id="exportPriority" class="export-filter-control">
                             <option value="">All priorities</option>
-                            <option value="critical">Critical</option>
-                            <option value="high">High</option>
-                            <option value="medium">Medium</option>
-                            <option value="low">Low</option>
+                            <?php
+                            $priorityOptions = [];
+                            foreach ($tickets as $ticketRow) {
+                                $rowPriority = trim((string) exportTicketValue($ticketRow, ['priority']));
+                                if ($rowPriority !== '') {
+                                    $priorityOptions[strtolower($rowPriority)] = $rowPriority;
+                                }
+                            }
+                            ksort($priorityOptions);
+                            foreach ($priorityOptions as $priorityValue => $priorityLabel): ?>
+                                <option value="<?php echo htmlspecialchars($priorityValue, ENT_QUOTES, 'UTF-8'); ?>">
+                                    <?php echo htmlspecialchars(ucfirst($priorityLabel), ENT_QUOTES, 'UTF-8'); ?>
+                                </option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
 
@@ -515,10 +549,11 @@ function exportTicketDateTime($value)
                                 <th>Ticket ID</th>
                                 <th>Subject</th>
                                 <th>Category</th>
+                                <th>Corridor</th>
                                 <th>Status</th>
                                 <th>Priority</th>
-                                <th>Assigned To</th>
                                 <th>Name</th>
+                                <th>Incidence Date</th>
                                 <th>Created</th>
                                 <th>Updated</th>
                             </tr>
@@ -531,52 +566,20 @@ function exportTicketDateTime($value)
                             foreach ($tickets as $ticket):
                                 $serialNumber++;
 
-                                $ticketId = exportTicketValue(
-                                    $ticket,
-                                    ['ticket_id', 'ticketid', 'id', 'refid', 'sn']
-                                );
+                                $ticketId = exportTicketValue($ticket, ['ticket_id', 'ticketid', 'id', 'refid', 'sn']);
+                                $subject = exportTicketValue($ticket, ['subject', 'complaint', 'title', 'ticket_subject']);
+                                $category = exportTicketValue($ticket, ['category', 'category_name', 'ticket_category']);
+                                $status = exportTicketValue($ticket, ['status_text', 'status', 'status_name']);
+                                $priority = exportTicketValue($ticket, ['priority', 'priority_name']);
+                                $corridor = exportTicketValue($ticket, ['corridor']);
+                                $name = exportTicketValue($ticket, ['name', 'full_name', 'reporter_name', 'created_by']);
 
-                                $subject = exportTicketValue(
-                                    $ticket,
-                                    ['subject', 'complaint', 'title', 'ticket_subject']
-                                );
-
-                                $category = exportTicketValue(
-                                    $ticket,
-                                    ['category_name', 'category', 'ticket_category']
-                                );
-
-                                $status = exportTicketValue(
-                                    $ticket,
-                                    ['status_name', 'status', 'ticket_status']
-                                );
-
-                                $priority = exportTicketValue(
-                                    $ticket,
-                                    ['priority_name', 'priority']
-                                );
-
-                                $assignedTo = exportTicketValue(
-                                    $ticket,
-                                    ['assigned_name', 'assigned_to', 'assignee', 'assigned_user']
-                                );
-
-                                $name = exportTicketValue(
-                                    $ticket,
-                                    ['full_name', 'reporter_name', 'name', 'created_by']
-                                );
-
-                                $createdRaw = exportTicketValue(
-                                    $ticket,
-                                    ['date_created', 'created_at', 'date', 'created']
-                                );
-
-                                $updatedRaw = exportTicketValue(
-                                    $ticket,
-                                    ['updated_at', 'date_updated', 'last_updated', 'updated']
-                                );
+                                $incidenceRaw = exportTicketValue($ticket, ['incidence_date']);
+                                $createdRaw = exportTicketValue($ticket, ['date_created', 'created_at', 'date', 'created']);
+                                $updatedRaw = exportTicketValue($ticket, ['date_updated', 'updated_at', 'last_updated', 'updated']);
 
                                 $createdDate = exportTicketDate($createdRaw);
+                                $incidenceDate = exportTicketDate($incidenceRaw);
                                 $statusLower = strtolower(trim((string) $status));
                                 $priorityLower = strtolower(trim((string) $priority));
 
@@ -591,6 +594,7 @@ function exportTicketDateTime($value)
                             ?>
                                 <tr
                                     data-created-date="<?php echo htmlspecialchars($createdDate, ENT_QUOTES, 'UTF-8'); ?>"
+                                    data-incidence-date="<?php echo htmlspecialchars($incidenceDate, ENT_QUOTES, 'UTF-8'); ?>"
                                     data-status="<?php echo htmlspecialchars($statusLower, ENT_QUOTES, 'UTF-8'); ?>"
                                     data-priority="<?php echo htmlspecialchars($priorityLower, ENT_QUOTES, 'UTF-8'); ?>"
                                 >
@@ -601,6 +605,8 @@ function exportTicketDateTime($value)
                                     <td><?php echo htmlspecialchars((string) $subject, ENT_QUOTES, 'UTF-8'); ?></td>
 
                                     <td><?php echo htmlspecialchars((string) $category, ENT_QUOTES, 'UTF-8'); ?></td>
+
+                                    <td><?php echo htmlspecialchars((string) $corridor, ENT_QUOTES, 'UTF-8'); ?></td>
 
                                     <td>
                                         <span class="export-status-badge">
@@ -614,9 +620,11 @@ function exportTicketDateTime($value)
                                         </span>
                                     </td>
 
-                                    <td><?php echo htmlspecialchars((string) $assignedTo, ENT_QUOTES, 'UTF-8'); ?></td>
-
                                     <td><?php echo htmlspecialchars((string) $name, ENT_QUOTES, 'UTF-8'); ?></td>
+
+                                    <td data-order="<?php echo htmlspecialchars((string) $incidenceRaw, ENT_QUOTES, 'UTF-8'); ?>">
+                                        <?php echo htmlspecialchars(exportTicketDate($incidenceRaw), ENT_QUOTES, 'UTF-8'); ?>
+                                    </td>
 
                                     <td data-order="<?php echo htmlspecialchars((string) $createdRaw, ENT_QUOTES, 'UTF-8'); ?>">
                                         <?php echo htmlspecialchars(exportTicketDateTime($createdRaw), ENT_QUOTES, 'UTF-8'); ?>
@@ -640,6 +648,64 @@ function exportTicketDateTime($value)
 (function () {
     'use strict';
 
+    /* ------------------------------------------------------------
+       Load DataTables Buttons + HTML5 export dependencies once.
+       These are required for the Excel/PDF export to actually fire.
+       ------------------------------------------------------------ */
+    var EXPORT_ASSETS = [
+        'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js',
+        'https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js',
+        'https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js',
+        'https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js'
+    ];
+
+    var assetsPromise = null;
+
+    function loadScript(src) {
+        return new Promise(function (resolve, reject) {
+            var existing = document.querySelector('script[data-export-asset="' + src + '"]');
+
+            if (existing) {
+                if (existing.getAttribute('data-loaded') === '1') {
+                    resolve();
+                } else {
+                    existing.addEventListener('load', function () { resolve(); });
+                    existing.addEventListener('error', function () { reject(new Error('Failed to load ' + src)); });
+                }
+                return;
+            }
+
+            var script = document.createElement('script');
+            script.src = src;
+            script.async = false;
+            script.setAttribute('data-export-asset', src);
+
+            script.onload = function () {
+                script.setAttribute('data-loaded', '1');
+                resolve();
+            };
+            script.onerror = function () {
+                reject(new Error('Failed to load ' + src));
+            };
+
+            document.head.appendChild(script);
+        });
+    }
+
+    function loadExportAssets() {
+        if (assetsPromise) {
+            return assetsPromise;
+        }
+
+        assetsPromise = EXPORT_ASSETS.reduce(function (chain, src) {
+            return chain.then(function () { return loadScript(src); });
+        }, Promise.resolve());
+
+        return assetsPromise;
+    }
+
     function initialiseExportTickets() {
         if (!window.jQuery || !jQuery.fn || !jQuery.fn.DataTable) {
             return;
@@ -651,6 +717,8 @@ function exportTicketDateTime($value)
         if (!tableElement) {
             return;
         }
+
+        var exportButtonsReady = false;
 
         if (!$.fn.DataTable.isDataTable(tableElement)) {
             $(tableElement).DataTable({
@@ -830,19 +898,134 @@ function exportTicketDateTime($value)
             .off('change.exportTickets')
             .on('change.exportTickets', applyFilters);
 
+        function triggerExport(selector) {
+            if (!$.fn.DataTable.Buttons) {
+                console.error('DataTables Buttons plugin is not loaded.');
+                return;
+            }
+
+            if (!exportButtonsReady) {
+                console.warn('Export libraries are still loading. Please try again in a moment.');
+                return;
+            }
+
+            var buttonApi = table.button(selector);
+
+            if (!buttonApi || !buttonApi.length) {
+                console.error('Export button not found: ' + selector);
+                return;
+            }
+
+            buttonApi.trigger();
+        }
+
         $('#exportTicketsExcel')
             .off('click.exportTickets')
             .on('click.exportTickets', function () {
-                table.button('.buttons-excel').trigger();
+                triggerExport('.buttons-excel');
             });
 
         $('#exportTicketsPdf')
             .off('click.exportTickets')
             .on('click.exportTickets', function () {
-                table.button('.buttons-pdf').trigger();
+                triggerExport('.buttons-pdf');
             });
 
         applyFilters();
+
+        /* --------------------------------------------------------
+           Load the export dependencies, then rebuild the DataTable
+           so its Buttons extension picks them up correctly.
+           -------------------------------------------------------- */
+        loadExportAssets()
+            .then(function () {
+                if (!$.fn.DataTable.Buttons) {
+                    console.error('DataTables Buttons plugin failed to load.');
+                    return;
+                }
+
+                // Re-initialise the table so the buttons extension is registered.
+                table.destroy();
+
+                $(tableElement).DataTable({
+                    pageLength: 10,
+                    lengthMenu: [10, 25, 50, 100],
+                    autoWidth: false,
+                    order: [[0, 'asc']],
+                    dom: 'Blfrtip',
+                    buttons: [
+                        {
+                            extend: 'excelHtml5',
+                            title: 'Export Tickets',
+                            filename: 'export_tickets',
+                            exportOptions: {
+                                columns: ':visible',
+                                modifier: {
+                                    search: 'applied',
+                                    order: 'applied',
+                                    page: 'all'
+                                }
+                            }
+                        },
+                        {
+                            extend: 'pdfHtml5',
+                            title: 'Export Tickets',
+                            filename: 'export_tickets',
+                            orientation: 'landscape',
+                            pageSize: 'A3',
+                            exportOptions: {
+                                columns: ':visible',
+                                modifier: {
+                                    search: 'applied',
+                                    order: 'applied',
+                                    page: 'all'
+                                }
+                            },
+                            customize: function (doc) {
+                                doc.defaultStyle.fontSize = 8;
+                                doc.styles.tableHeader.fontSize = 8;
+                                doc.styles.title.fontSize = 14;
+                                doc.pageMargins = [20, 25, 20, 25];
+
+                                if (doc.content[1] && doc.content[1].table) {
+                                    doc.content[1].table.widths = Array(
+                                        doc.content[1].table.body[0].length
+                                    ).fill('*');
+                                }
+                            }
+                        }
+                    ],
+                    drawCallback: function () {
+                        var api = this.api();
+                        var info = api.page.info();
+
+                        api.column(0, {page: 'current'}).nodes().each(function (cell, index) {
+                            cell.innerHTML = info.start + index + 1;
+                        });
+                    },
+                    language: {
+                        emptyTable: 'No tickets available',
+                        search: 'Search tickets:',
+                        lengthMenu: 'Show _MENU_ tickets',
+                        info: 'Showing _START_ to _END_ of _TOTAL_ tickets',
+                        infoEmpty: 'Showing 0 to 0 of 0 tickets',
+                        zeroRecords: 'No matching tickets found',
+                        paginate: {
+                            previous: 'Previous',
+                            next: 'Next'
+                        }
+                    }
+                });
+
+                table = $(tableElement).DataTable();
+                exportButtonsReady = true;
+
+                // Re-apply current filters after re-initialisation.
+                applyFilters();
+            })
+            .catch(function (error) {
+                console.error('Failed to load export libraries:', error);
+            });
     }
 
     if (document.readyState === 'loading') {

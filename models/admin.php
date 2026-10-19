@@ -27,6 +27,65 @@ class ModelAdmin
     }
 
 
+public function updateStatus($userId)
+{
+    try {
+        $userId = (int) $userId;
+        $status = 1;
+
+        $this->conn->beginTransaction();
+
+        // Fetch fullname and email from users
+        $stmtSelect = $this->conn->prepare("SELECT fullname, email FROM users WHERE userid = :userid");
+        $stmtSelect->bindParam(':userid', $userId, PDO::PARAM_INT);
+        $stmtSelect->execute();
+        $user = $stmtSelect->fetch(PDO::FETCH_ASSOC);
+
+        if (!$user) {
+            $this->conn->rollBack();
+            return false;
+        }
+
+        // Generate random 8-char alphanumeric password
+        $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        $plainPassword = '';
+        for ($i = 0; $i < 8; $i++) {
+            $plainPassword .= $chars[random_int(0, strlen($chars) - 1)];
+        }
+
+        // Hash the password
+        $hashedPassword = password_hash($plainPassword, PASSWORD_DEFAULT);
+
+        // Update users table status
+        $stmtUsers = $this->conn->prepare("UPDATE users SET status = :status WHERE userid = :userid");
+        $stmtUsers->bindParam(':status', $status, PDO::PARAM_INT);
+        $stmtUsers->bindParam(':userid', $userId, PDO::PARAM_INT);
+        $stmtUsers->execute();
+
+        // Update login table status, password, and reset login_counts
+        $stmtLogin = $this->conn->prepare("UPDATE login SET status = :status, password = :password, login_counts = 0 WHERE userid = :userid");
+        $stmtLogin->bindParam(':status', $status, PDO::PARAM_INT);
+        $stmtLogin->bindParam(':password', $hashedPassword, PDO::PARAM_STR);
+        $stmtLogin->bindParam(':userid', $userId, PDO::PARAM_INT);
+        $stmtLogin->execute();
+
+        $this->conn->commit();
+
+        return [
+            'success'        => true,
+            'fullname'       => $user['fullname'],
+            'email'          => $user['email'],
+            'plain_password' => $plainPassword
+        ];
+    } catch (PDOException $e) {
+        if ($this->conn->inTransaction()) {
+            $this->conn->rollBack();
+        }
+        return false;
+    }
+}
+
+
 
 public function InsertTransferHistory($data)
 {
@@ -76,20 +135,23 @@ public function InsertTransferHistory($data)
 
 
 
+
+
 public function GetWellheadStatusCounts()
 {
     try {
         $sql = "SELECT
                     ws.sn,
                     ws.name,
-                    ws.color,
-                    COUNT(t.status_name) AS total
+                    COALESCE(NULLIF(TRIM(ws.color), ''), '#3b6fd4') AS color,
+                    COUNT(t.status_text) AS total
                 FROM wellhead_status ws
-                LEFT JOIN tickets t
-                    ON t.status_name = ws.name
+                LEFT JOIN ticket_reports t
+                       ON TRIM(LOWER(t.status_text)) COLLATE utf8mb4_unicode_ci
+                        = TRIM(LOWER(ws.name)) COLLATE utf8mb4_unicode_ci
+                      AND t.status >= 0
                 GROUP BY ws.sn, ws.name, ws.color
-                ORDER BY ws.sn ASC
-                LIMIT 6";
+                ORDER BY ws.sn ASC";
 
         $stmt = $this->conn->prepare($sql);
         $stmt->execute();
@@ -97,9 +159,20 @@ public function GetWellheadStatusCounts()
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     } catch (PDOException $e) {
+
+        $errorMessage = 'GetWellheadStatusCounts SQL ERROR: ' . $e->getMessage();
+
+        error_log($errorMessage);
+
+        echo '<pre style="background:#fff0f0;color:#b00020;padding:15px;border:1px solid #b00020;white-space:pre-wrap;">';
+        echo htmlspecialchars($errorMessage, ENT_QUOTES, 'UTF-8');
+        echo '</pre>';
+
         return [];
     }
 }
+
+
 
 
 
@@ -836,7 +909,7 @@ public function getLoginStatusCounts(){
                     SUM(status = 0) AS status_0,
                     SUM(status = 1) AS status_1,
                     SUM(status = 2) AS status_2
-                FROM tickets";
+                FROM ticket_reports";
 
         $stmt = $this->conn->prepare($sql);
         $stmt->execute();

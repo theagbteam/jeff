@@ -77,6 +77,8 @@ public function page_dashboard() {
     $LoadAllNigeriaStates = $this->stateModel->getAll();
    $callUserModel = new User();
   $CallModelAdmin = new ModelAdmin;
+  
+  $wellhead_status_counts = $CallModelAdmin->GetWellheadStatusCounts();
  
   $CallMailerModel = new Mailer;
 
@@ -98,11 +100,8 @@ $totalDeletedUsers  = (int) ($statusCounts['deleted'] ?? 0);
     $user_id = base64_decode($token, true);
     $LoadAParticularUsersAndLoginTableForAdmin=$callUserModel->SelectUsersAndLoginTableforOnePersonAfterLogin($user_id);
         }
-//   if (isset($_GET['token_profile'])) { 
-//     $token = $_GET['token_profile']; 
-//     $user_id = base64_decode($token, true);
-//     $LoadAParticularUsersAndLoginTableForAdmin=$callUserModel->SelectUsersAndLoginTableforOnePersonAfterLogin($user_id);
-//         }
+ 
+        
   if (isset($_GET['token_userdetails'])) { 
     $token = $_GET['token_userdetails']; 
     $user_id = base64_decode($token, true);
@@ -124,6 +123,7 @@ $totalDeletedUsers  = (int) ($statusCounts['deleted'] ?? 0);
    $tb_name = "pipeline";$LoadPipelineColumnForSelect=$callUserModel->GeneralSelectAnyTable($tb_name);
    $tb_name = "pipeline_type";$LoadPipelineTypeColumnForSelect=$callUserModel->GeneralSelectAnyTable($tb_name);
    $tb_name = "ticket_reports";$LoadAllTickets=$callUserModel->GeneralSelectAnyTable($tb_name);
+   $tb_name = "wellhead_status";$LoadAllTicketCategories=$callUserModel->GeneralSelectAnyTable($tb_name);
    $ticket_id = $callUserModel->generateTicketId();
    if ($ticket_id === null) { $ticket_id="Undefined"; }
 $page_link_title = $_GET['action'] ?? 'tickets';
@@ -187,7 +187,7 @@ header("Location: index?action=compulsory_cp");
    }
    $search_tb_name ="ticket_category";
   $LoadTicketcategories= $callUserModel->GeneralSelectAnyTable($search_tb_name);
-   $wellhead_status_counts = $CallModelAdmin->GetWellheadStatusCounts();
+   
    $TotalNoTickets = $callUserModel->CountAllTickets();
             // $isConnected = $callAuthMiddlewareClass->checkConnection();
 //    $roleCounts = $CallModelAdmin->getRoleCounts();
@@ -299,6 +299,70 @@ $callUserModel->clearMsgNotification($userid);
 
 
 
+
+
+
+ if (isset($_GET['token_reset'])) {
+    // 1. Decode the token properly
+    $userrefid = base64_decode(urldecode($_GET['token_reset']), true);
+
+    // 2. Validate
+    if ($userrefid === false || !is_numeric($userrefid)) {
+        $_SESSION['error'] = "Invalid activation token.";
+        header("Location: " . ($_SERVER['HTTP_REFERER'] ?? 'index.php?action=index'));
+        exit;
+    }
+
+    $userrefid = (int) $userrefid;
+    $user_details = $admin_abr . " - " . $_SESSION['userid'];
+
+    // 3. Call model
+    $UpdateStatues = $CallModelAdmin->updateStatus($userrefid);
+
+    if (!$UpdateStatues) {
+        $_SESSION['error'] = "Failed to activate account. User not found.";
+        header("Location: " . ($_SERVER['HTTP_REFERER'] ?? 'index.php?action=index'));
+        exit;
+    }
+
+    $fullname      = $UpdateStatues['fullname'];
+    $email         = $UpdateStatues['email'];
+    $plainPassword = $UpdateStatues['plain_password'];
+
+    $_SESSION['success'] = "Account activated successfully";
+
+    $subject = "Account activated successfully";
+    $action  = "You activated " . $fullname . "'s account";
+
+    $message = "Hello $fullname,<br><br>"
+             . "Your account has been activated successfully.<br><br>"
+             . "Your registration/activation has been completed, and your account is now ready for use.<br><br>"
+             . "<strong>Reference ID:</strong> $userrefid<br>"
+             . "<strong>Reference PASSWORD:</strong> $plainPassword<br>"
+             . "Please use your Reference ID and default password to log in to your account. For your security, we strongly recommend changing your default password after your first successful login.<br><br>"
+             . "<div style='text-align:center; margin:25px 0;'>"
+             . "<a href='$loginurl' style='display:inline-block; padding:12px 25px; background-color:#0d6efd; color:#ffffff; text-decoration:none; border-radius:5px; font-weight:bold;'>"
+             . "Login to Your Account"
+             . "</a>"
+             . "</div>"
+             . "If you did not register for this account, please contact the Support Team immediately.<br><br>"
+             . "Best regards,<br>"
+             . "The Support Team";
+
+    $SendEmail = $CallMailerModel->sendmail($email, $subject, $message);
+
+    $logResult = $callAuthMiddlewareClass->writelog(
+        $_SESSION['userid'], $_SESSION['role'], $_SESSION['role'],
+        $user_details, $action, $company_logfile_url
+    );
+
+    header("Location: " . ($_SERVER['HTTP_REFERER'] ?? 'index.php?action=index'));
+    exit;
+}
+
+
+
+            
 
 
  if (isset($_POST['updateuserpwd'])) {
@@ -490,7 +554,7 @@ $message = "Hello $user_fn,<br><br>"
 
          . "Please take note of your new corridor assignment and resume your duties on the effective resumption date stated above.<br><br>"
 
-         . "If you have any questions regarding this transfer, please contact your administrator or the Support Team.<br><br>"
+         . "If you have any questions regarding this transfer, please contact your administrator or supervisor.<br><br>"
 
          . "Best regards,<br>"
          . "The Support Team";
@@ -552,10 +616,11 @@ if (in_array('', $data, true)) {
  if (isset($_POST['CreateNewTicket'])) {
 
     $userid = $_SESSION['userid'];
-
+  $status_text="new";
     $data = [
        'ticket_id' => 'TKT' . date('YmdHis') . substr((string) microtime(true), -6) ,
         'date_created'                              => date('Y-m-d H:i:s'),
+        'status_text'                              => $status_text,
         'date_updated'                              => 'Nil',
         'category'                                  => trim($_POST['category'] ?? ''),
         'priority'                                  => trim($_POST['priority'] ?? ''),

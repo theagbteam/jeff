@@ -1,66 +1,134 @@
-
 <?php
 
 $table_name = "tickets";
 $report_start_date = $_GET['from_date'] ?? '2026-10-01';
-$report_end_date = $_GET['to_date'] ?? '2026-10-09';
+$report_end_date = $_GET['to_date'] ?? date('Y-m-d');
 $report_type = $_GET['report_type'] ?? 'tickets_per_day';
 
 $report_start_date = preg_match('/^\d{4}-\d{2}-\d{2}$/', $report_start_date)
     ? $report_start_date : '2026-10-01';
 
 $report_end_date = preg_match('/^\d{4}-\d{2}-\d{2}$/', $report_end_date)
-    ? $report_end_date : '2026-10-09';
+    ? $report_end_date : date('Y-m-d');
 
-$sample_report = [
-    ['date' => '2026-10-01', 'new_tickets' => 3,  'open' => 1,  'resolved' => 2, 'time_worked' => '00:00:21'],
-    ['date' => '2026-10-02', 'new_tickets' => 8,  'open' => 1,  'resolved' => 7, 'time_worked' => '00:13:49'],
-    ['date' => '2026-10-03', 'new_tickets' => 4,  'open' => 3,  'resolved' => 1, 'time_worked' => '00:02:39'],
-    ['date' => '2026-10-04', 'new_tickets' => 10, 'open' => 3,  'resolved' => 7, 'time_worked' => '00:01:20'],
-    ['date' => '2026-10-05', 'new_tickets' => 8,  'open' => 2,  'resolved' => 6, 'time_worked' => '07:18:44'],
-    ['date' => '2026-10-06', 'new_tickets' => 3,  'open' => 1,  'resolved' => 2, 'time_worked' => ''],
-    ['date' => '2026-10-07', 'new_tickets' => 4,  'open' => 1,  'resolved' => 3, 'time_worked' => ''],
-    ['date' => '2026-10-08', 'new_tickets' => 13, 'open' => 11, 'resolved' => 2, 'time_worked' => '01:00:50'],
-    ['date' => '2026-10-09', 'new_tickets' => 1,  'open' => 1,  'resolved' => 0, 'time_worked' => ''],
-];
+/*
+ * Build the report from the real tickets dataset.
+ * $LoadAllTickets = $callUserModel->GeneralSelectAnyTable($tb_name);
+ *
+ * Real fields used (same as your ticket table):
+ *   - date_created   (any strtotime-parseable date/datetime)
+ *   - status_text    (actual status label, e.g. "New", "Assigned", "Resolved", ...)
+ *   - status         (numeric status id; rows with status < 0 are skipped, same as your table)
+ */
 
-$report_rows = isset($LoadTicketsPerDayReport) && is_array($LoadTicketsPerDayReport)
-    ? $LoadTicketsPerDayReport
-    : $sample_report;
+$all_tickets = isset($LoadAllTickets) && is_array($LoadAllTickets)
+    ? $LoadAllTickets
+    : [];
 
-$report_rows = array_values(array_filter($report_rows, function ($row) use ($report_start_date, $report_end_date) {
-    $date = $row['date'] ?? '';
-    return $date >= $report_start_date && $date <= $report_end_date;
-}));
+// ---------------------------------------------------------------
+// 1. Discover the real, distinct status labels from the data.
+//    Same idea as $wellhead_status_counts — dynamic, no hardcoding.
+// ---------------------------------------------------------------
+$status_labels = [];
 
-usort($report_rows, function ($a, $b) {
-    return strcmp($a['date'] ?? '', $b['date'] ?? '');
-});
-
-$total_new = 0;
-$total_open = 0;
-$total_resolved = 0;
-$total_seconds = 0;
-
-foreach ($report_rows as $row) {
-    $total_new += (int)($row['new_tickets'] ?? 0);
-    $total_open += (int)($row['open'] ?? 0);
-    $total_resolved += (int)($row['resolved'] ?? 0);
-
-    $time = trim((string)($row['time_worked'] ?? ''));
-
-    if ($time !== '' && preg_match('/^\d+:\d{2}:\d{2}$/', $time)) {
-        [$hours, $minutes, $seconds] = array_map('intval', explode(':', $time));
-        $total_seconds += ($hours * 3600) + ($minutes * 60) + $seconds;
+foreach ($all_tickets as $ticket) {
+    if (!is_array($ticket)) {
+        continue;
     }
+
+    // Skip rows your table already skips (status < 0)
+    if ((int)($ticket['status'] ?? -1) < 0) {
+        continue;
+    }
+
+    $label = trim((string)($ticket['status_text'] ?? ''));
+    if ($label === '') {
+        $label = 'Unknown';
+    }
+
+    if (!isset($status_labels[$label])) {
+        $status_labels[$label] = 0;
+    }
+    $status_labels[$label]++;
 }
 
-$total_time = sprintf(
-    '%02d:%02d:%02d',
-    intdiv($total_seconds, 3600),
-    intdiv($total_seconds % 3600, 60),
-    $total_seconds % 60
-);
+// Order status columns: "New"-like first, resolved/closed last, then alphabetical.
+$status_order_weight = function ($label) {
+    $l = strtolower($label);
+    if (strpos($l, 'new') !== false)      return 0;
+    if (strpos($l, 'open') !== false)     return 1;
+    if (strpos($l, 'assign') !== false)   return 2;
+    if (strpos($l, 'progress') !== false) return 3;
+    if (strpos($l, 'pending') !== false)  return 4;
+    if (strpos($l, 'hold') !== false)     return 5;
+    if (strpos($l, 'resolved') !== false) return 8;
+    if (strpos($l, 'closed') !== false)   return 9;
+    return 6;
+};
+
+uksort($status_labels, function ($a, $b) use ($status_order_weight) {
+    $wa = $status_order_weight($a);
+    $wb = $status_order_weight($b);
+    return $wa === $wb ? strcasecmp($a, $b) : $wa <=> $wb;
+});
+
+$status_columns = array_keys($status_labels);
+
+// ---------------------------------------------------------------
+// 2. Group tickets per day, counting each real status label.
+// ---------------------------------------------------------------
+$grouped = [];
+
+foreach ($all_tickets as $ticket) {
+    if (!is_array($ticket)) {
+        continue;
+    }
+
+    if ((int)($ticket['status'] ?? -1) < 0) {
+        continue;
+    }
+
+    $timestamp = strtotime((string)($ticket['date_created'] ?? ''));
+    if ($timestamp === false) {
+        continue;
+    }
+
+    $day = date('Y-m-d', $timestamp);
+    if ($day < $report_start_date || $day > $report_end_date) {
+        continue;
+    }
+
+    if (!isset($grouped[$day])) {
+        $grouped[$day] = ['date' => $day, 'new_tickets' => 0, 'statuses' => []];
+        foreach ($status_columns as $col) {
+            $grouped[$day]['statuses'][$col] = 0;
+        }
+    }
+
+    $grouped[$day]['new_tickets']++;
+
+    $label = trim((string)($ticket['status_text'] ?? ''));
+    if ($label === '') {
+        $label = 'Unknown';
+    }
+    $grouped[$day]['statuses'][$label] = ($grouped[$day]['statuses'][$label] ?? 0) + 1;
+}
+
+ksort($grouped);
+$report_rows = array_values($grouped);
+
+// ---------------------------------------------------------------
+// 3. Totals
+// ---------------------------------------------------------------
+$total_new = 0;
+$status_totals = array_fill_keys($status_columns, 0);
+
+foreach ($report_rows as $row) {
+    $total_new += (int)$row['new_tickets'];
+    foreach ($status_columns as $col) {
+        $status_totals[$col] += (int)($row['statuses'][$col] ?? 0);
+    }
+}
 
 $format_report_date = function ($date) {
     $timestamp = strtotime($date);
@@ -166,24 +234,16 @@ $report_period = $report_rows
 
                     <div class="run-report-stats">
                         <div class="run-report-stat new-stat">
-                            <span>New tickets</span>
+                            <span>Total tickets</span>
                             <strong><?= number_format($total_new) ?></strong>
                         </div>
 
-                        <div class="run-report-stat open-stat">
-                            <span>Open</span>
-                            <strong><?= number_format($total_open) ?></strong>
-                        </div>
-
-                        <div class="run-report-stat resolved-stat">
-                            <span>Resolved</span>
-                            <strong><?= number_format($total_resolved) ?></strong>
-                        </div>
-
-                        <div class="run-report-stat time-stat">
-                            <span>Time worked</span>
-                            <strong><?= htmlspecialchars($total_time, ENT_QUOTES, 'UTF-8') ?></strong>
-                        </div>
+                        <?php foreach ($status_columns as $col): ?>
+                            <div class="run-report-stat status-stat">
+                                <span><?= htmlspecialchars($col, ENT_QUOTES, 'UTF-8') ?></span>
+                                <strong><?= number_format($status_totals[$col]) ?></strong>
+                            </div>
+                        <?php endforeach; ?>
                     </div>
                 </div>
 
@@ -192,22 +252,16 @@ $report_period = $report_rows
                         <thead>
                             <tr>
                                 <th>Date</th>
-                                <th>New tickets</th>
-                                <th>Open</th>
-                                <th>Resolved</th>
-                                <th>Time worked</th>
+                                <th>Tickets</th>
+                                <?php foreach ($status_columns as $col): ?>
+                                    <th><?= htmlspecialchars($col, ENT_QUOTES, 'UTF-8') ?></th>
+                                <?php endforeach; ?>
                             </tr>
                         </thead>
 
                         <tbody>
                             <?php foreach ($report_rows as $row): ?>
-                                <?php
-                                $date = (string)($row['date'] ?? '');
-                                $new_tickets = (int)($row['new_tickets'] ?? 0);
-                                $open = (int)($row['open'] ?? 0);
-                                $resolved = (int)($row['resolved'] ?? 0);
-                                $time_worked = trim((string)($row['time_worked'] ?? ''));
-                                ?>
+                                <?php $date = (string)($row['date'] ?? ''); ?>
                                 <tr>
                                     <td data-order="<?= htmlspecialchars($date, ENT_QUOTES, 'UTF-8') ?>">
                                         <span class="run-report-date">
@@ -215,20 +269,15 @@ $report_period = $report_rows
                                             <?= htmlspecialchars($format_report_date($date), ENT_QUOTES, 'UTF-8') ?>
                                         </span>
                                     </td>
-                                    <td data-order="<?= $new_tickets ?>">
-                                        <span class="report-number new-number"><?= number_format($new_tickets) ?></span>
+                                    <td data-order="<?= (int)$row['new_tickets'] ?>">
+                                        <span class="report-number new-number"><?= number_format((int)$row['new_tickets']) ?></span>
                                     </td>
-                                    <td data-order="<?= $open ?>">
-                                        <span class="report-number open-number"><?= number_format($open) ?></span>
-                                    </td>
-                                    <td data-order="<?= $resolved ?>">
-                                        <span class="report-number resolved-number"><?= number_format($resolved) ?></span>
-                                    </td>
-                                    <td data-order="<?= htmlspecialchars($time_worked, ENT_QUOTES, 'UTF-8') ?>">
-                                        <span class="run-report-time">
-                                            <?= htmlspecialchars($time_worked, ENT_QUOTES, 'UTF-8') ?>
-                                        </span>
-                                    </td>
+                                    <?php foreach ($status_columns as $col): ?>
+                                        <?php $val = (int)($row['statuses'][$col] ?? 0); ?>
+                                        <td data-order="<?= $val ?>">
+                                            <span class="report-number status-number"><?= number_format($val) ?></span>
+                                        </td>
+                                    <?php endforeach; ?>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -237,9 +286,9 @@ $report_period = $report_rows
                             <tr>
                                 <th>Totals</th>
                                 <th><?= number_format($total_new) ?></th>
-                                <th><?= number_format($total_open) ?></th>
-                                <th><?= number_format($total_resolved) ?></th>
-                                <th><?= htmlspecialchars($total_time, ENT_QUOTES, 'UTF-8') ?></th>
+                                <?php foreach ($status_columns as $col): ?>
+                                    <th><?= number_format($status_totals[$col]) ?></th>
+                                <?php endforeach; ?>
                             </tr>
                         </tfoot>
                     </table>
@@ -261,192 +310,96 @@ $report_period = $report_rows
 </div>
 
 <style>
-.run-reports-row {
-    max-width: 100%;
-    min-width: 0;
-    margin: 0;
-}
+.run-reports-row { max-width: 100%; min-width: 0; margin: 0; }
 
 .run-reports-card {
-    width: 100%;
-    min-width: 0;
-    overflow: hidden;
-    border: 1px solid #dfe3ea;
-    border-radius: 14px;
-    background: #f7f8fb;
-    box-shadow: 0 5px 22px rgba(15, 23, 42, .04);
+    width: 100%; min-width: 0; overflow: hidden;
+    border: 1px solid #dfe3ea; border-radius: 14px;
+    background: #f7f8fb; box-shadow: 0 5px 22px rgba(15, 23, 42, .04);
 }
 
-.run-reports-card > .card-body {
-    padding: 24px;
-    min-width: 0;
-}
+.run-reports-card > .card-body { padding: 24px; min-width: 0; }
 
 .run-reports-heading,
 .run-report-summary-heading {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 14px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 14px;
 }
 
-.run-reports-heading {
-    margin-bottom: 25px;
-}
+.run-reports-heading { margin-bottom: 25px; }
 
-.run-reports-heading .card-title {
-    color: #2c3545;
-    font-size: 19px;
-    font-weight: 700;
-}
+.run-reports-heading .card-title { color: #2c3545; font-size: 19px; font-weight: 700; }
 
 .run-reports-heading p,
-.run-report-summary-heading p {
-    margin: 5px 0 0;
-    color: #6b7280;
-    font-size: 13px;
-}
+.run-report-summary-heading p { margin: 5px 0 0; color: #6b7280; font-size: 13px; }
 
 .run-reports-total {
-    display: inline-flex;
-    align-items: center;
-    gap: 9px;
-    padding: 10px 14px;
-    border: 1px solid rgba(59, 111, 212, .20);
-    border-radius: 9px;
-    background: rgba(59, 111, 212, .07);
-    color: #6b7280;
-    font-size: 12px;
+    display: inline-flex; align-items: center; gap: 9px;
+    padding: 10px 14px; border: 1px solid rgba(59, 111, 212, .20);
+    border-radius: 9px; background: rgba(59, 111, 212, .07);
+    color: #6b7280; font-size: 12px;
 }
 
 .run-reports-total i,
-.run-reports-total strong {
-    color: #3b6fd4;
-}
-
-.run-reports-total i {
-    font-size: 20px;
-}
+.run-reports-total strong { color: #3b6fd4; }
+.run-reports-total i { font-size: 20px; }
 
 .run-reports-filters {
-    display: grid;
-    grid-template-columns: 1.2fr 1fr 1fr 1.2fr auto;
-    align-items: end;
-    gap: 14px;
-    padding: 18px;
-    margin-bottom: 25px;
-    border: 1px solid #dfe3ea;
-    border-radius: 11px;
+    display: grid; grid-template-columns: 1.2fr 1fr 1fr 1.2fr auto;
+    align-items: end; gap: 14px; padding: 18px; margin-bottom: 25px;
+    border: 1px solid #dfe3ea; border-radius: 11px;
     background: rgba(234, 237, 243, .55);
 }
 
-.run-report-field {
-    min-width: 0;
-}
+.run-report-field { min-width: 0; }
 
 .run-report-field label {
-    display: block;
-    margin-bottom: 8px;
-    color: #6b7280;
-    font-size: 12px;
-    font-weight: 700;
+    display: block; margin-bottom: 8px; color: #6b7280;
+    font-size: 12px; font-weight: 700;
 }
 
 .run-report-input {
-    width: 100%;
-    min-width: 0;
-    height: 42px;
-    padding: 0 10px;
-    border: 1px solid #dfe3ea;
-    border-radius: 8px;
-    outline: none;
-    background: #f7f8fb;
-    color: #2c3545;
-    font-family: inherit;
-    font-size: 12px;
-    color-scheme: light;
+    width: 100%; min-width: 0; height: 42px; padding: 0 10px;
+    border: 1px solid #dfe3ea; border-radius: 8px; outline: none;
+    background: #f7f8fb; color: #2c3545;
+    font-family: inherit; font-size: 12px; color-scheme: light;
 }
 
-.run-report-input:focus {
-    border-color: #3b6fd4;
-}
+.run-report-input:focus { border-color: #3b6fd4; }
 
 .run-report-display-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 7px;
-    min-height: 42px;
-    padding: 0 15px;
-    border: 1px solid #3b6fd4;
-    border-radius: 8px;
-    background: #3b6fd4;
-    color: #fff;
-    font-size: 12px;
-    font-weight: 700;
-    white-space: nowrap;
-    cursor: pointer;
-    transition: .2s ease;
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 7px; min-height: 42px; padding: 0 15px;
+    border: 1px solid #3b6fd4; border-radius: 8px;
+    background: #3b6fd4; color: #fff; font-size: 12px; font-weight: 700;
+    white-space: nowrap; cursor: pointer; transition: .2s ease;
 }
 
-.run-report-display-btn:hover {
-    background: #2d5db9;
-}
+.run-report-display-btn:hover { background: #2d5db9; }
 
-.run-report-summary {
-    margin-bottom: 22px;
-}
-
-.run-report-summary-heading {
-    margin-bottom: 15px;
-}
-
-.run-report-summary-heading h5 {
-    margin: 0;
-    color: #2c3545;
-    font-size: 15px;
-    font-weight: 700;
-}
+.run-report-summary { margin-bottom: 22px; }
+.run-report-summary-heading { margin-bottom: 15px; }
+.run-report-summary-heading h5 { margin: 0; color: #2c3545; font-size: 15px; font-weight: 700; }
 
 .run-report-period-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 7px 11px;
-    border: 1px solid rgba(59, 111, 212, .20);
-    border-radius: 8px;
-    background: rgba(59, 111, 212, .07);
-    color: #3b6fd4;
-    font-size: 11px;
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 11px; border: 1px solid rgba(59, 111, 212, .20);
+    border-radius: 8px; background: rgba(59, 111, 212, .07);
+    color: #3b6fd4; font-size: 11px;
 }
 
 .run-report-stats {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 13px;
 }
 
 .run-report-stat {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    min-width: 0;
-    padding: 15px;
-    border: 1px solid;
-    border-radius: 10px;
+    display: flex; flex-direction: column; gap: 10px;
+    min-width: 0; padding: 15px; border: 1px solid; border-radius: 10px;
 }
 
-.run-report-stat span {
-    font-size: 12px;
-    color: #6b7280;
-}
-
-.run-report-stat strong {
-    font-size: 22px;
-    font-weight: 700;
-    overflow-wrap: anywhere;
-}
+.run-report-stat span { font-size: 12px; color: #6b7280; }
+.run-report-stat strong { font-size: 22px; font-weight: 700; overflow-wrap: anywhere; }
 
 .new-stat {
     border-color: rgba(59, 111, 212, .22);
@@ -454,102 +407,52 @@ $report_period = $report_rows
 }
 .new-stat strong { color: #3b6fd4; }
 
-.open-stat {
+.status-stat {
     border-color: rgba(220, 160, 50, .25);
     background: rgba(220, 160, 50, .08);
 }
-.open-stat strong { color: #bd8424; }
-
-.resolved-stat {
-    border-color: rgba(40, 167, 110, .22);
-    background: rgba(40, 167, 110, .07);
-}
-.resolved-stat strong { color: #23875c; }
-
-.time-stat {
-    border-color: rgba(100, 116, 139, .22);
-    background: rgba(100, 116, 139, .07);
-}
-.time-stat strong {
-    color: #64748b;
-    font-size: 20px;
-}
+.status-stat strong { color: #bd8424; }
 
 .run-report-table-wrapper {
-    width: 100%;
-    overflow-x: auto;
-    border: 1px solid #dfe3ea;
-    border-radius: 10px;
+    width: 100%; overflow-x: auto;
+    border: 1px solid #dfe3ea; border-radius: 10px;
 }
 
 .run-report-table {
-    width: 100%;
-    min-width: 650px;
-    margin: 0;
-    border-collapse: separate;
-    border-spacing: 0;
-    background: #f7f8fb;
-    font-size: 12px;
+    width: 100%; min-width: 650px; margin: 0;
+    border-collapse: separate; border-spacing: 0;
+    background: #f7f8fb; font-size: 12px;
 }
 
 .run-report-table thead th {
-    padding: 15px;
-    border: 0;
-    border-bottom: 1px solid #dfe3ea;
-    background: #eaedf3;
-    color: #6b7280;
-    font-size: 10px;
-    font-weight: 700;
-    text-align: left;
-    text-transform: uppercase;
-    letter-spacing: .4px;
-    white-space: nowrap;
+    padding: 15px; border: 0; border-bottom: 1px solid #dfe3ea;
+    background: #eaedf3; color: #6b7280; font-size: 10px; font-weight: 700;
+    text-align: left; text-transform: uppercase; letter-spacing: .4px; white-space: nowrap;
 }
 
 .run-report-table tbody td,
 .run-report-table tfoot th {
-    padding: 14px 15px;
-    border: 0;
-    border-bottom: 1px solid #e5e8ef;
-    background: #f7f8fb;
-    color: #475569;
-    vertical-align: middle;
+    padding: 14px 15px; border: 0; border-bottom: 1px solid #e5e8ef;
+    background: #f7f8fb; color: #475569; vertical-align: middle;
 }
 
-.run-report-table tbody tr:hover td {
-    background: #e8eef9;
-}
+.run-report-table tbody tr:hover td { background: #e8eef9; }
 
 .run-report-table tfoot th {
-    border-top: 1px solid #dfe3ea;
-    border-bottom: 0;
-    background: #eaedf3;
-    color: #2c3545;
-    font-weight: 700;
-    white-space: nowrap;
+    border-top: 1px solid #dfe3ea; border-bottom: 0;
+    background: #eaedf3; color: #2c3545; font-weight: 700; white-space: nowrap;
 }
 
 .run-report-date {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    white-space: nowrap;
-    color: #475569;
+    display: inline-flex; align-items: center; gap: 8px;
+    white-space: nowrap; color: #475569;
 }
 
-.run-report-date i {
-    color: #3b6fd4;
-    font-size: 16px;
-}
+.run-report-date i { color: #3b6fd4; font-size: 16px; }
 
 .report-number {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 30px;
-    padding: 5px 9px;
-    border-radius: 6px;
-    font-weight: 700;
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 30px; padding: 5px 9px; border-radius: 6px; font-weight: 700;
 }
 
 .new-number {
@@ -557,295 +460,155 @@ $report_period = $report_rows
     color: #3b6fd4;
 }
 
-.open-number {
+.status-number {
     background: rgba(220, 160, 50, .10);
     color: #bd8424;
 }
 
-.resolved-number {
-    background: rgba(40, 167, 110, .09);
-    color: #23875c;
-}
-
-.run-report-time {
-    color: #64748b;
-    font-family: monospace;
-    white-space: nowrap;
-}
-
 .run-report-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 17px;
-    color: #6b7280;
-    font-size: 12px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 10px; margin-top: 17px;
+    color: #6b7280; font-size: 12px;
 }
 
 .run-report-footer span:last-child {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
+    display: inline-flex; align-items: center; gap: 6px;
 }
 
-.run-report-footer i {
-    color: #3b6fd4;
-    font-size: 16px;
-}
+.run-report-footer i { color: #3b6fd4; font-size: 16px; }
 
 /* DataTables export buttons */
 
 .run-reports-card .dt-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 7px;
-    margin-bottom: 15px;
+    display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 15px;
 }
 
 .run-reports-card .dt-buttons .dt-button {
-    padding: 8px 12px;
-    border: 1px solid rgba(59, 111, 212, .25);
-    border-radius: 8px;
-    background: rgba(59, 111, 212, .07);
-    color: #3b6fd4;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
+    padding: 8px 12px; border: 1px solid rgba(59, 111, 212, .25);
+    border-radius: 8px; background: rgba(59, 111, 212, .07);
+    color: #3b6fd4; font-size: 12px; font-weight: 600; cursor: pointer;
 }
 
-.run-reports-card .dt-buttons .dt-button:hover {
-    background: #3b6fd4;
-    color: #fff;
-}
+.run-reports-card .dt-buttons .dt-button:hover { background: #3b6fd4; color: #fff; }
 
 .run-reports-card .dataTables_length,
-.run-reports-card .dataTables_info {
-    color: #6b7280;
-    font-size: 12px;
-}
+.run-reports-card .dataTables_info { color: #6b7280; font-size: 12px; }
 
 .run-reports-card .dataTables_length select {
-    margin: 0 5px;
-    padding: 5px;
-    border: 1px solid #dfe3ea;
-    border-radius: 7px;
-    background: #eef1f6;
-    color: #2c3545;
+    margin: 0 5px; padding: 5px; border: 1px solid #dfe3ea;
+    border-radius: 7px; background: #eef1f6; color: #2c3545;
 }
 
-.run-reports-card .dataTables_paginate {
-    padding-top: 10px;
-}
+.run-reports-card .dataTables_paginate { padding-top: 10px; }
 
 .run-reports-card .dataTables_paginate .paginate_button {
-    margin: 2px;
-    padding: 6px 10px !important;
-    border: 1px solid transparent !important;
-    border-radius: 7px !important;
-    background: transparent !important;
-    color: #6b7280 !important;
-    font-size: 12px;
+    margin: 2px; padding: 6px 10px !important;
+    border: 1px solid transparent !important; border-radius: 7px !important;
+    background: transparent !important; color: #6b7280 !important; font-size: 12px;
 }
 
 .run-reports-card .dataTables_paginate .paginate_button.current,
 .run-reports-card .dataTables_paginate .paginate_button.current:hover {
-    border-color: #3b6fd4 !important;
-    background: #3b6fd4 !important;
-    color: #fff !important;
+    border-color: #3b6fd4 !important; background: #3b6fd4 !important; color: #fff !important;
 }
 
 .run-reports-card .dataTables_empty {
-    padding: 30px !important;
-    color: #6b7280 !important;
-    text-align: center !important;
+    padding: 30px !important; color: #6b7280 !important; text-align: center !important;
 }
 
 /* Dark theme */
 
-:root[data-theme="dark"] .run-reports-card {
-    border-color: #29364a;
-    background: #111c2e;
-}
+:root[data-theme="dark"] .run-reports-card { border-color: #29364a; background: #111c2e; }
 
 :root[data-theme="dark"] .run-reports-heading .card-title,
 :root[data-theme="dark"] .run-report-summary-heading h5,
-:root[data-theme="dark"] .run-report-table tfoot th {
-    color: #e5edf8;
-}
+:root[data-theme="dark"] .run-report-table tfoot th { color: #e5edf8; }
 
 :root[data-theme="dark"] .run-reports-heading p,
 :root[data-theme="dark"] .run-report-summary-heading p,
 :root[data-theme="dark"] .run-reports-total,
 :root[data-theme="dark"] .run-report-stat span,
-:root[data-theme="dark"] .run-report-footer {
-    color: #a7b6cb;
-}
+:root[data-theme="dark"] .run-report-footer { color: #a7b6cb; }
 
 :root[data-theme="dark"] .run-reports-total {
-    border-color: rgba(139, 184, 255, .2);
-    background: rgba(139, 184, 255, .06);
+    border-color: rgba(139, 184, 255, .2); background: rgba(139, 184, 255, .06);
 }
 
 :root[data-theme="dark"] .run-reports-total i,
-:root[data-theme="dark"] .run-reports-total strong {
-    color: #8bb8ff;
-}
+:root[data-theme="dark"] .run-reports-total strong { color: #8bb8ff; }
 
 :root[data-theme="dark"] .run-reports-filters {
-    border-color: #29364a;
-    background: rgba(23, 36, 56, .65);
+    border-color: #29364a; background: rgba(23, 36, 56, .65);
 }
 
 :root[data-theme="dark"] .run-report-input {
-    border-color: #29364a;
-    background: #172438;
-    color: #e5edf8;
-    color-scheme: dark;
+    border-color: #29364a; background: #172438; color: #e5edf8; color-scheme: dark;
 }
 
-:root[data-theme="dark"] .run-report-field label {
-    color: #a7b6cb;
-}
+:root[data-theme="dark"] .run-report-field label { color: #a7b6cb; }
 
-:root[data-theme="dark"] .run-report-stat {
-    background: rgba(139, 184, 255, .045);
-}
-
+:root[data-theme="dark"] .run-report-stat { background: rgba(139, 184, 255, .045); }
 :root[data-theme="dark"] .new-stat { border-color: rgba(139, 184, 255, .22); }
-:root[data-theme="dark"] .open-stat { border-color: rgba(220, 190, 100, .22); }
-:root[data-theme="dark"] .resolved-stat { border-color: rgba(40, 167, 110, .22); }
-:root[data-theme="dark"] .time-stat { border-color: rgba(139, 184, 255, .16); }
+:root[data-theme="dark"] .status-stat { border-color: rgba(220, 190, 100, .22); }
 
 :root[data-theme="dark"] .new-stat strong,
 :root[data-theme="dark"] .run-report-date i,
-:root[data-theme="dark"] .run-report-footer i {
-    color: #8bb8ff;
-}
+:root[data-theme="dark"] .run-report-footer i { color: #8bb8ff; }
 
-:root[data-theme="dark"] .open-stat strong { color: #e4bf70; }
-:root[data-theme="dark"] .resolved-stat strong { color: #64d6a0; }
-:root[data-theme="dark"] .time-stat strong { color: #a7b6cb; }
+:root[data-theme="dark"] .status-stat strong { color: #e4bf70; }
 
-:root[data-theme="dark"] .run-report-table-wrapper {
-    border-color: #29364a;
-}
+:root[data-theme="dark"] .run-report-table-wrapper { border-color: #29364a; }
 
 :root[data-theme="dark"] .run-report-table,
-:root[data-theme="dark"] .run-report-table tbody td {
-    background: #111c2e;
-}
+:root[data-theme="dark"] .run-report-table tbody td { background: #111c2e; }
 
 :root[data-theme="dark"] .run-report-table thead th,
 :root[data-theme="dark"] .run-report-table tfoot th {
-    border-color: #29364a;
-    background: #172438;
+    border-color: #29364a; background: #172438;
 }
 
-:root[data-theme="dark"] .run-report-table thead th {
-    color: #a7b6cb;
-}
+:root[data-theme="dark"] .run-report-table thead th { color: #a7b6cb; }
+:root[data-theme="dark"] .run-report-table tbody td { border-bottom-color: #29364a; color: #cbd5e1; }
+:root[data-theme="dark"] .run-report-table tbody tr:hover td { background: #1a2a42; }
+:root[data-theme="dark"] .run-report-date { color: #a7b6cb; }
 
-:root[data-theme="dark"] .run-report-table tbody td {
-    border-bottom-color: #29364a;
-    color: #cbd5e1;
-}
-
-:root[data-theme="dark"] .run-report-table tbody tr:hover td {
-    background: #1a2a42;
-}
-
-:root[data-theme="dark"] .run-report-date,
-:root[data-theme="dark"] .run-report-time {
-    color: #a7b6cb;
-}
-
-:root[data-theme="dark"] .new-number {
-    background: rgba(139, 184, 255, .10);
-    color: #8bb8ff;
-}
-
-:root[data-theme="dark"] .open-number {
-    background: rgba(220, 190, 100, .10);
-    color: #e4bf70;
-}
-
-:root[data-theme="dark"] .resolved-number {
-    background: rgba(40, 167, 110, .10);
-    color: #64d6a0;
-}
+:root[data-theme="dark"] .new-number { background: rgba(139, 184, 255, .10); color: #8bb8ff; }
+:root[data-theme="dark"] .status-number { background: rgba(220, 190, 100, .10); color: #e4bf70; }
 
 :root[data-theme="dark"] .run-report-period-badge {
-    border-color: rgba(139, 184, 255, .2);
-    background: rgba(139, 184, 255, .06);
-    color: #8bb8ff;
+    border-color: rgba(139, 184, 255, .2); background: rgba(139, 184, 255, .06); color: #8bb8ff;
 }
 
 :root[data-theme="dark"] .run-reports-card .dt-buttons .dt-button {
-    border-color: rgba(139, 184, 255, .25);
-    background: rgba(139, 184, 255, .07);
-    color: #8bb8ff;
+    border-color: rgba(139, 184, 255, .25); background: rgba(139, 184, 255, .07); color: #8bb8ff;
 }
 
-:root[data-theme="dark"] .run-reports-card .dt-buttons .dt-button:hover {
-    background: #3b6fd4;
-    color: #fff;
-}
+:root[data-theme="dark"] .run-reports-card .dt-buttons .dt-button:hover { background: #3b6fd4; color: #fff; }
 
 :root[data-theme="dark"] .run-reports-card .dataTables_length,
-:root[data-theme="dark"] .run-reports-card .dataTables_info {
-    color: #a7b6cb;
-}
+:root[data-theme="dark"] .run-reports-card .dataTables_info { color: #a7b6cb; }
 
 :root[data-theme="dark"] .run-reports-card .dataTables_length select {
-    border-color: #29364a;
-    background: #172438;
-    color: #e5edf8;
+    border-color: #29364a; background: #172438; color: #e5edf8;
 }
 
 @media (max-width: 1100px) {
-    .run-reports-filters {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .run-report-submit {
-        grid-column: 1 / -1;
-    }
-
-    .run-report-display-btn {
-        width: 100%;
-    }
+    .run-reports-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .run-report-submit { grid-column: 1 / -1; }
+    .run-report-display-btn { width: 100%; }
 }
 
 @media (max-width: 767px) {
-    .run-reports-card > .card-body {
-        padding: 14px;
-    }
-
-    .run-report-stats {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .run-reports-filters {
-        padding: 13px;
-        gap: 12px;
-    }
+    .run-reports-card > .card-body { padding: 14px; }
+    .run-report-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .run-reports-filters { padding: 13px; gap: 12px; }
 }
 
 @media (max-width: 480px) {
-    .run-reports-card > .card-body {
-        padding: 11px;
-    }
-
+    .run-reports-card > .card-body { padding: 11px; }
     .run-reports-filters,
-    .run-report-stats {
-        grid-template-columns: 1fr;
-    }
-
-    .run-report-stat strong {
-        font-size: 20px;
-    }
+    .run-report-stats { grid-template-columns: 1fr; }
+    .run-report-stat strong { font-size: 20px; }
 }
 </style>
 
@@ -922,22 +685,11 @@ $report_period = $report_rows
                     customize: function (doc) {
                         doc.defaultStyle.fontSize = 9;
                         doc.styles.title = {
-                            fontSize: 15,
-                            bold: true,
-                            margin: [0, 0, 0, 12]
+                            fontSize: 15, bold: true, margin: [0, 0, 0, 12]
                         };
                         doc.styles.tableHeader = {
-                            bold: true,
-                            fontSize: 9,
-                            color: '#ffffff',
-                            fillColor: '#3b6fd4'
+                            bold: true, fontSize: 9, color: '#ffffff', fillColor: '#3b6fd4'
                         };
-                        doc.content.forEach(function (item) {
-                            if (item.table) {
-                                item.table.widths = ['40%', '15%', '15%', '15%', '15%'];
-                                item.layout = 'lightHorizontalLines';
-                            }
-                        });
                     }
                 },
                 {
@@ -963,7 +715,7 @@ $report_period = $report_rows
                 }
             ],
             columnDefs: [
-                { targets: [1, 2, 3, 4], className: 'dt-body-left' }
+                { targets: '_all', className: 'dt-body-left' }
             ],
             language: {
                 emptyTable: 'No report records found for this date range',

@@ -203,6 +203,7 @@ public function createTicket($data, $files, $userid){
             INSERT INTO ticket_reports (
                 userid,
                 ticket_id,
+                status_text,
                 date_created,
                 date_updated,
                 category,
@@ -242,6 +243,7 @@ public function createTicket($data, $files, $userid){
             ) VALUES (
                 :userid,
                 :ticket_id,
+                :status_text,
                 :date_created,
                 :date_updated,
                 :category,
@@ -285,6 +287,7 @@ public function createTicket($data, $files, $userid){
 
         $stmt->bindValue(':userid', $userid, PDO::PARAM_STR);
         $stmt->bindValue(':ticket_id', $data['ticket_id'], PDO::PARAM_STR);
+        $stmt->bindValue(':status_text', $data['status_text'], PDO::PARAM_STR);
         $stmt->bindValue(':date_created', $data['date_created'], PDO::PARAM_STR);
         $stmt->bindValue(':date_updated', $data['date_updated'], PDO::PARAM_STR);
         $stmt->bindValue(':category', $data['category'], PDO::PARAM_STR);
@@ -348,7 +351,7 @@ public function createTicket($data, $files, $userid){
 public function CountAllTickets()
 {
     try {
-        $sql = "SELECT COUNT(*) AS total FROM tickets";
+        $sql = "SELECT COUNT(*) AS total FROM ticket_reports";
 
         $stmt = $this->conn->prepare($sql);
         $stmt->execute();
@@ -472,7 +475,7 @@ public function GeneralSelectAnyTable($tb_name){
             return [];
         }
 
-        $sql = "SELECT * FROM `{$tb_name}` ORDER BY sn DESC";
+        $sql = "SELECT * FROM `{$tb_name}` ORDER BY sn ASC";
         $stmt = $this->conn->prepare($sql);
         $stmt->execute();
 
@@ -1116,16 +1119,15 @@ public function CreateUserAccount($data) {try {try {
     // Set Nigeria timezone (West Africa Time - UTC+1, no DST)
     date_default_timezone_set('Africa/Lagos');
 
-    $company_userid = $data['company_userid'];
-    $title          = $data['title'];
-    $fullname       = $data['fullname'];
-    $phone          = $data['phone'];
-    $role           = $data['role'];
-    $role_name      = $data['role_name'];
-    $email          = $data['email'];
-    $user_corridor  = $data['user_corridor'];
-
-    $status = 1;
+   $company_userid = $data['company_userid'];
+$title          = $data['title'];
+$fullname       = $data['fullname'];
+$phone           = $data['phone'];
+$role            = $data['role'];
+$role_name       = $data['role_name'];
+$email           = $data['email'];
+$status          = $data['status'] ?? 1;
+$user_corridor   = $data['user_corridor'];
 
     $Role_comment =
     $Role_create_user =

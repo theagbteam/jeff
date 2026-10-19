@@ -564,7 +564,8 @@ if ($errors) {
     header("Location: index?action=login"); // redirect back to signup, not login
     exit;
 }
-
+$thisstatus=0;
+ if ($company_acct_approval == 1) { $thisstatus=1; }
     $role = "reporter";
     $role_name = "reporter";
 // CALL CreateUserAccount WITH ARRAY
@@ -576,6 +577,7 @@ $result = $userModel->CreateUserAccount([
     'role'           => $role,
     'role_name'      => $role_name,
     'email'          => $email,
+    'status'          => $thisstatus,
     'user_corridor'  => $user_corridor
 ]);
     if (!empty($result['success'])) {

@@ -609,6 +609,7 @@ public function EraseRecord($table_name_token, $sn_token){
             'zone',
             'wellhead_status',
             'ticket_category',
+            'navy_incidence_offences',
             'report_type'
         ];
 
@@ -710,6 +711,7 @@ public function SelectCorridorsAndThoseSimilar($tb_name)
             'zone',
             'wellhead_status',
             'ticket_category',
+            'navy_incidence_offences',
             'report_type'
         ];
 
