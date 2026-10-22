@@ -27,6 +27,122 @@ class ModelAdmin
     }
 
 
+public function InsertTicketReply(array $data): array
+{
+    try {
+        $sql = "INSERT INTO ticket_replies
+                    (ticket_id, role, replyer_userid, replyer_name,
+                     ticketcreator_userid, comment, date, ticket_date,
+                     attachments, status)
+                VALUES
+                    (:ticket_id, :role, :replyer_userid, :replyer_name,
+                     :ticketcreator_userid, :comment, :date, :ticket_date,
+                     :attachments, :status)";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute([
+            ':ticket_id'            => $data['ticket_id'],
+            ':role'                 => $data['role'],
+            ':replyer_userid'       => $data['replyer_userid'],
+            ':replyer_name'         => $data['replyer_name'],
+            ':ticketcreator_userid' => (int) $data['ticketcreator_userid'],
+            ':comment'              => $data['comment'],
+            ':date'                 => $data['date'],
+            ':ticket_date'          => $data['ticket_date'],
+            ':attachments'          => $data['attachments'],
+            ':status'               => $data['status'],
+        ]);
+
+        return ['success' => true, 'message' => 'Reply inserted.', 'sn' => (int)$this->conn->lastInsertId()];
+    } catch (PDOException $e) {
+        error_log('InsertTicketReply ERROR: ' . $e->getMessage());
+        return ['success' => false, 'message' => 'Failed to insert reply.'];
+    }
+}
+
+public function UpdateTicketPriorityAndStatus(array $data): array
+{
+    try {
+        if (empty($data['ticket_id'])) {
+            return ['success' => false, 'message' => 'Ticket ID required.'];
+        }
+
+        $sets = [];
+        $params = [':ticket_id' => $data['ticket_id']];
+
+        if (isset($data['priority']) && $data['priority'] !== '') {
+            $sets[] = 'priority = :priority';
+            $params[':priority'] = $data['priority'];
+        }
+        if (isset($data['status_text']) && $data['status_text'] !== '') {
+            $sets[] = 'status_text = :status_text';
+            $params[':status_text'] = $data['status_text'];
+        }
+        if (isset($data['date_updated']) && $data['date_updated'] !== '') {
+            $sets[] = 'date_updated = :date_updated';
+            $params[':date_updated'] = $data['date_updated'];
+        }
+
+        if (empty($sets)) {
+            return ['success' => true, 'message' => 'Nothing to update.'];
+        }
+
+        $sql = 'UPDATE ticket_reports SET ' . implode(', ', $sets) . ' WHERE ticket_id = :ticket_id LIMIT 1';
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute($params);
+
+        return ['success' => true, 'message' => 'Ticket updated.', 'affected' => $stmt->rowCount()];
+    } catch (PDOException $e) {
+        error_log('UpdateTicketPriorityAndStatus ERROR: ' . $e->getMessage());
+        return ['success' => false, 'message' => 'Failed to update ticket.'];
+    }
+}
+
+
+public function DeleteTicketsByIds(array $ticketIds)
+{
+    try {
+        $ticketIds = array_values(array_filter(array_map('trim', $ticketIds), function ($v) {
+            return $v !== '';
+        }));
+
+        if (empty($ticketIds)) {
+            return [
+                'success' => false,
+                'deleted' => 0,
+                'message' => 'No ticket IDs supplied.'
+            ];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($ticketIds), '?'));
+
+        $sql = "DELETE FROM ticket_reports WHERE ticket_id IN ($placeholders)";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute($ticketIds);
+
+        return [
+            'success' => true,
+            'deleted' => $stmt->rowCount(),
+            'message' => 'Tickets deleted successfully.'
+        ];
+
+    } catch (PDOException $e) {
+        error_log('DeleteTicketsByIds SQL ERROR: ' . $e->getMessage());
+
+        return [
+            'success' => false,
+            'deleted' => 0,
+            'message' => 'Unable to delete tickets.'
+        ];
+    }
+}
+
+
+
+
+
+    
 public function updateStatus($userId)
 {
     try {
@@ -150,6 +266,7 @@ public function GetWellheadStatusCounts()
                        ON TRIM(LOWER(t.status_text)) COLLATE utf8mb4_unicode_ci
                         = TRIM(LOWER(ws.name)) COLLATE utf8mb4_unicode_ci
                       AND t.status >= 0
+                      AND TRIM(t.narration) = ''
                 GROUP BY ws.sn, ws.name, ws.color
                 ORDER BY ws.sn ASC";
 

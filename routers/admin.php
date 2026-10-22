@@ -17,7 +17,9 @@ switch ($action) {
         $Admincontroller->delete_user();
         break;
          case 'dashboard':
+         case 'assignowner':
          case 'reset_user':
+         case 'viewticket':
          case 'updateaccountsettings':
          case 'create_ticket':
          case 'create_request':

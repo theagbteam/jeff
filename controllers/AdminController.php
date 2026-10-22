@@ -100,6 +100,13 @@ $totalDeletedUsers  = (int) ($statusCounts['deleted'] ?? 0);
     $user_id = base64_decode($token, true);
     $LoadAParticularUsersAndLoginTableForAdmin=$callUserModel->SelectUsersAndLoginTableforOnePersonAfterLogin($user_id);
         }
+  if (isset($_GET['viewtoken'])) { 
+    $token = $_GET['viewtoken']; 
+    $ticket_token = base64_decode($token, true);
+       $the_tablename="ticket_reports"; $column_name="ticket_id"; $column_value=$ticket_token  ;
+ $ViewTicketListing = $callUserModel->GeneralSelectAnyTableWhereColumnValueEquals($the_tablename, $column_name, $column_value);
+
+       }
  
         
   if (isset($_GET['token_userdetails'])) { 
@@ -123,6 +130,7 @@ $totalDeletedUsers  = (int) ($statusCounts['deleted'] ?? 0);
    $tb_name = "pipeline";$LoadPipelineColumnForSelect=$callUserModel->GeneralSelectAnyTable($tb_name);
    $tb_name = "pipeline_type";$LoadPipelineTypeColumnForSelect=$callUserModel->GeneralSelectAnyTable($tb_name);
    $tb_name = "ticket_reports";$LoadAllTickets=$callUserModel->GeneralSelectAnyTable($tb_name);
+   $tb_name = "ticket_replies";$LoadAllReplies=$callUserModel->GeneralSelectAnyTable($tb_name);
    $tb_name = "wellhead_status";$LoadAllTicketCategories=$callUserModel->GeneralSelectAnyTable($tb_name);
    $ticket_id = $callUserModel->generateTicketId();
    if ($ticket_id === null) { $ticket_id="Undefined"; }
@@ -170,6 +178,8 @@ $page_name ="Transfer History";
 $page_name ="Upload Library";
 }elseif ($page_link_title =="audit_trail") {
 $page_name ="Audit Trail";
+}elseif ($page_link_title =="viewticket") {
+$page_name ="View ticket";
 }else{
    $page_link_title="tickets";
   $page_name ="Tickets";
@@ -287,6 +297,7 @@ $callUserModel->clearMsgNotification($userid);
        $company_allownotification_text="Allow";
 
       }
+      $company_name = $company_settings['company_name'] ?? 'ACISS';
       $company_alias = $company_settings['company_alias'] ?? 'Page';
 
        $company_logo = $company_settings['company_logo'] ?? '';
@@ -362,9 +373,169 @@ $callUserModel->clearMsgNotification($userid);
 
 
 
-            
 
 
+if (isset($_POST['delete_selected_tickets'])) {
+
+    $ticketIds = $_POST['ticket_ids'] ?? [];
+
+    if (!is_array($ticketIds) || empty($ticketIds)) {
+        $_SESSION['error'] = 'No tickets selected for deletion.';
+        header('Location: index.php?action=tickets');
+        exit;
+    }
+
+    $ticketIds = array_values(array_filter(array_map(function ($v) {
+        return trim((string) $v);
+    }, $ticketIds), function ($v) {
+        return $v !== '';
+    }));
+
+    if (empty($ticketIds)) {
+        $_SESSION['error'] = 'No valid tickets selected for deletion.';
+        header('Location: index.php?action=tickets');
+        exit;
+    }
+
+    $deleteResult = $CallModelAdmin->DeleteTicketsByIds($ticketIds);
+
+    if (!empty($deleteResult['success']) && (int)$deleteResult['deleted'] > 0) {
+
+        $_SESSION['success'] = $deleteResult['deleted'] . ' ticket(s) deleted successfully.';
+
+        $user_details = $admin_abr . " - " . $_SESSION['userid'];
+        $action = 'Deleted ' . $deleteResult['deleted'] . ' ticket(s): ' . implode(', ', $ticketIds);
+
+        $callAuthMiddlewareClass->writelog(
+            $_SESSION['userid'],
+            $admin_lrn,
+            $admin_lr,
+            $user_details,
+            $action,
+            $company_logfile_url
+        );
+
+    } else {
+        $_SESSION['error'] = $deleteResult['message'] ?? 'Unable to delete selected tickets.';
+    }
+
+    header('Location: index.php?action=tickets');
+    exit;
+}
+
+
+// Assign users
+
+   
+if (isset($_POST['assign_owner'])) {$ticketId    = trim($_POST['ticket_id'] ?? '');
+    $ownerUserId = trim($_POST['owner']     ?? '');
+
+    if ($ticketId === '' || $ownerUserId === '') {
+        $_SESSION['error'] = "Ticket ID and owner are required.";
+        header("Location: " . ($_SERVER['HTTP_REFERER'] ?? 'index.php?action=dashboard'));
+        exit;
+    }
+
+    $OwnerUserResult = $callUserModel->SelectUsersAndLoginTableforOnePersonAfterLogin($ownerUserId);
+
+    if (empty($OwnerUserResult['success']) || empty($OwnerUserResult['user'])) {
+        $_SESSION['error'] = "Could not find the selected owner. Please try again.";
+        header("Location: " . ($_SERVER['HTTP_REFERER'] ?? 'index.php?action=dashboard'));
+        exit;
+    }
+
+    $ownerUser     = $OwnerUserResult['user'];
+    $ownerFullName = trim($ownerUser['user_fullname'] ?? '');
+    $ownerAbrvName = trim($ownerUser['AbrvName']      ?? '');
+    $ownerEmail    = trim($ownerUser['user_email']    ?? '');
+
+    if ($ownerFullName === '') {
+        $_SESSION['error'] = "Selected owner has no name on record. Please update the user first.";
+        header("Location: " . ($_SERVER['HTTP_REFERER'] ?? 'index.php?action=dashboard'));
+        exit;
+    }
+
+    $ticketRows     = $callUserModel->GeneralSelectAnyTableWhereColumnValueEquals('ticket_reports', 'ticket_id', $ticketId);
+    $ticketRow      = $ticketRows[0] ?? [];
+    $ticketSubject  = trim($ticketRow['subject']  ?? '');
+    $ticketCategory = trim($ticketRow['category'] ?? '');
+    $ticketPriority = trim($ticketRow['priority'] ?? '');
+
+    $data = [
+        'the_tablename' => "ticket_reports",
+        'column_value'  => $ownerFullName,
+        'column_name'   => "owner",
+        'where_column'  => "ticket_id",
+        'where_value'   => $ticketId
+    ];
+
+    $UpdateTicketOwner = $callUserModel->GeneralUpdateAnyTableColumnWithThisValue($data);
+
+    if ($UpdateTicketOwner) {
+
+        $dataOwnerUserId = [
+            'the_tablename' => "ticket_reports",
+            'column_value'  => $ownerUserId,
+            'column_name'   => "owner_userid",
+            'where_column'  => "ticket_id",
+            'where_value'   => $ticketId
+        ];
+
+        $callUserModel->GeneralUpdateAnyTableColumnWithThisValue($dataOwnerUserId);
+
+        $_SESSION['success'] = "New owner assigned successfully";
+
+        $user_details = $admin_abr . " - " . $_SESSION['userid'];
+        $action       = "Assigned ticket " . $ticketId . " to " . $ownerFullName . " (Ref ID: " . $ownerUserId . ")";
+
+        $logResult = $callAuthMiddlewareClass->writelog(
+            $_SESSION['userid'],
+            $admin_lrn,
+            $admin_lr,
+            $user_details,
+            $action,
+            $company_logfile_url
+        );
+
+        if ($ownerEmail !== '' && filter_var($ownerEmail, FILTER_VALIDATE_EMAIL)) {
+
+            $subject = "Ticket Assigned To You: " . $ticketId;
+
+            $safeFullName = htmlspecialchars($ownerFullName, ENT_QUOTES, 'UTF-8');
+            $safeTicketId = htmlspecialchars($ticketId,     ENT_QUOTES, 'UTF-8');
+            $safeSubject  = htmlspecialchars($ticketSubject,  ENT_QUOTES, 'UTF-8');
+            $safeCategory = htmlspecialchars($ticketCategory, ENT_QUOTES, 'UTF-8');
+            $safePriority = htmlspecialchars($ticketPriority, ENT_QUOTES, 'UTF-8');
+            $assignedBy   = htmlspecialchars($admin_fn ?? '', ENT_QUOTES, 'UTF-8');
+
+            $message =
+                "Hello $safeFullName,<br><br>"
+              . "A ticket has been assigned to you.<br><br>"
+              . "<strong>Ticket ID:</strong> $safeTicketId<br>"
+              . "<strong>Subject:</strong> $safeSubject<br>"
+              . "<strong>Category:</strong> $safeCategory<br>"
+              . "<strong>Priority:</strong> $safePriority<br>"
+              . "<strong>Assigned By:</strong> $assignedBy<br><br>"
+              . "Please log in to review the ticket and take the necessary action.<br><br>"
+              . "<div style='text-align:center; margin:25px 0;'>"
+              . "<a href='" . htmlspecialchars($loginurl, ENT_QUOTES, 'UTF-8') . "' "
+              . "style='display:inline-block; padding:12px 25px; background-color:#0d6efd; "
+              . "color:#ffffff; text-decoration:none; border-radius:5px; font-weight:bold;'>"
+              . "Login to Your Account"
+              . "</a>"
+              . "</div>"
+              . "Best regards,<br>"
+              . "The Support Team";
+
+            $CallMailerModel->sendmail($ownerEmail, $subject, $message);
+        }
+
+    } else {
+        $_SESSION['error'] = "Error assigning owner, please try again later";
+    }
+
+    header("Location: " . ($_SERVER['HTTP_REFERER'] ?? 'index.php?action=dashboard'));
+    exit;}
  if (isset($_POST['updateuserpwd'])) {
 
 
@@ -618,7 +789,7 @@ if (in_array('', $data, true)) {
     $userid = $_SESSION['userid'];
   $status_text="new";
     $data = [
-       'ticket_id' => 'TKT' . date('YmdHis') . substr((string) microtime(true), -6) ,
+      'ticket_id' => 'TKT' . date('YmdHis') . substr(str_replace('.', '', (string) microtime(true)), -6),
         'date_created'                              => date('Y-m-d H:i:s'),
         'status_text'                              => $status_text,
         'date_updated'                              => 'Nil',
@@ -922,7 +1093,127 @@ $message = "Hello $fullname,<br><br>"
 
 
 
+//update replies
+// ============================================================
+// SUBMIT TICKET REPLY  +  UPDATE TICKET PRIORITY & STATUS
+// ============================================================
+if (isset($_POST['submit_reply'])) {
 
+    $ticketId     = trim($_POST['orig_id']   ?? '');
+    $comment      = trim($_POST['message']   ?? '');
+    $newStatus    = trim($_POST['submit_as'] ?? '');      // '' means no status change
+    $changePrio   = isset($_POST['set_priority']) ? 1 : 0;
+    $newPriority  = trim($_POST['priority']  ?? '');
+    $noNotify     = isset($_POST['no_notify']) ? 1 : 0;
+
+    if ($ticketId === '' || $comment === '') {
+        $_SESSION['error'] = 'Ticket ID and message are required.';
+        header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php')); exit;
+    }
+
+    // Load the parent ticket so we can fill ticketcreator_userid / ticket_date
+    $ticketRows = $callUserModel->GeneralSelectAnyTableWhereColumnValueEquals(
+        'ticket_reports', 'ticket_id', $ticketId
+    );
+    $ticketRow = $ticketRows[0] ?? [];
+
+    if (empty($ticketRow)) {
+        $_SESSION['error'] = 'Ticket not found.';
+        header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php')); exit;
+    }
+
+    /* ---------- Handle attachments (up to 8) ---------- */
+    $savedAttachments = [];
+    $uploadDir = __DIR__ . '/../views/uploads/attachments/';
+    if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+
+    if (!empty($_FILES['attachment']['name']) && is_array($_FILES['attachment']['name'])) {
+        foreach ($_FILES['attachment']['name'] as $i => $origName) {
+            if ($_FILES['attachment']['error'][$i] !== UPLOAD_ERR_OK) continue;
+            if ($origName === '') continue;
+
+            $tmp  = $_FILES['attachment']['tmp_name'][$i];
+            $size = (int) $_FILES['attachment']['size'][$i];
+            if ($size <= 0 || $size > 10 * 1024 * 1024) continue; // 10MB cap
+
+            $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
+            $safe = preg_replace('/[^A-Za-z0-9._-]/', '_', pathinfo($origName, PATHINFO_FILENAME));
+            $newName = $ticketId . '_' . time() . '_' . $i . '_' . $safe . ($ext ? '.' . $ext : '');
+
+            if (move_uploaded_file($tmp, $uploadDir . $newName)) {
+                $savedAttachments[] = $newName;
+            }
+        }
+    }
+
+    /* ---------- Build reply row ---------- */
+    $now = date('Y-m-d H:i:s');
+
+    $replyData = [
+        'ticket_id'            => $ticketId,
+        'role'                 => $admin_lrn ?? $_SESSION['role'], // replyer role label
+        'replyer_userid'       => $_SESSION['userid'],
+        'replyer_name'         => $admin_fn ?? '',
+        'ticketcreator_userid' => $ticketRow['ticketcreator_userid'] ?? 0,
+        'comment'              => $comment,
+        'date'                 => $now,
+        'ticket_date'          => $ticketRow['date_created'] ?? '',
+        'attachments'          => implode(',', $savedAttachments), // store as comma list
+        'status'               => ($newStatus !== '' ? $newStatus : 'replied'),
+    ];
+
+    $insertReply = $CallModelAdmin->InsertTicketReply($replyData);
+
+    if (!$insertReply['success']) {
+        $_SESSION['error'] = $insertReply['message'];
+        header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php')); exit;
+    }
+
+    /* ---------- Update parent ticket (priority + status) ---------- */
+    $updateData = [
+        'ticket_id'    => $ticketId,
+        'date_updated' => $now,
+    ];
+    if ($changePrio && $newPriority !== '') {
+        $updateData['priority'] = $newPriority;
+    }
+    if ($newStatus !== '') {
+        $updateData['status_text'] = $newStatus;
+    }
+
+    $updateTicket = $CallModelAdmin->UpdateTicketPriorityAndStatus($updateData);
+
+    if (!$updateTicket['success']) {
+        $_SESSION['error'] = 'Reply saved, but ticket update failed: ' . $updateTicket['message'];
+        header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php')); exit;
+    }
+
+    /* ---------- Audit log ---------- */
+    $user_details = ($admin_abr ?? '') . ' - ' . $_SESSION['userid'];
+    $action       = 'Replied to ticket ' . $ticketId
+                  . ($newStatus !== '' ? ', status → ' . $newStatus : '')
+                  . ($changePrio && $newPriority !== '' ? ', priority → ' . $newPriority : '');
+
+    $callAuthMiddlewareClass->writelog(
+        $_SESSION['userid'], $admin_lrn, $admin_lr,
+        $user_details, $action, $company_logfile_url
+    );
+
+    /* ---------- Optional email notify to reporter ---------- */
+    if (!$noNotify && !empty($ticketRow['email']) && filter_var($ticketRow['email'], FILTER_VALIDATE_EMAIL)) {
+        $subject = 'Re: Ticket ' . $ticketId . ' - ' . ($ticketRow['subject'] ?? '');
+        $message = 'Hello ' . htmlspecialchars($ticketRow['name'] ?? '') . ',<br><br>'
+                 . 'A new reply has been added to your ticket.<br><br>'
+                 . '<strong>Ticket ID:</strong> ' . htmlspecialchars($ticketId) . '<br>'
+                 . '<strong>Reply:</strong><br>' . nl2br(htmlspecialchars($comment)) . '<br><br>'
+                 . 'Best regards,<br>The Support Team';
+        $CallMailerModel->sendmail($ticketRow['email'], $subject, $message);
+    }
+
+    $_SESSION['success'] = 'Reply submitted successfully.';
+    header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? ('index.php?action=viewticket&viewtoken=' . base64_encode($ticketId))));
+    exit;
+}
 
 
 

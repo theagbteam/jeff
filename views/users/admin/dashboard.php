@@ -73,6 +73,8 @@
     <?php include 'views/inc/admin/edit_user_preview.php' ?>
 <?php elseif ($page_link_title == "user_library") : ?>
     <?php include 'views/inc/admin/upload_library.php' ?>
+<?php elseif ($page_link_title == "viewticket") : ?>
+    <?php include 'views/inc/admin/viewticket.php' ?>
 
 <?php endif; ?>
 </main>

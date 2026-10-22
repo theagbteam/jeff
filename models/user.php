@@ -108,7 +108,6 @@ public function Create_request(array $data)
 }
 
 
-
 public function createTicket($data, $files, $userid){
 
     /*
@@ -283,6 +282,30 @@ public function createTicket($data, $files, $userid){
             )
         ";
 
+        /*
+        |--------------------------------------------------------------------------
+        | CHECK IF ticket_id ALREADY EXISTS
+        |--------------------------------------------------------------------------
+        */
+
+        $checkSql  = "SELECT COUNT(*) FROM ticket_reports WHERE ticket_id = :ticket_id";
+        $checkStmt = $this->conn->prepare($checkSql);
+        $checkStmt->bindValue(':ticket_id', $data['ticket_id'], PDO::PARAM_STR);
+        $checkStmt->execute();
+
+        if ((int) $checkStmt->fetchColumn() > 0) {
+
+            $this->conn->rollBack();
+
+            foreach ($uploadedFiles as $f) {
+                if (file_exists($uploadDirectory . $f)) {
+                    unlink($uploadDirectory . $f);
+                }
+            }
+
+            return ['success' => false, 'message' => 'Duplicate ticket: ticket ID "' . $data['ticket_id'] . '" already exists.'];
+        }
+
         $stmt = $this->conn->prepare($sql);
 
         $stmt->bindValue(':userid', $userid, PDO::PARAM_STR);
@@ -344,8 +367,6 @@ public function createTicket($data, $files, $userid){
         return ['success' => false, 'message' => 'Database error: ' . $e->getMessage()];
     }
 }
-
-
 
 
 public function CountAllTickets()

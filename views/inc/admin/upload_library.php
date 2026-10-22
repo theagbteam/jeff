@@ -299,8 +299,8 @@ $uploadLibraryRecords = (
                                         <!-- NARRATION -->
                                         <td>
                                             <span class="audit-trail-action">
-                                                <i class="mdi mdi-text-box-outline"></i>
-                                                <?= htmlspecialchars((string)$narration, ENT_QUOTES, 'UTF-8') ?>
+                                                <!-- <i class="mdi mdi-text-box-outline"></i> -->
+                                                <?= htmlspecialchars(trim((string)$narration) !== '' ? (string)$narration : 'Nil', ENT_QUOTES, 'UTF-8') ?>
                                             </span>
                                         </td>
 
