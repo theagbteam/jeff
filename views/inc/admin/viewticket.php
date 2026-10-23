@@ -59,29 +59,83 @@ $dumpSites     = $val('illegal_storage_dump_sites', '0');
 $dateCreated   = $val('date_created', '');
 $dateUpdated   = $val('date_updated', '');
 $dueDate       = $val('due_date', '');
-$note          = $val('note', '');
+$rawNote       = $val('note', '');
 $createdIso    = $dateCreated ? date('c', strtotime($dateCreated)) : '';
+
+/* ------------------------------------------------------------------
+ * Parse the stored "note" column into structured entries.
+ *
+ * The model stores each note as:
+ *   [YYYY-MM-DD HH:MM:SS] Note by Name (Role) - ID:
+ *   <body text>
+ *
+ * Multiple notes are separated by "\n\n---\n\n".
+ * ------------------------------------------------------------------ */
+$noteEntries = [];
+if (trim((string) $rawNote) !== '') {
+    $chunks = preg_split('/\r?\n\s*---\s*\r?\n/', (string) $rawNote);
+    foreach ($chunks as $chunk) {
+        $chunk = trim($chunk);
+        if ($chunk === '') continue;
+
+        $entry = ['time' => '', 'author' => '', 'body' => $chunk];
+
+        // Strip leading [timestamp]
+        if (preg_match('/^\[([^\]]+)\]\s*(.*)$/s', $chunk, $m)) {
+            $entry['time'] = trim($m[1]);
+            $chunk         = trim($m[2]);
+        }
+
+        // Strip leading "Note by ... :" line
+        if (preg_match('/^Note\s+by\s+(.+?):\s*(.*)$/s', $chunk, $m)) {
+            $entry['author'] = trim($m[1]);
+            $entry['body']   = trim($m[2]);
+        } else {
+            $entry['body'] = $chunk;
+        }
+
+        $noteEntries[] = $entry;
+    }
+    // newest first
+    usort($noteEntries, function ($a, $b) {
+        return strcmp((string)($b['time'] ?? ''), (string)($a['time'] ?? ''));
+    });
+}
+$noteCount = count($noteEntries);
 
 /* Replies — load only rows from ticket_replies whose ticket_id matches
  * the ticket currently being viewed ($ticketId from ticket_reports). */
 $LoadAllReplies = isset($LoadAllReplies) && is_array($LoadAllReplies) ? $LoadAllReplies : [];
 
 $currentTicketId = trim((string) $ticketId);
+if ($currentTicketId === '—') {
+    $currentTicketId = '';
+}
+/* Fallback: derive from raw viewtoken if the row came back empty */
+if ($currentTicketId === '' && !empty($_GET['viewtoken'])) {
+    $raw = urldecode((string) $_GET['viewtoken']);
+    $decoded = base64_decode($raw);
+    if ($decoded !== false && trim($decoded) !== '') {
+        $currentTicketId = trim((string) $decoded);
+    }
+}
 
 $replies = [];
-foreach ($LoadAllReplies as $replyRow) {
-    if (!is_array($replyRow)) {
-        continue;
-    }
+if ($currentTicketId !== '') {
+    foreach ($LoadAllReplies as $replyRow) {
+        if (!is_array($replyRow)) {
+            continue;
+        }
 
-    $replyTicketId = isset($replyRow['ticket_id']) ? trim((string) $replyRow['ticket_id']) : '';
+        $replyTicketId = isset($replyRow['ticket_id']) ? trim((string) $replyRow['ticket_id']) : '';
 
-    if ($replyTicketId === '' || $currentTicketId === '') {
-        continue;
-    }
+        if ($replyTicketId === '') {
+            continue;
+        }
 
-    if ($replyTicketId === $currentTicketId) {
-        $replies[] = $replyRow;
+        if (strcasecmp(trim($replyTicketId), trim($currentTicketId)) === 0) {
+            $replies[] = $replyRow;
+        }
     }
 }
 
@@ -264,12 +318,34 @@ function getReplyAttachments(array $row): array
     return [];
 }
 
+/**
+ * Build a browser-usable URL for a stored reply attachment.
+ *
+ * Controller (Pasted text.txt) saves physically to:
+ *   __DIR__ . '/../views/uploads/ticket_library/replies/'
+ * and stores ONLY the bare filename in ticket_replies.attachments.
+ *
+ * This view is rendered by index.php (app root), so URLs must resolve
+ * from the app root — hence "views/..." with NO leading "../".
+ */
 function attachmentHref(string $path): string
 {
     $p = trim($path);
     if ($p === '') return '';
-    if (preg_match('~^(?:https?:)?//~i', $p) || preg_match('~^[a-z][a-z0-9+.-]*:~i', $p) || $p[0] === '/') return $p;
-    return '../views/uploads/attachments/' . ltrim($p, '/');
+
+    // Already absolute / protocol URLs — leave untouched.
+    if (preg_match('~^(?:https?:)?//~i', $p)
+        || preg_match('~^[a-z][a-z0-9+.-]*:~i', $p)
+        || $p[0] === '/') {
+        return $p;
+    }
+
+    // Bare filename (what the controller stores). Guard against traversal
+    // and encode so spaces/unicode survive the URL.
+    $file = basename($p);
+    if ($file === '' || $file === '.' || $file === '..') return '';
+
+    return 'views/uploads/ticket_library/replies/' . rawurlencode($file);
 }
 
 function attachmentLabel(string $path): string
@@ -295,6 +371,7 @@ function attachmentLabel(string $path): string
     .ticket__body_block > div { padding: 4px 0; font-size: 13px; }
     .block--description { margin-top: 14px; padding: 14px 16px; background: var(--surface-soft); border: 1px solid var(--surface-border); border-radius: 12px; font-size: 13px; line-height: 1.7; color: var(--body-text); white-space: pre-line; }
     .block--description p { margin: 0; }
+    .block--description__label { display: block; font-size: 11px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: var(--secondary-text); margin-bottom: 8px; }
     .block--notes { margin-top: 16px; }
     .group-title { font-weight: 700; font-size: 11px; letter-spacing: .5px; text-transform: uppercase; color: var(--secondary-text); margin: 16px 0 2px; padding-top: 12px; border-top: 1px dashed var(--surface-border); }
     .group-title:first-of-type { margin-top: 8px; padding-top: 0; border-top: 0; }
@@ -350,7 +427,9 @@ function attachmentLabel(string $path): string
     .back-to-top:hover { background: var(--table-hover-bg); text-decoration: none; }
     @media print {
         .back-to-top, .users-online, .ticket__params .params--bar, .block--notes, .replies-modal-overlay,
-        .ticket__body_block:last-child, .block--attach, .block--checkboxs, .block--submit, input[type="file"] { display: none !important; }
+        .note-modal-overlay,
+        .ticket__body_block:last-child, .block--attach, .block--checkboxs, .block--submit, input[type="file"],
+        .file-limits-overlay { display: none !important; }
         .main__content.ticket { display: block; max-width: 100%; padding: 0; }
         .ticket__body, .ticket__params { flex: 1 1 100% !important; max-width: 100% !important; }
         .ticket__body_block, .params--block { box-shadow: none; border: 1px solid #ccc; page-break-inside: avoid; }
@@ -404,6 +483,373 @@ function attachmentLabel(string $path): string
     .attachment-item .icon { width: 12px; height: 12px; flex-shrink: 0; }
     .attachment-item span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .attachment-none { color: var(--secondary-text); font-size: 11px; }
+
+    /* ============================================================
+       NOTES PANEL (presentable)
+       ============================================================ */
+    .notes-panel {
+        margin-top: 18px;
+        border: 1px solid var(--surface-border);
+        border-radius: 14px;
+        background: var(--surface-bg);
+        box-shadow: 0 5px 20px rgba(15,23,42,.04);
+        overflow: hidden;
+    }
+    .notes-panel__head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 14px 18px;
+        background: linear-gradient(135deg, rgba(59,111,212,.10) 0%, rgba(184,134,11,.10) 100%);
+        border-bottom: 1px solid var(--surface-border);
+    }
+    .notes-panel__head h4 {
+        margin: 0;
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: .3px;
+        text-transform: uppercase;
+        color: var(--body-text);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .notes-panel__head h4 .icon { width: 16px; height: 16px; color: #b8860b; }
+    .notes-panel__count {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 700;
+        background: #b8860b;
+        color: #fff;
+        letter-spacing: .2px;
+    }
+    .notes-panel__list {
+        display: flex;
+        flex-direction: column;
+        padding: 8px;
+        gap: 8px;
+        max-height: 460px;
+        overflow-y: auto;
+    }
+    .note-entry {
+        border: 1px solid var(--surface-border);
+        border-left: 4px solid #b8860b;
+        border-radius: 12px;
+        background: var(--surface-soft);
+        padding: 12px 14px;
+        font-size: 13px;
+        color: var(--body-text);
+        line-height: 1.6;
+        transition: background .2s ease, border-color .2s ease;
+    }
+    .note-entry:hover { background: var(--table-hover-bg); }
+    .note-entry__meta {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+        font-size: 11px;
+    }
+    .note-entry__time {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        color: var(--secondary-text);
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+    }
+    .note-entry__time .icon { width: 12px; height: 12px; }
+    .note-entry__author {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 10px;
+        border-radius: 999px;
+        background: #b8860b;
+        color: #fff;
+        font-weight: 700;
+        letter-spacing: .2px;
+    }
+    .note-entry__author .icon { width: 12px; height: 12px; }
+    .note-entry__body {
+        white-space: pre-line;
+        word-break: break-word;
+        color: var(--body-text);
+    }
+    .notes-panel__empty {
+        padding: 30px 10px;
+        text-align: center;
+        color: var(--secondary-text);
+        font-size: 13px;
+        font-style: italic;
+    }
+
+    /* ============================================================
+       FILE LIMITS MODAL (self-contained, no hesk_window)
+       ============================================================ */
+    .file-limits-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, .55);
+        backdrop-filter: blur(2px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        padding: 20px;
+    }
+    .file-limits-overlay.open { display: flex; }
+    .file-limits-modal {
+        background: var(--surface-bg);
+        color: var(--body-text);
+        width: 100%;
+        max-width: 520px;
+        border: 1px solid var(--surface-border);
+        border-radius: 16px;
+        box-shadow: 0 20px 60px rgba(15, 23, 42, .28);
+        overflow: hidden;
+        animation: flm-pop .18s ease-out;
+    }
+    @keyframes flm-pop {
+        from { opacity: 0; transform: translateY(8px) scale(.98); }
+        to   { opacity: 1; transform: translateY(0)   scale(1); }
+    }
+    .file-limits-modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 20px;
+        background: linear-gradient(135deg, #1e2b42 0%, #3b6fd4 100%);
+        color: #ffffff;
+    }
+    .file-limits-modal-header h3 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+    }
+    .file-limits-modal-close {
+        background: transparent;
+        border: none;
+        color: #ffffff;
+        font-size: 20px;
+        line-height: 1;
+        cursor: pointer;
+        opacity: .85;
+        padding: 0 4px;
+    }
+    .file-limits-modal-close:hover { opacity: 1; }
+    .file-limits-modal-body {
+        padding: 20px 22px;
+        font-size: 13px;
+    }
+    .file-limits-list {
+        list-style: none;
+        margin: 0 0 16px 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .file-limits-list li {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        color: var(--body-text);
+    }
+    .file-limits-list li::before {
+        content: "»";
+        color: #3b6fd4;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+    .file-limits-ext-label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--secondary-text);
+    }
+    .file-limits-exts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        padding: 12px;
+        background: var(--surface-soft);
+        border: 1px solid var(--surface-border);
+        border-radius: 10px;
+    }
+    .file-limits-exts .ext {
+        display: inline-block;
+        padding: 3px 8px;
+        font-size: 11px;
+        font-weight: 600;
+        background: var(--surface-bg);
+        color: var(--link-color);
+        border: 1px solid var(--surface-border);
+        border-radius: 6px;
+    }
+    .file-limits-modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        padding: 14px 20px;
+        background: var(--surface-soft);
+        border-top: 1px solid var(--surface-border);
+    }
+    .file-limits-modal-footer .btn-close-modal {
+        padding: 8px 18px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #ffffff;
+        background: #3b6fd4;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: background .15s ease;
+    }
+    .file-limits-modal-footer .btn-close-modal:hover { background: #2f5cb8; }
+
+    /* Style the trigger link so it looks like a link, not a default anchor */
+    .file-limits-trigger {
+        color: var(--link-color);
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+    }
+    .file-limits-trigger:hover { text-decoration: underline; }
+
+    /* ============================================================
+       ADD NOTE MODAL (fancy popup)
+       ============================================================ */
+    .note-modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, .55);
+        backdrop-filter: blur(2px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9700;
+        padding: 20px;
+    }
+    .note-modal-overlay.open { display: flex; }
+
+    .note-modal {
+        background: var(--surface-bg);
+        color: var(--body-text);
+        width: 100%;
+        max-width: 560px;
+        border: 1px solid var(--surface-border);
+        border-radius: 16px;
+        box-shadow: 0 20px 60px rgba(15, 23, 42, .28);
+        overflow: hidden;
+        animation: note-pop .18s ease-out;
+    }
+    @keyframes note-pop {
+        from { opacity: 0; transform: translateY(10px) scale(.97); }
+        to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .note-modal__head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 20px;
+        background: linear-gradient(135deg, #1e2b42 0%, #3b6fd4 100%);
+        color: #fff;
+    }
+    .note-modal__head h3 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: .3px;
+        display: inline-flex;
+        align-items: center;
+    }
+    .note-modal__close {
+        background: transparent;
+        border: none;
+        color: #fff;
+        font-size: 22px;
+        line-height: 1;
+        cursor: pointer;
+        opacity: .85;
+        padding: 0 4px;
+    }
+    .note-modal__close:hover { opacity: 1; }
+
+    .note-modal__body { padding: 20px 22px; }
+
+    .note-modal__hint {
+        font-size: 12px;
+        color: var(--secondary-text);
+        background: var(--surface-soft);
+        border: 1px solid var(--surface-border);
+        border-radius: 10px;
+        padding: 10px 12px;
+        margin: 0 0 16px;
+        line-height: 1.5;
+    }
+    .note-modal__hint strong { color: var(--body-text); }
+
+    .note-modal__label {
+        display: block;
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--secondary-text);
+        margin-bottom: 6px;
+        text-transform: uppercase;
+        letter-spacing: .4px;
+    }
+    .note-modal__textarea {
+        width: 100%;
+        min-height: 160px;
+        resize: vertical;
+        border: 1px solid var(--surface-border);
+        border-radius: 12px;
+        padding: 12px 14px;
+        font-size: 13px;
+        line-height: 1.6;
+        color: var(--body-text);
+        background: var(--surface-soft);
+        font-family: inherit;
+        transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+    }
+    .note-modal__textarea:focus {
+        outline: none;
+        border-color: #3b6fd4;
+        box-shadow: 0 0 0 3px rgba(59,111,212,.12);
+        background: var(--surface-bg);
+    }
+
+    .note-modal__meta {
+        margin-top: 12px;
+        font-size: 12px;
+        color: var(--secondary-text);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+    .note-modal__meta strong { color: var(--body-text); }
+
+    .note-modal__footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 18px;
+        padding-top: 16px;
+        border-top: 1px solid var(--surface-border);
+    }
+
+    @media (max-width: 480px) {
+        .note-modal__footer { flex-direction: column-reverse; }
+        .note-modal__footer .btn-full,
+        .note-modal__footer .btn-border { width: 100%; }
+    }
 </style>
 
 <main class="main-content" style="margin-top:-7%">
@@ -508,18 +954,13 @@ function attachmentLabel(string $path): string
 
                 <?php if ($description || $message): ?>
                 <div class="block--description browser-default">
+                    <span class="block--description__label">Incident Description</span>
                     <p><?= nl2br(htmlspecialchars($description ?: $message)) ?></p>
                 </div>
                 <?php endif; ?>
 
-                <?php if ($note): ?>
-                <div class="block--description browser-default" style="border-left:3px solid #b8860b;">
-                    <p><strong>Note:</strong><br><?= nl2br(htmlspecialchars($note)) ?></p>
-                </div>
-                <?php endif; ?>
-
                 <div class="block--notes">
-                    <button class="btn--blue-border" type="button" onclick="hesk_toggleLayerDisplay('notesform')">
+                    <button class="btn--blue-border" type="button" id="open-note-modal">
                         <svg class="icon icon-note" style="width:14px;height:14px;"><use xlink:href="../img/sprite.svg#icon-note"></use></svg>
                         &nbsp; Add note
                     </button>
@@ -527,20 +968,45 @@ function attachmentLabel(string $path): string
                         <svg class="icon icon-note" style="width:14px;height:14px;"><use xlink:href="../img/sprite.svg#icon-team"></use></svg>
                         &nbsp; View Replies (<span id="replies-count-badge"><?= (int) $repliesCount ?></span>)
                     </button>
-                    <div id="notesform" style="display:none; margin-top: 20px">
-                        <form method="post" action="admin_ticket.php" class="form" enctype="multipart/form-data">
-                            <i style="font-size:12px;color:var(--secondary-text)">Notes are hidden from customers!</i><br><br>
-                            <textarea class="form-control" name="notemsg" rows="6" style="height: auto; resize: vertical;"></textarea>
-                            <br>
-                            <?php for ($i = 1; $i <= 8; $i++): ?>
-                                <input type="file" name="attachment[<?= $i ?>]" size="50" style="margin-bottom:4px;"><br>
-                            <?php endfor; ?>
-                            <br>
-                            <button type="submit" class="btn-full">Submit</button>
-                            <input type="hidden" name="track" value="<?= htmlspecialchars($ticketId) ?>">
-                            <input type="hidden" name="token" value="<?= htmlspecialchars($token) ?>">
-                        </form>
+                </div>
+
+                <!-- ============================================================
+                     NOTES PANEL — presentable list of internal notes
+                     ============================================================ -->
+                <div class="notes-panel">
+                    <div class="notes-panel__head">
+                        <h4>
+                            <svg class="icon icon-note"><use xlink:href="../img/sprite.svg#icon-note"></use></svg>
+                            Internal Notes
+                        </h4>
+                        <span class="notes-panel__count"><?= (int) $noteCount ?></span>
                     </div>
+
+                    <?php if ($noteCount === 0): ?>
+                        <div class="notes-panel__empty">No internal notes have been added yet.</div>
+                    <?php else: ?>
+                        <div class="notes-panel__list">
+                            <?php foreach ($noteEntries as $entry): ?>
+                                <div class="note-entry">
+                                    <div class="note-entry__meta">
+                                        <?php if ($entry['time'] !== ''): ?>
+                                        <span class="note-entry__time">
+                                            <svg class="icon"><use xlink:href="../img/sprite.svg#icon-clock"></use></svg>
+                                            <?= htmlspecialchars($entry['time']) ?>
+                                        </span>
+                                        <?php endif; ?>
+                                        <?php if ($entry['author'] !== ''): ?>
+                                        <span class="note-entry__author">
+                                            <svg class="icon"><use xlink:href="../img/sprite.svg#icon-user"></use></svg>
+                                            <?= htmlspecialchars($entry['author']) ?>
+                                        </span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="note-entry__body"><?= nl2br(htmlspecialchars($entry['body'])) ?></div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </article>
 
@@ -554,7 +1020,7 @@ function attachmentLabel(string $path): string
 
                     <div class="block--attach">
                         <svg class="icon icon-attach" style="width:16px;height:16px;"><use xlink:href="../img/sprite.svg#icon-attach"></use></svg>
-                        <div>Attachments (<a class="link" href="Javascript:void(0)" onclick="hesk_window('../file_limits.php',250,500);return false;">File upload limits</a>):</div>
+                        <div>Attachments (<a class="link file-limits-trigger" href="javascript:void(0)" id="openFileLimits">File upload limits</a>):</div>
                     </div>
                     <?php for ($i = 0; $i < 8; $i++): ?>
                         <input type="file" name="attachment[<?= $i ?>]" size="50" style="margin-bottom:4px;"><br>
@@ -713,6 +1179,95 @@ function attachmentLabel(string $path): string
     </div>
 </div>
 
+<!-- ============================================================
+     ADD NOTE MODAL
+     ============================================================ -->
+<div class="note-modal-overlay" id="noteModalOverlay" role="dialog" aria-modal="true" aria-labelledby="noteModalTitle">
+    <div class="note-modal">
+        <div class="note-modal__head">
+            <h3 id="noteModalTitle">
+                <svg class="icon icon-note" style="width:16px;height:16px;"><use xlink:href="../img/sprite.svg#icon-note"></use></svg>
+                &nbsp; Add Internal Note
+            </h3>
+            <button type="button" class="note-modal__close" id="noteModalClose" aria-label="Close">&times;</button>
+        </div>
+
+        <form method="post"
+              action="index.php?action=viewticket&viewtoken=<?= urlencode(base64_encode($ticketId)) ?>"
+              class="note-modal__body" id="noteForm">
+            <input type="hidden" name="add_ticket_note" value="1">
+            <input type="hidden" name="note_ticket_id" value="<?= htmlspecialchars($ticketId) ?>">
+            <input type="hidden" name="token" value="<?= htmlspecialchars($token) ?>">
+
+            <p class="note-modal__hint">
+                <svg class="icon" style="width:14px;height:14px;vertical-align:-2px;">
+                    <use xlink:href="../img/sprite.svg#icon-note"></use>
+                </svg>
+                Notes are <strong>internal only</strong> and are hidden from the customer. The ticket owner
+                will be notified by email that a note was added.
+            </p>
+
+            <label class="note-modal__label" for="note_body">Note</label>
+            <textarea id="note_body" name="note_body" class="note-modal__textarea"
+                      placeholder="Type your note here…" required></textarea>
+
+            <div class="note-modal__meta">
+                <span>Adding as:</span>
+                <strong><?= htmlspecialchars(($admin_fn ?? 'User') . ' (' . ($admin_lrn ?? ($_SESSION['role'] ?? '')) . ') - ' . ($_SESSION['userid'] ?? '')) ?></strong>
+            </div>
+
+            <div class="note-modal__footer">
+                <button type="button" class="btn-border" id="noteCancelBtn">Cancel</button>
+                <button type="submit" class="btn-full" id="noteSubmitBtn">
+                    <svg class="icon" style="width:14px;height:14px;"><use xlink:href="../img/sprite.svg#icon-save"></use></svg>
+                    &nbsp; Save Note &amp; Notify
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ============================================================
+     FILE LIMITS MODAL
+     ============================================================ -->
+<div class="file-limits-overlay" id="fileLimitsOverlay" role="dialog" aria-modal="true" aria-labelledby="fileLimitsTitle">
+    <div class="file-limits-modal">
+        <div class="file-limits-modal-header">
+            <h3 id="fileLimitsTitle">File upload limits</h3>
+            <button type="button" class="file-limits-modal-close" id="fileLimitsClose" aria-label="Close">×</button>
+        </div>
+
+        <div class="file-limits-modal-body">
+            <ul class="file-limits-list">
+                <li><span><strong>Maximum number of attachments:</strong> 8</span></li>
+                <li><span><strong>Maximum size per attachment:</strong> 992097152 B</span></li>
+            </ul>
+
+            <span class="file-limits-ext-label">You may upload files ending with:</span>
+            <div class="file-limits-exts">
+                <span class="ext">.gif</span>
+                <span class="ext">.jpg</span>
+                <span class="ext">.png</span>
+                <span class="ext">.zip</span>
+                <span class="ext">.rar</span>
+                <span class="ext">.csv</span>
+                <span class="ext">.doc</span>
+                <span class="ext">.docx</span>
+                <span class="ext">.xls</span>
+                <span class="ext">.xlsx</span>
+                <span class="ext">.txt</span>
+                <span class="ext">.pdf</span>
+                <span class="ext">.jpeg</span>
+                <span class="ext">.mp4</span>
+            </div>
+        </div>
+
+        <div class="file-limits-modal-footer">
+            <button type="button" class="btn-close-modal" id="fileLimitsCloseBtn">Close</button>
+        </div>
+    </div>
+</div>
+
 <input type="hidden" name="HESK_PATH" value="../">
 <script src="../js/svg4everybody.min.js"></script>
 <script src="../js/datepicker.min.js"></script>
@@ -843,5 +1398,94 @@ function attachmentLabel(string $path): string
     if (overlay)  overlay.addEventListener('click', function (e) { if (e.target === overlay) closeModal(); });
     if (searchEl) searchEl.addEventListener('input', filterRows);
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && overlay.classList.contains('is-open')) closeModal(); });
+})();
+</script>
+
+<script>
+/* ============================================================
+   ADD NOTE MODAL — fancy popup
+   ============================================================ */
+(function () {
+    var overlay  = document.getElementById('noteModalOverlay');
+    var openBtn  = document.getElementById('open-note-modal');
+    var closeX   = document.getElementById('noteModalClose');
+    var cancel   = document.getElementById('noteCancelBtn');
+    var form     = document.getElementById('noteForm');
+    var textarea = document.getElementById('note_body');
+    var submit   = document.getElementById('noteSubmitBtn');
+
+    if (!overlay || !openBtn) return;
+
+    function openModal() {
+        overlay.classList.add('open');
+        document.body.style.overflow = 'hidden';
+        setTimeout(function () { if (textarea) textarea.focus(); }, 80);
+    }
+    function closeModal() {
+        overlay.classList.remove('open');
+        document.body.style.overflow = '';
+    }
+
+    openBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        openModal();
+    });
+    if (closeX) closeX.addEventListener('click', closeModal);
+    if (cancel) cancel.addEventListener('click', closeModal);
+
+    overlay.addEventListener('click', function (e) {
+        if (e.target === overlay) closeModal();
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && overlay.classList.contains('open')) closeModal();
+    });
+
+    // Basic client-side guard
+    if (form) {
+        form.addEventListener('submit', function (e) {
+            if (!textarea.value.trim()) {
+                e.preventDefault();
+                textarea.focus();
+                return;
+            }
+            if (submit) {
+                submit.disabled = true;
+                submit.innerHTML = 'Saving…';
+            }
+        });
+    }
+})();
+</script>
+
+<script>
+/* ============================================================
+   FILE LIMITS MODAL — self-contained, no hesk_window
+   ============================================================ */
+(function () {
+    var overlay   = document.getElementById('fileLimitsOverlay');
+    var openBtn   = document.getElementById('openFileLimits');
+    var closeX    = document.getElementById('fileLimitsClose');
+    var closeBtn  = document.getElementById('fileLimitsCloseBtn');
+
+    if (!overlay || !openBtn) return;
+
+    function openModal()  { overlay.classList.add('open');    document.body.style.overflow = 'hidden'; }
+    function closeModal() { overlay.classList.remove('open'); document.body.style.overflow = ''; }
+
+    openBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        openModal();
+    });
+    if (closeX)   closeX.addEventListener('click', closeModal);
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+
+    overlay.addEventListener('click', function (e) {
+        if (e.target === overlay) closeModal();
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && overlay.classList.contains('open')) closeModal();
+    });
 })();
 </script>

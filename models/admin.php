@@ -27,6 +27,61 @@ class ModelAdmin
     }
 
 
+
+
+
+
+
+
+    public function AddTicketNote($ticketId, $noteText, $authorId = 0)
+{
+    $ticketId = trim((string) $ticketId);
+    $noteText = trim((string) $noteText);
+
+    if ($ticketId === '' || $noteText === '') {
+        return ['success' => false, 'message' => 'Ticket ID and note text are required.'];
+    }
+
+    try {
+        // Fetch existing note
+        $stmt = $this->conn->prepare(
+            "SELECT note FROM ticket_reports WHERE ticket_id = :tid LIMIT 1"
+        );
+        $stmt->execute([':tid' => $ticketId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$row) {
+            return ['success' => false, 'message' => 'Ticket not found.'];
+        }
+
+        $existingNote = trim((string) ($row['note'] ?? ''));
+        $timestamp    = date('Y-m-d H:i:s');
+        $formatted    = '[' . $timestamp . '] ' . $noteText;
+
+        $newNote = $existingNote === ''
+            ? $formatted
+            : $existingNote . "\n\n---\n\n" . $formatted;
+
+        // Update note column
+        $stmt = $this->conn->prepare(
+            "UPDATE ticket_reports SET note = :note WHERE ticket_id = :tid"
+        );
+        $ok = $stmt->execute([
+            ':note' => $newNote,
+            ':tid'  => $ticketId,
+        ]);
+
+        return $ok
+            ? ['success' => true,  'message' => 'Note added successfully.']
+            : ['success' => false, 'message' => 'Unable to save note.'];
+    } catch (Throwable $e) {
+        return ['success' => false, 'message' => 'Error: ' . $e->getMessage()];
+    }
+}
+
+
+
+    
 public function InsertTicketReply(array $data): array
 {
     try {

@@ -67,7 +67,6 @@ class Admincontroller {
 
 
 
-
 public function page_dashboard() {
     
   if (session_status() === PHP_SESSION_NONE) session_start();
@@ -101,13 +100,16 @@ $totalDeletedUsers  = (int) ($statusCounts['deleted'] ?? 0);
     $LoadAParticularUsersAndLoginTableForAdmin=$callUserModel->SelectUsersAndLoginTableforOnePersonAfterLogin($user_id);
         }
   if (isset($_GET['viewtoken'])) { 
+    $LoadAllReplies = [];
     $token = $_GET['viewtoken']; 
     $ticket_token = base64_decode($token, true);
        $the_tablename="ticket_reports"; $column_name="ticket_id"; $column_value=$ticket_token  ;
  $ViewTicketListing = $callUserModel->GeneralSelectAnyTableWhereColumnValueEquals($the_tablename, $column_name, $column_value);
-
-       }
- 
+  if ($ticket_token !== false && trim($ticket_token) !== '') {
+        $LoadAllReplies = $callUserModel->GeneralSelectAnyTableWhereColumnValueEquals('ticket_replies','ticket_id',trim($ticket_token));
+       
+        }
+  }
         
   if (isset($_GET['token_userdetails'])) { 
     $token = $_GET['token_userdetails']; 
@@ -118,6 +120,7 @@ $totalDeletedUsers  = (int) ($statusCounts['deleted'] ?? 0);
  
          $CheifAdminCrown ="";
            $company_adminseniorman  = $company_settings['company_adminseniorman'] ;
+           $company_supervisorseniorman  = $company_settings['company_supervisorseniorman'] ;
          $LoadAllUsersAndLoginTableForAdmin = $CallModelAdmin-> SelectAllCategoryOfUsersAndLoginTableForAdmin($userid);
    $tb_name = "request"; $LoadAllRequest =  $callUserModel->GeneralSelectAnyTable($tb_name);
    $tb_name = "corridor"; $LoadCorridorColumnForSelect =  $callUserModel->GeneralSelectAnyTable($tb_name);
@@ -130,7 +133,17 @@ $totalDeletedUsers  = (int) ($statusCounts['deleted'] ?? 0);
    $tb_name = "pipeline";$LoadPipelineColumnForSelect=$callUserModel->GeneralSelectAnyTable($tb_name);
    $tb_name = "pipeline_type";$LoadPipelineTypeColumnForSelect=$callUserModel->GeneralSelectAnyTable($tb_name);
    $tb_name = "ticket_reports";$LoadAllTickets=$callUserModel->GeneralSelectAnyTable($tb_name);
-   $tb_name = "ticket_replies";$LoadAllReplies=$callUserModel->GeneralSelectAnyTable($tb_name);
+//    $tb_name = "ticket_replies";$LoadAllReplies=$callUserModel->GeneralSelectAnyTable($tb_name);
+// $LoadAllReplies = [];
+// if (isset($_GET['viewtoken'])) {
+//     $ticket_token = base64_decode($_GET['viewtoken'], true);
+//     if ($ticket_token !== false && $ticket_token !== '') {
+//         $LoadAllReplies = $callUserModel->GeneralSelectAnyTableWhereColumnValueEquals(
+//             'ticket_replies', 'ticket_id', $ticket_token
+//         );
+//     }
+// }
+   
    $tb_name = "wellhead_status";$LoadAllTicketCategories=$callUserModel->GeneralSelectAnyTable($tb_name);
    $ticket_id = $callUserModel->generateTicketId();
    if ($ticket_id === null) { $ticket_id="Undefined"; }
@@ -422,6 +435,244 @@ if (isset($_POST['delete_selected_tickets'])) {
     header('Location: index.php?action=tickets');
     exit;
 }
+
+
+
+
+
+// ============================================================
+// ADD TICKET NOTE
+// ============================================================
+if (isset($_POST['add_ticket_note'])) {
+
+    $ticketId = trim($_POST['note_ticket_id'] ?? '');
+    $noteBody = trim($_POST['note_body'] ?? '');
+
+    if ($ticketId === '' || $noteBody === '') {
+        $_SESSION['error'] = 'Ticket ID and note are required.';
+        header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php'));
+        exit;
+    }
+
+    // Build author line: "Stellar Edwin (Administrator) - 1042"
+    $authorLine = trim(($admin_fn ?? 'Unknown') . ' (' . ($admin_lrn ?? $_SESSION['role'] ?? 'User') . ') - ' . ($_SESSION['userid'] ?? '0'));
+
+    // Final note text stored in DB
+    $fullNote = "Note by " . $authorLine . ":\n" . $noteBody;
+
+    // Persist
+    $result = $CallModelAdmin->AddTicketNote($ticketId, $fullNote, $_SESSION['userid']);
+
+    if (!empty($result['success'])) {
+
+        $_SESSION['success'] = 'Note added successfully.';
+
+        // Audit log
+        $user_details = ($admin_abr ?? '') . ' - ' . ($_SESSION['userid'] ?? '');
+        $action       = 'Added a note to ticket ' . $ticketId;
+
+        $callAuthMiddlewareClass->writelog(
+            $_SESSION['userid'],
+            $admin_lrn ?? $_SESSION['role'],
+            $admin_lr ?? $_SESSION['role'],
+            $user_details,
+            $action,
+            $company_logfile_url
+        );
+
+        // ---- Notify ticket owner / reporter by email ----
+        $ticketRows = $callUserModel->GeneralSelectAnyTableWhereColumnValueEquals(
+            'ticket_reports', 'ticket_id', $ticketId
+        );
+        $ticketRow = $ticketRows[0] ?? [];
+
+        $notifyEmail = '';
+        $notifyName  = '';
+
+        // Prefer the assigned owner's email, else the reporter's email
+        if (!empty($ticketRow['owner_userid'])) {
+            $ownerResult = $callUserModel->SelectUsersAndLoginTableforOnePersonAfterLogin($ticketRow['owner_userid']);
+            if (!empty($ownerResult['success'])) {
+                $notifyEmail = trim($ownerResult['user']['user_email'] ?? '');
+                $notifyName  = trim($ownerResult['user']['user_fullname'] ?? '');
+            }
+        }
+
+        if ($notifyEmail === '' && !empty($ticketRow['email'])) {
+            $notifyEmail = trim($ticketRow['email']);
+            $notifyName  = trim($ticketRow['name'] ?? '');
+        }
+
+        if ($notifyEmail !== '' && filter_var($notifyEmail, FILTER_VALIDATE_EMAIL)) {
+
+            $safeName    = htmlspecialchars($notifyName, ENT_QUOTES, 'UTF-8');
+            $safeTicket  = htmlspecialchars($ticketId, ENT_QUOTES, 'UTF-8');
+            $safeSubject = htmlspecialchars($ticketRow['subject'] ?? '', ENT_QUOTES, 'UTF-8');
+            $safeNote    = nl2br(htmlspecialchars($noteBody, ENT_QUOTES, 'UTF-8'));
+            $safeAuthor  = htmlspecialchars($authorLine, ENT_QUOTES, 'UTF-8');
+
+            $subject = 'New Note Added to Ticket ' . $ticketId;
+
+            $message =
+                "Hello $safeName,<br><br>"
+              . "A new internal note has been added to the ticket below.<br><br>"
+              . "<strong>Ticket ID:</strong> $safeTicket<br>"
+              . "<strong>Subject:</strong> $safeSubject<br>"
+              . "<strong>Note Added By:</strong> $safeAuthor<br><br>"
+              . "<strong>Note:</strong><br><div style='padding:10px 14px;background:#f5f7fb;border-left:4px solid #3b6fd4;border-radius:6px;'>$safeNote</div><br>"
+              . "<div style='text-align:center;margin:25px 0;'>"
+              . "<a href='" . htmlspecialchars($loginurl, ENT_QUOTES, 'UTF-8') . "' "
+              . "style='display:inline-block;padding:12px 25px;background-color:#0d6efd;color:#fff;"
+              . "text-decoration:none;border-radius:5px;font-weight:bold;'>Login to View Ticket</a></div>"
+              . "Best regards,<br>The Support Team";
+
+            $CallMailerModel->sendmail($notifyEmail, $subject, $message);
+        }
+
+    } else {
+        $_SESSION['error'] = $result['message'] ?? 'Could not add note.';
+    }
+
+    header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? ('index.php?action=viewticket&viewtoken=' . base64_encode($ticketId))));
+    exit;
+}
+
+
+
+
+
+
+
+
+// ============================================================
+// ASSIGN CHIEF SUPERVISOR (company_supervisorseniorman)
+// ============================================================
+if (isset($_POST['assign_chief_sp'])) {
+
+    // --- 1. CSRF / action token check -----------------------
+    $action_token  = trim($_POST['action_token'] ?? '');
+    $session_token = $_SESSION['action_token'] ?? '';
+
+    if (
+        $action_token === '' ||
+        $session_token === '' ||
+        !hash_equals($session_token, $action_token)
+    ) {
+        $_SESSION['error'] = 'Invalid authorization token.';
+        header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php'));
+        exit;
+    }
+
+    // --- 2. Only the current chief admin can do this --------
+    $company_settings_fresh = $callCompanyModel->web_settings();
+    $current_chief_id       = (int) ($company_settings_fresh['company_adminseniorman'] ?? 0);
+
+    if ($current_chief_id !== (int) $_SESSION['userid']) {
+        $_SESSION['error'] = 'You are not authorised to assign a chief supervisor.';
+        header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php'));
+        exit;
+    }
+
+    // --- 3. Validate submitted supervisor -------------------
+    $supervisor_userid = trim($_POST['supervisor_userid'] ?? '');
+
+    if ($supervisor_userid === '') {
+        $_SESSION['error'] = 'Please select a supervisor.';
+        header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php'));
+        exit;
+    }
+
+    $supervisorResult = $callUserModel->SelectUsersAndLoginTableforOnePersonAfterLogin($supervisor_userid);
+
+    if (empty($supervisorResult['success']) || empty($supervisorResult['user'])) {
+        $_SESSION['error'] = 'Could not find the selected supervisor.';
+        header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php'));
+        exit;
+    }
+
+    $supervisor         = $supervisorResult['user'];
+    $supervisorFullName = trim($supervisor['user_fullname'] ?? '');
+    $supervisorAbrv     = trim($supervisor['AbrvName']      ?? '');
+    $supervisorEmail    = trim($supervisor['user_email']    ?? '');
+    $supervisorRole     = trim($supervisor['login_role']    ?? '');
+
+    if ($supervisorRole !== 'supervisor') {
+        $_SESSION['error'] = 'The selected user is not a supervisor.';
+        header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php'));
+        exit;
+    }
+
+    if ((int) $supervisor_userid === (int) ($company_settings_fresh['company_supervisorseniorman'] ?? 0)) {
+        $_SESSION['error'] = $supervisorFullName . ' is already the chief supervisor.';
+        header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php'));
+        exit;
+    }
+
+    // --- 4. Update company.company_supervisorseniorman ------
+    $updateData = [
+        'the_tablename' => 'company',
+        'column_value'  => $supervisor_userid,
+        'column_name'   => 'company_supervisorseniorman',
+        'where_column'  => 'company_userid',
+        'where_value'   => $company_userid,
+    ];
+
+    $updated = $callUserModel->GeneralUpdateAnyTableColumnWithThisValue($updateData);
+
+    if (!$updated) {
+        $_SESSION['error'] = 'Could not update the chief supervisor. Please try again.';
+        header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php'));
+        exit;
+    }
+
+    // --- 5. Audit log ---------------------------------------
+    $user_details = ($admin_abr ?? '') . ' - ' . $_SESSION['userid'];
+    $action       = 'Assigned ' . $supervisorFullName .
+                    ' (Ref ID: ' . $supervisor_userid . ') as Chief Supervisor';
+
+    $callAuthMiddlewareClass->writelog(
+        $_SESSION['userid'],
+        $admin_lrn ?? $_SESSION['role'],
+        $admin_lr  ?? $_SESSION['role'],
+        $user_details,
+        $action,
+        $company_logfile_url
+    );
+
+    // --- 6. Email the new chief supervisor ------------------
+    if ($supervisorEmail !== '' && filter_var($supervisorEmail, FILTER_VALIDATE_EMAIL)) {
+
+        $safeName    = htmlspecialchars($supervisorFullName, ENT_QUOTES, 'UTF-8');
+        $safeChief   = htmlspecialchars($admin_fn ?? '', ENT_QUOTES, 'UTF-8');
+        $safeCompany = htmlspecialchars($company_name ?? 'the organisation', ENT_QUOTES, 'UTF-8');
+
+        $subject = 'You Have Been Assigned as Chief Supervisor';
+
+        $message =
+            "Hello $safeName,<br><br>"
+          . "You have been assigned as the <strong>Chief Supervisor</strong> of $safeCompany.<br><br>"
+          . "<strong>Reference ID:</strong> " . htmlspecialchars($supervisor_userid, ENT_QUOTES, 'UTF-8') . "<br>"
+          . "<strong>Assigned By:</strong> $safeChief<br>"
+          . "<strong>Date:</strong> " . date('Y-m-d H:i:s') . "<br><br>"
+          . "As Chief Supervisor, you now have supervisory authority over the supervisor team. "
+          . "Please log in to review your responsibilities.<br><br>"
+          . "<div style='text-align:center; margin:25px 0;'>"
+          . "<a href='" . htmlspecialchars($loginurl, ENT_QUOTES, 'UTF-8') . "' "
+          . "style='display:inline-block; padding:12px 25px; background-color:#0d6efd; "
+          . "color:#ffffff; text-decoration:none; border-radius:5px; font-weight:bold;'>"
+          . "Login to Your Account</a></div>"
+          . "Best regards,<br>The Support Team";
+
+        $CallMailerModel->sendmail($supervisorEmail, $subject, $message);
+    }
+
+    $_SESSION['success'] = $supervisorFullName . ' is now the Chief Supervisor.';
+    header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php?action=manage_users'));
+    exit;
+}
+
+
+
 
 
 // Assign users
@@ -1124,7 +1375,7 @@ if (isset($_POST['submit_reply'])) {
 
     /* ---------- Handle attachments (up to 8) ---------- */
     $savedAttachments = [];
-    $uploadDir = __DIR__ . '/../views/uploads/attachments/';
+    $uploadDir = __DIR__ . '/../views/uploads/ticket_library/replies/';
     if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
 
     if (!empty($_FILES['attachment']['name']) && is_array($_FILES['attachment']['name'])) {

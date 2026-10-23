@@ -25,7 +25,7 @@
                     data-bs-toggle="dropdown"
                     aria-expanded="false"
                 >
-                    <i class="bi bi-person-plus-fill me-1"></i> Create user
+                    <i class="bi bi-person-plus-fill me-1"></i> User
                 </button>
 
                 <div
@@ -33,7 +33,7 @@
                     aria-labelledby="createUserDropdownToggle"
                 >
                     <div class="dropdown-header px-3 py-2">
-                        <small class="text-uppercase fw-bold text-muted">Select Role</small>
+                        <small class="text-uppercase fw-bold text-muted">Create user / chief head</small>
                     </div>
                     <div class="dropdown-divider"></div>
 
@@ -50,7 +50,7 @@
                         </div>
                         <div class="preview-item-content">
                             <p class="preview-subject ellipsis mb-1 fw-semibold">
-                                Administrator
+                                Create Administrator
                             </p>
                             <p class="text-muted small mb-0">Full system access</p>
                         </div>
@@ -58,7 +58,7 @@
 
                     <div class="dropdown-divider"></div>
 
-                    <!-- REPORTER (uses the standard Create User modal) -->
+                    <!-- REPORTER -->
                     <a
                         href="#"
                         class="dropdown-item preview-item create-user-role-btn"
@@ -73,9 +73,31 @@
                         </div>
                         <div class="preview-item-content">
                             <p class="preview-subject ellipsis mb-1 fw-semibold">
-                                Reporter
+                               Create Reporter
                             </p>
                             <p class="text-muted small mb-0">Limited access</p>
+                        </div>
+                    </a>
+
+                    <div class="dropdown-divider"></div>
+
+                    <!-- ASSIGN CHIEF S.P (now opens its own modal) -->
+                    <a
+                        href="#"
+                        class="dropdown-item preview-item"
+                        id="assignChiefSPTrigger"
+                        role="button"
+                    >
+                        <div class="preview-thumbnail">
+                            <div class="preview-icon bg-gradient-warning rounded-circle">
+                                <i class="bi bi-shield-fill-check text-white"></i>
+                            </div>
+                        </div>
+                        <div class="preview-item-content">
+                            <p class="preview-subject ellipsis mb-1 fw-semibold">
+                               Assign chief S.P
+                            </p>
+                            <p class="text-muted small mb-0">Chief Supervisor</p>
                         </div>
                     </a>
 
@@ -134,7 +156,6 @@
         <div class="modal-content create-user-modal-content">
 
             <form method="post" action="index.php?action=manage_users"
-                  
                   enctype="multipart/form-data"
                   onsubmit="return checkTurnstile(event) && disableSubmitButton(this);">
 
@@ -172,18 +193,6 @@
                     </div>
 
                     <div class="mb-3">
-                        <!-- <label for="adminCorridor" class="form-label fw-semibold">
-                            <i class="bi bi-diagram-3 me-1 text-primary"></i> Corridor
-                        </label>
-
-                        <select class="form-select form-select-lg" id="adminCorridor" name="user_corridor" required>
-                            <option value="" selected disabled>Select corridor</option>
-                            <?php foreach ($LoadCorridorColumnForSelect as $corridor): ?>
-                                <option value="<?= htmlspecialchars($corridor['name'], ENT_QUOTES, 'UTF-8') ?>">
-                                    <?= htmlspecialchars($corridor['name'], ENT_QUOTES, 'UTF-8') ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select> -->
                         <input type="hidden" name="user_corridor" value="General">
                     </div>
 
@@ -213,15 +222,11 @@
 
                 </div>
 
-                <!-- Turnstile widget (uncomment when ready to enforce) -->
-                <!-- <div class="cf-turnstile" data-sitekey="<?= $CF_SiteKey ?>" data-callback="turnstileSuccess" data-size="flexible"></div> -->
-
                 <div class="modal-footer create-user-modal-footer">
                     <button type="button" class="btn btn-outline-secondary btn-lg" data-bs-dismiss="modal">
                         Cancel
                     </button>
-   <input type="hidden" name="create_user_account" value="1">
-                    
+                    <input type="hidden" name="create_user_account" value="1">
                     <button type="submit" name="create_admin_user" value="1" class="btn btn-success btn-lg px-4">
                         <i class="bi bi-check-circle me-1"></i> Create Administrator
                     </button>
@@ -236,19 +241,15 @@
 
 <!-- ==================================================
      CREATE USER MODAL (Reporter / General)
-     — mirrors the Administrator modal exactly
-     — submits: title, fullname, phone, role, email, user_corridor
      ================================================== -->
 <div class="modal fade" id="createUserModal" tabindex="-1" aria-labelledby="createUserModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content create-user-modal-content">
 
-            <form method="post" action="index.php?action=manage_users"  onsubmit="disableSubmitButton(this); return validateCreateUserForm(this);">
+            <form method="post" action="index.php?action=manage_users" onsubmit="disableSubmitButton(this); return validateCreateUserForm(this);">
 
                 <input type="hidden" name="action_token" value="<?= htmlspecialchars($_SESSION['action_token'] ?? '') ?>">
-
-                <!-- Role is pre-filled by the dropdown trigger (data-role="reporter") -->
-                <input type="hidden" name="role"  value="reporter">
+                <input type="hidden" name="role"  value="reporter" id="createUserRole">
 
                 <div class="modal-header create-user-modal-header">
                     <div class="d-flex align-items-center">
@@ -321,9 +322,6 @@
 
                 </div>
 
-                <!-- Turnstile widget (uncomment when ready to enforce) -->
-                <!-- <div class="cf-turnstile" data-sitekey="<?= $CF_SiteKey ?>" data-callback="turnstileSuccess" data-size="flexible"></div> -->
-
                 <div class="modal-footer create-user-modal-footer">
                     <button type="button" class="btn btn-outline-secondary btn-lg" data-bs-dismiss="modal">
                         Cancel
@@ -331,6 +329,94 @@
                     <input type="hidden" name="create_user_account" value="1">
                     <button type="submit" name="create_admin_user" value="1" class="btn btn-success btn-lg px-4">
                         <i class="bi bi-check-circle me-1"></i> Create Reporter
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+
+<!-- ==================================================
+     ASSIGN CHIEF SUPERVISOR MODAL
+     ================================================== -->
+<div class="modal fade" id="assignChiefSPModal" tabindex="-1" aria-labelledby="assignChiefSPModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content create-user-modal-content">
+
+            <form method="post" action="index.php?action=manage_users"
+                  onsubmit="return checkTurnstile(event) && disableSubmitButton(this);">
+
+                <input type="hidden" name="action_token" value="<?= htmlspecialchars($_SESSION['action_token'] ?? '') ?>">
+                <input type="hidden" name="assign_chief_sp" value="1">
+
+                <div class="modal-header create-user-modal-header">
+                    <div class="d-flex align-items-center">
+                        <div class="modal-icon-circle me-3">
+                            <i class="bi bi-shield-fill-check"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title mb-0" id="assignChiefSPModalLabel">
+                                Assign Chief Supervisor
+                            </h5>
+                            <small class="text-muted">Supervisory authority</small>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body create-user-modal-body">
+
+                    <div class="mb-3">
+                        <label for="chiefSupervisorSelect" class="form-label fw-semibold">
+                            <i class="bi bi-person-check me-1 text-primary"></i> Select Supervisor
+                        </label>
+                        <select class="form-select form-select-lg" id="chiefSupervisorSelect" name="supervisor_userid" required>
+                            <option value="" selected disabled>Select a supervisor</option>
+                            <?php
+error_reporting(E_ALL);
+ini_set('display_errors', '1');
+ini_set('display_startup_errors', '1');
+?>
+                            <?php if (!empty($LoadAllUsersAndLoginTableForAdmin['supervisor'])): ?>
+                                <?php foreach ($LoadAllUsersAndLoginTableForAdmin['supervisor'] as $sup): ?>
+                                      <?php  
+                                        $supervisors_userid_list = htmlspecialchars($sup['user_userid'], ENT_QUOTES, 'UTF-8');
+                                        $supervisors_corridor_list = htmlspecialchars($sup['user_corridor'], ENT_QUOTES, 'UTF-8');
+                                        if ($supervisors_corridor_list!="" ) { $supervisors_corridor_list =" (".$supervisors_corridor_list . " corridor)";}
+                                        $supervisors_fullname_list = htmlspecialchars($sup['user_fullname'], ENT_QUOTES, 'UTF-8');
+                                        
+                                        ?>
+
+
+                                    <option value="<?= $supervisors_userid_list ?>">
+                                        <?= ucfirst($supervisors_fullname_list). $supervisors_corridor_list. " - ". $supervisors_userid_list  ?>
+                                      
+                                    </option>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <option value="" disabled>No supervisors available</option>
+                            <?php endif; ?>
+                        </select>
+                    </div>
+
+                    <div class="alert alert-info d-flex align-items-start mb-0" role="alert">
+                        <i class="bi bi-info-circle-fill me-2 mt-1"></i>
+                        <div class="small">
+                            The selected supervisor will replace the current Chief Supervisor and gain supervisory authority over the supervisor team. An email will be sent to notify them.
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer create-user-modal-footer">
+                    <button type="button" class="btn btn-outline-secondary btn-lg" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-warning btn-lg px-4">
+                        <i class="bi bi-shield-check me-1"></i> Assign Chief S.P
                     </button>
                 </div>
 
@@ -398,9 +484,6 @@
 
                 </div>
 
-                <!-- Turnstile widget (uncomment when ready to enforce) -->
-                <!-- <div class="cf-turnstile" data-sitekey="<?= $CF_SiteKey ?>" data-callback="turnstileSuccess" data-size="flexible"></div> -->
-
                 <div class="modal-footer update-password-modal-footer">
                     <button type="button" class="btn btn-outline-secondary btn-lg" data-bs-dismiss="modal">
                         Cancel
@@ -448,68 +531,53 @@
 
                     <div class="mb-3">
                         <label for="template_mode" class="form-label fw-semibold">
-                            <!-- <i class="bi bi-palette me-1 text-primary"></i>  -->
                             My account template mode
                         </label>
                         <select class="form-select form-select-lg" id="template_mode" name="template_mode" required>
-                       
                             <option value="<?= $template_mode ?>"><?= ucfirst($template_mode) ?></option>
                             <option value="dark">Dark</option>
-                             <option value="light">Light</option>
+                            <option value="light">Light</option>
                             <option value="auto">Auto</option>
                         </select>
                     </div>
 
                     <?php if ( $company_adminseniorman==$_SESSION['userid']) : ?>
                     <div class="mb-3">
-                        <label for="template_mode" class="form-label fw-semibold">
-                            <!-- <i class="bi bi-palette me-1 text-primary"></i>  -->
-                            Allow notification 
+                        <label for="company_allownotification" class="form-label fw-semibold">
+                            Allow notification
                         </label>
                         <select class="form-select form-select-lg" id="company_allownotification" name="company_allownotification" required>
-                       
                             <option value="<?= $company_allownotification ?>"><?= ucfirst($company_allownotification_text) ?></option>
                             <option value="1">Allow</option>
-                             <option value="0">Disallow</option>
-                            
+                            <option value="0">Disallow</option>
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label for="template_mode" class="form-label fw-semibold">
-                            <!-- <i class="bi bi-palette me-1 text-primary"></i>  -->
+                        <label for="allow_signup" class="form-label fw-semibold">
                             Allow users to create new account
                         </label>
                         <select class="form-select form-select-lg" id="allow_signup" name="allow_signup" required>
-                       
                             <option value="<?= $company_Allow_signup ?>"><?= ucfirst($company_Allow_signup_text) ?></option>
                             <option value="1">Allow</option>
-                             <option value="0">Disallow</option>
-                            
+                            <option value="0">Disallow</option>
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label for="template_mode" class="form-label fw-semibold">
-                            <!-- <i class="bi bi-palette me-1 text-primary"></i>  -->
+                        <label for="auto_approval" class="form-label fw-semibold">
                             Auto account approval
                         </label>
                         <select class="form-select form-select-lg" id="auto_approval" name="auto_approval" required>
-                       
                             <option value="<?= $company_acct_approval ?>"><?= ucfirst($company_acct_approval_text) ?></option>
                             <option value="1">Allow</option>
-                             <option value="0">Disallow</option>
-                            
+                            <option value="0">Disallow</option>
                         </select>
                     </div>
                   <?php else: ?>
                 <input type="hidden" name="allow_signup" value="<?= $company_Allow_signup ?>">
                 <input type="hidden" name="auto_approval" value="<?= $company_acct_approval ?>">
                 <input type="hidden" name="company_allownotification" value="<?= $company_allownotification ?>">
-
                   <?php endif ?>
                 </div>
-
-                <!-- Turnstile widget (uncomment when ready to enforce) -->
-                <!-- <div class="cf-turnstile" data-sitekey="<?= $CF_SiteKey ?>" data-callback="turnstileSuccess" data-size="flexible"></div> -->
 
 <input type="hidden" name="update_settings" >
 
@@ -532,7 +600,8 @@
 <style>
 /* ===== Create User Modal Styles ===== */
 #createUserModal .modal-dialog,
-#createAdministratorModal .modal-dialog {
+#createAdministratorModal .modal-dialog,
+#assignChiefSPModal .modal-dialog {
     display: flex;
     align-items: center;
     min-height: calc(100vh - 1rem);
@@ -541,7 +610,8 @@
 
 @media (min-width: 576px) {
     #createUserModal .modal-dialog,
-    #createAdministratorModal .modal-dialog {
+    #createAdministratorModal .modal-dialog,
+    #assignChiefSPModal .modal-dialog {
         min-height: calc(100vh - 3.5rem);
     }
 }
@@ -695,8 +765,9 @@
     font-size: 1.1rem;
 }
 
-.bg-gradient-danger { background: linear-gradient(135deg, #f5365c 0%, #f56036 100%); }
-.bg-gradient-info   { background: linear-gradient(135deg, #11cdef 0%, #1171ef 100%); }
+.bg-gradient-danger  { background: linear-gradient(135deg, #f5365c 0%, #f56036 100%); }
+.bg-gradient-info    { background: linear-gradient(135deg, #11cdef 0%, #1171ef 100%); }
+.bg-gradient-warning { background: linear-gradient(135deg, #f5a623 0%, #f5c823 100%); }
 
 .create-user-dropdown .preview-subject { font-size: 0.9rem; color: #2c3e50; }
 .create-user-dropdown .dropdown-divider { margin: 0.3rem 0.5rem; border-color: #eef1f6; }
@@ -786,8 +857,23 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     /* =========================================================
+       ASSIGN CHIEF S.P TRIGGER  ->  assignChiefSPModal
+       ========================================================= */
+    var assignChiefTrigger = document.getElementById('assignChiefSPTrigger');
+    var assignChiefModalEl = document.getElementById('assignChiefSPModal');
+
+    if (assignChiefTrigger && assignChiefModalEl && typeof bootstrap !== 'undefined') {
+        assignChiefTrigger.addEventListener('click', function (event) {
+            event.preventDefault();
+            event.stopPropagation(); // keep the dropdown from swallowing the click
+
+            var modal = bootstrap.Modal.getOrCreateInstance(assignChiefModalEl);
+            modal.show();
+        });
+    }
+
+    /* =========================================================
        REPORTER BUTTON  ->  createUserModal
-       Sets role="reporter" and updates the modal title
        ========================================================= */
     var reporterButtons = document.querySelectorAll('.create-user-role-btn');
     var createUserRoleInput = document.getElementById('createUserRole');
@@ -811,20 +897,15 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     /* =========================================================
-       UPDATE PASSWORD TRIGGER (from profile dropdown)
+       UPDATE PASSWORD TRIGGER
        ========================================================= */
     var trigger = document.getElementById('openUpdatePasswordModal');
-
     if (trigger) {
         trigger.addEventListener('click', function (e) {
             e.preventDefault();
-
             var modalEl = document.getElementById('updatePasswordModal');
-
             if (!modalEl || typeof bootstrap === 'undefined') return;
-
-            var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-            modal.show();
+            bootstrap.Modal.getOrCreateInstance(modalEl).show();
         });
     }
 
@@ -836,13 +917,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function sanitisePhoneInput() {
         var value = this.value;
-
         if (value.startsWith('+')) {
             value = '+' + value.substring(1).replace(/\D/g, '');
         } else {
             value = value.replace(/\D/g, '');
         }
-
         this.value = value;
     }
 
@@ -851,17 +930,14 @@ document.addEventListener('DOMContentLoaded', function () {
             'Backspace', 'Delete', 'ArrowLeft', 'ArrowRight',
             'ArrowUp', 'ArrowDown', 'Home', 'End', 'Tab'
         ];
-
         if (allowedKeys.includes(event.key)) return;
         if (event.ctrlKey || event.metaKey) return;
-
         if (event.key === '+') {
             if (this.selectionStart !== 0 || this.value.includes('+')) {
                 event.preventDefault();
             }
             return;
         }
-
         if (!/^[0-9]$/.test(event.key)) {
             event.preventDefault();
         }
@@ -871,7 +947,6 @@ document.addEventListener('DOMContentLoaded', function () {
         createUserPhone.addEventListener('input', sanitisePhoneInput);
         createUserPhone.addEventListener('keydown', blockInvalidPhoneKeys);
     }
-
     if (adminPhone) {
         adminPhone.addEventListener('input', sanitisePhoneInput);
         adminPhone.addEventListener('keydown', blockInvalidPhoneKeys);
@@ -886,7 +961,6 @@ function validateCreateUserForm(form) {
     if (typeof checkTurnstile === 'function') {
         if (!checkTurnstile(event)) return false;
     }
-
     if (typeof disableSubmitButton === 'function') {
         disableSubmitButton(form);
     } else {
@@ -896,7 +970,6 @@ function validateCreateUserForm(form) {
             button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Creating...';
         }
     }
-
     return true;
 }
 </script>
@@ -905,29 +978,21 @@ function validateCreateUserForm(form) {
      SHARED HELPERS
      ========================================================= -->
 <script>
-/* Turnstile stub — safe if Turnstile is not loaded yet */
 function checkTurnstile(event) {
     if (typeof turnstile === 'undefined') return true;
-
     var responseInput = document.querySelector('input[name="cf-turnstile-response"]');
-
     if (responseInput && responseInput.value) return true;
-
     if (event) event.preventDefault();
-
     alert('Please complete the verification challenge.');
     return false;
 }
 
-/* Disable submit button to prevent double submits */
 function disableSubmitButton(form) {
     const button = form.querySelector('button[type="submit"]');
-
     if (button) {
         button.disabled = true;
         button.innerHTML = 'Processing...';
     }
-
     return true;
 }
 </script>

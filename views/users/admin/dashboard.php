@@ -1,4 +1,3 @@
-
 <?php include 'views/inc/admin/head.php' ?>
 <body>
 <?php include 'views/inc/admin/sidebar_menu.php' ?>
@@ -439,15 +438,15 @@
                 selectedIds.push(id);
             });
 
-            if (confirm(`Are you sure you want to delete ${selectedIds.length} selected ticket(s)?`)) {
-                checkedCheckboxes.each(function () {
-                    ticketsTable.row($(this).closest('tr')).remove();
-                });
-
-                ticketsTable.draw();
-                $('#selectAll').prop('checked', false).prop('indeterminate', false);
-                updateDeleteButtonState();
-            }
+            // if (confirm(`Are you sure you want to delete ${selectedIds.length} selected ticket(s)?`)) {
+            //     checkedCheckboxes.each(function () {
+            //         ticketsTable.row($(this).closest('tr')).remove();
+            //     });
+            //
+            //     ticketsTable.draw();
+            //     $('#selectAll').prop('checked', false).prop('indeterminate', false);
+            //     updateDeleteButtonState();
+            // }
         });
 
         /* ========================================================

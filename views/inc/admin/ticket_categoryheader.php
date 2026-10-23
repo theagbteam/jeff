@@ -147,11 +147,13 @@ var_dump($wellhead_status_counts);
                         $ownerName = trim((string)($ticket_history['owner'] ?? ''));
                         $ownerDisplay = $ownerName !== '' ? $ownerName : 'Unassigned';
                         $ownerTicketId = (string)($ticket_history['ticket_id'] ?? $ticket_history['id'] ?? '');
+                        $ownerCorridor = trim((string)($ticket_history['corridor'] ?? ''));
                         ?>
                         <button type="button"
                                 class="owner-popup-trigger"
                                 data-ticket-id="<?= htmlspecialchars($ownerTicketId, ENT_QUOTES, 'UTF-8') ?>"
-                                data-owner="<?= htmlspecialchars($ownerName, ENT_QUOTES, 'UTF-8') ?>">
+                                data-owner="<?= htmlspecialchars($ownerName, ENT_QUOTES, 'UTF-8') ?>"
+                                data-corridor="<?= htmlspecialchars($ownerCorridor, ENT_QUOTES, 'UTF-8') ?>">
                             <?= htmlspecialchars($ownerDisplay, ENT_QUOTES, 'UTF-8') ?>
                         </button>
                     </td>
@@ -309,12 +311,14 @@ var_dump($wellhead_status_counts);
                     <?php foreach ($LoadAllUsersAndLoginTableForAdmin['supervisor'] as $asignuser): ?>
                         <?php
                             $optUserId   = (string)($asignuser['user_userid'] ?? '');
+                            $optCorridor  = (string)($asignuser['user_corridor'] ?? '');
+                            if ($optCorridor !="") {$optCorridor = " (". $optCorridor . " corridor)";}
                             $optFullname = (string)($asignuser['user_fullname'] ?? '');
                             $optRole     = (string)($asignuser['login_role'] ?? '');
-                            $AssignableUsers = $optFullname . "-" . $optUserId . " (".$optRole . ")"
+                            $AssignableUsers = ucfirst($optFullname) .  $optCorridor   ." - " . $optUserId ;
 
                         ?>
-                        <option value="<?= $optUserId?>">
+                        <option value="<?= $optUserId ?>">
                             <?= htmlspecialchars($AssignableUsers, ENT_QUOTES, 'UTF-8') ?>
                         </option>
                     <?php endforeach; ?>
@@ -583,13 +587,20 @@ var_dump($wellhead_status_counts);
     const ownerTicketIdInput = document.getElementById('assignOwnerTicketIdInput'); // hidden ticket id input
     const ownerSelect       = document.getElementById('assignOwnerSelect');
     const ownerCancelBtn    = document.getElementById('assignOwnerCancelBtn');
+    const ownerTitle        = document.getElementById('assignOwnerTitle');
 
-    function openOwnerModal(ticketId, currentOwner) {
+    function openOwnerModal(ticketId, currentOwner, corridor) {
         if (!ownerOverlay) return;
 
         // Set hidden ticket id field
         if (ownerTicketIdInput) {
             ownerTicketIdInput.value = ticketId || '';
+        }
+
+        // Update modal title to show ticket number and corridor name
+        if (ownerTitle) {
+            const corridorLabel = (corridor || '').trim() || 'No Corridor';
+            ownerTitle.textContent = 'Ticket ' + (ticketId || '') + ' of ' + corridorLabel + ' corridor';
         }
 
         // The form action remains the same, but the hidden field carries the ticket_id.
@@ -625,7 +636,7 @@ var_dump($wellhead_status_counts);
         if (!trigger) return;
 
         e.preventDefault();
-        openOwnerModal(trigger.dataset.ticketId, trigger.dataset.owner);
+        openOwnerModal(trigger.dataset.ticketId, trigger.dataset.owner, trigger.dataset.corridor);
     });
 
     if (ownerCancelBtn) {

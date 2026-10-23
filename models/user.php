@@ -484,13 +484,12 @@ public function updateuserpwd($data){
 
 public function GeneralSelectAnyTable($tb_name){
     try {
-         $allowed_tables = [
-        'audit_trail','transfer_history','company','corridor','incidence_source','lgas',
-        'local_government_areas','login','operator','owner','pipeline',
-        'pipeline_type','priority','report_type','request','states',
-        'tickets','ticket_category','users','ticket_reports','wellhead_status','zone'
-    ];
-
+        $allowed_tables = [
+            'audit_trail','transfer_history','company','corridor','incidence_source','lgas',
+            'local_government_areas','login','operator','owner','pipeline',
+            'pipeline_type','priority','report_type','request','states',
+            'tickets','ticket_category','users','ticket_reports','ticket_replies','wellhead_status','zone'
+        ];
 
         if (!in_array($tb_name, $allowed_tables, true)) {
             return [];
@@ -507,9 +506,6 @@ public function GeneralSelectAnyTable($tb_name){
         return [];
     }
 }
-
-
-
 
 
 
@@ -555,7 +551,7 @@ public function GeneralSelectAnyTableWhereColumnValueEquals($the_tablename, $col
             'audit_trail','company','corridor','incidence_source','lgas',
             'local_government_areas','login','operator','owner','pipeline',
             'pipeline_type','priority','report_type','request','states',
-            'tickets','ticket_category','ticket_reports','users','wellhead_status','zone'
+            'tickets','ticket_category','ticket_reports','ticket_replies','users','wellhead_status','zone'
         ];
 
         if (!in_array($the_tablename, $allowed_tables, true)) {

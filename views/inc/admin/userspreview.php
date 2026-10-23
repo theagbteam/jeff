@@ -169,6 +169,9 @@ $totalAllUsers = $totalActiveUsers + $totalInactiveUsers;
                                                 <div class="dashboard-table-user-name">
                                                     <span class="status-ball <?= $status_ball_class; ?>" aria-hidden="true"></span>
                                                     <?= ucfirst(htmlspecialchars($user['user_title'])) ." " .ucfirst(htmlspecialchars($user['user_fullname'] ." (". ucfirst(htmlspecialchars($user['login_role'])).")" ?? 'N/A', ENT_QUOTES, 'UTF-8')); ?>
+                                                    <?php if ($company_supervisorseniorman == $user['user_userid']): ?>
+                                                        <span class="supervisor-crown" aria-label="Supervisor" title="Supervisor">👑</span>
+                                                    <?php endif; ?>
                                              <?php if ( $company_adminseniorman == $user['user_userid']){ echo "👑"; } ?>
                                                 </div>
 
@@ -751,6 +754,18 @@ $totalAllUsers = $totalActiveUsers + $totalInactiveUsers;
     vertical-align: middle;
     flex-shrink: 0;
     box-shadow: 0 0 0 1px rgba(0, 0, 0, .08);
+}
+
+/* Blue crown for the supervisor user (placed after the role parentheses). */
+
+.dashboard-table-user-name .supervisor-crown {
+    display: inline-block;
+    margin-left: 4px;
+    vertical-align: middle;
+    font-size: 12px;
+    line-height: 1;
+    color: #3b6fd4;
+    filter: hue-rotate(0deg) saturate(1.4);
 }
 
 .status-ball-active {
