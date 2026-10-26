@@ -177,8 +177,8 @@ exit;
     $company_Allow_signup =
         $company_settings['company_signup'] ?? 0;
 
-    $company_alias =
-        $company_settings['company_alias'] ?? 'Page';
+    $company_alias =  $company_settings['company_alias'] ?? 'Page';
+    $company_name =  $company_settings['company_name'] ?? 'Page';
 
     $company_logo =
         $company_settings['company_logo'] ?? '';

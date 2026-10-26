@@ -171,7 +171,7 @@
                 >
 
                     <i
-                        class="mdi mdi-account-multiple"
+                        class="mdi mdi-account-group"
                         style="<?= $page_name === 'users' ? 'color:green !important;' : '' ?>"
                     ></i>
 
@@ -191,6 +191,39 @@
         </li>
 
 
+        <li class="nav-item menu-items <?= $tb_name === 'subcontractors' ? 'active' : '' ?>">
+
+            <a
+                class="nav-link"
+                href="index.php?action=subcontractors"
+                style="<?= $tb_name === 'subcontractors' ? 'color:lawngreen !important;' : '' ?>"
+            >
+
+                <span
+                    class="menu-icon"
+                    style="<?= $tb_name === 'subcontractors' ? 'color:lawngreen !important;' : '' ?>"
+                >
+
+                    <i
+                        class="mdi mdi-account-tie"
+                        style="<?= $tb_name === 'subcontractors' ? 'color:green !important;' : '' ?>"
+                    ></i>
+
+                </span>
+
+                <span
+                    class="menu-title"
+                    style="<?= $tb_name === 'subcontractors' ? 'color:lawngreen !important;' : '' ?>"
+                >
+
+                    Sub Contractors
+
+                </span>
+
+            </a>
+
+        </li>
+
         <li class="nav-item menu-items <?= $tb_name === 'ticket_category' ? 'active' : '' ?>">
 
             <a
@@ -205,7 +238,7 @@
                 >
 
                     <i
-                        class="mdi mdi-account-multiple"
+                        class="mdi mdi-tag-multiple"
                         style="<?= $tb_name === 'ticket_category' ? 'color:green !important;' : '' ?>"
                     ></i>
 
@@ -241,7 +274,7 @@
                 >
 
                     <i
-                        class="mdi mdi-account-multiple"
+                        class="mdi mdi-map-marker-path"
                         style="<?= $tb_name === 'corridor' ? 'color:green !important;' : '' ?>"
                     ></i>
 
@@ -479,7 +512,7 @@
                 >
 
                     <i
-                        class="mdi mdi-map-marker-multiple"
+                        class="mdi mdi-map-marker-radius"
                         style="<?= $tb_name === 'zone' ? 'color:green !important;' : '' ?>"
                     ></i>
 

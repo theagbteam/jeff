@@ -709,6 +709,7 @@ public function SelectCorridorsAndThoseSimilar($tb_name)
             'pipeline_type',
             'priority',
             'zone',
+            'subcontractors',
             'wellhead_status',
             'ticket_category',
             'navy_incidence_offences',

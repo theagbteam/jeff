@@ -107,7 +107,6 @@ public function Create_request(array $data)
     }
 }
 
-
 public function createTicket($data, $files, $userid){
 
     /*
@@ -238,6 +237,8 @@ public function createTicket($data, $files, $userid){
                 `show`,
                 due_date,
                 attachments,
+                subcontractor,
+                noofsubcontractors,
                 status
             ) VALUES (
                 :userid,
@@ -278,6 +279,8 @@ public function createTicket($data, $files, $userid){
                 :show,
                 :due_date,
                 :attachments,
+                :subcontractor,
+                :noofsubcontractors,
                 :status
             )
         ";
@@ -346,6 +349,8 @@ public function createTicket($data, $files, $userid){
         $stmt->bindValue(':show', $data['show'], PDO::PARAM_INT);
         $stmt->bindValue(':due_date', $data['due_date'], PDO::PARAM_STR);
         $stmt->bindValue(':attachments', $attachments, PDO::PARAM_STR);
+        $stmt->bindValue(':subcontractor', $data['subcontractor'] ?? '', PDO::PARAM_STR);
+        $stmt->bindValue(':noofsubcontractors', $data['noofsubcontractors'] ?? '', PDO::PARAM_STR);
         $stmt->bindValue(':status', 1, PDO::PARAM_INT);
 
         $stmt->execute();
@@ -488,7 +493,7 @@ public function GeneralSelectAnyTable($tb_name){
             'audit_trail','transfer_history','company','corridor','incidence_source','lgas',
             'local_government_areas','login','operator','owner','pipeline',
             'pipeline_type','priority','report_type','request','states',
-            'tickets','ticket_category','users','ticket_reports','ticket_replies','wellhead_status','zone'
+            'tickets','ticket_category','users','ticket_reports','ticket_replies','subcontractors','wellhead_status','zone'
         ];
 
         if (!in_array($tb_name, $allowed_tables, true)) {

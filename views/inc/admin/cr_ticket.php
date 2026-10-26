@@ -682,6 +682,99 @@
     }
 
     /* ============================================================
+       SUBCONTRACTORS
+       ============================================================ */
+    .subcontractor-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 12px;
+    }
+
+    .subcontractor-row {
+        display: grid;
+        grid-template-columns: 1fr 140px 40px;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .subcontractor-row input[type="text"],
+    .subcontractor-row input[type="number"],
+    .subcontractor-row select {
+        width: 100%;
+        padding: 9px 12px;
+        font-size: 13px;
+        color: var(--body-text);
+        background: var(--surface-soft);
+        border: 1px solid var(--surface-border);
+        border-radius: 10px;
+        font-family: inherit;
+        transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+    }
+
+    .subcontractor-row select {
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        background-image: none;
+        background-repeat: no-repeat;
+        background-size: 0;
+        padding-right: 12px;
+        cursor: pointer;
+    }
+
+    .subcontractor-row select::-ms-expand {
+        display: none;
+    }
+
+    .subcontractor-row input:focus,
+    .subcontractor-row select:focus {
+        outline: none;
+        border-color: #3b6fd4;
+        box-shadow: 0 0 0 3px rgba(59, 111, 212, .12);
+        background: var(--surface-bg);
+    }
+
+    .btn-remove-sub {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        border: 1px solid var(--surface-border);
+        border-radius: 10px;
+        background: var(--surface-soft);
+        color: #d9535e;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background .15s ease, border-color .15s ease;
+    }
+
+    .btn-remove-sub:hover {
+        background: rgba(217, 83, 94, .08);
+        border-color: #d9535e;
+    }
+
+    .btn-add-sub {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--link-color);
+        background: rgba(59, 111, 212, .08);
+        border: 1px dashed #3b6fd4;
+        border-radius: 10px;
+        cursor: pointer;
+        font-family: inherit;
+        transition: background .15s ease;
+    }
+
+    .btn-add-sub:hover { background: rgba(59, 111, 212, .16); }
+
+    /* ============================================================
        RESPONSIVE
        ============================================================ */
     @media (max-width: 991.98px) {
@@ -708,6 +801,10 @@
         .form-section { padding: 18px 16px; }
         .form-footer { padding: 16px; }
         .btn-submit { width: 100%; justify-content: center; }
+
+        .subcontractor-row {
+            grid-template-columns: 1fr 110px 40px;
+        }
     }
      .priority-option {
     display: flex;
@@ -1071,11 +1168,30 @@
                 </div>
 
                 <div class="form-field">
-                    <label>Description of the Spill Location</label>
+                    <label>Description</label>
                     <textarea name="description_of_reported_incidence" rows="4"
-                              placeholder="Additional details about the spill location..."
+                              placeholder="Additional details about the event..."
                               minlength="5"></textarea>
                 </div>
+            </div>
+        </div>
+
+        <!-- ===== SECTION 5B: SUBCONTRACTORS ===== -->
+        <div class="form-section">
+            <h3 class="section-title"><span class="section-num">5</span> Subcontractors <span class="hint" style="text-transform:none;letter-spacing:0;font-weight:500;">(optional)</span></h3>
+
+            <div class="form-field">
+                <label>Subcontractor &amp; Number of Subcontractors</label>
+                <div class="subcontractor-list" id="subcontractorList">
+                    <!-- Rows injected by JS; a blank row is added on load -->
+                </div>
+                <button type="button" class="btn-add-sub" id="addSubcontractorBtn">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M8 1a.5.5 0 0 1 .5.5v6h6a.5.5 0 0 1 0 1h-6v6a.5.5 0 0 1-1 0v-6h-6a.5.5 0 0 1 0-1h6v-6A.5.5 0 0 1 8 1z"/>
+                    </svg>
+                    Add subcontractor
+                </button>
+                <span class="hint">Leave blank if there are no subcontractors. You can add multiple.</span>
             </div>
         </div>
 
@@ -1305,4 +1421,68 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     });
 });
+</script>
+
+<script>
+// ===== Subcontractors: add / remove rows =====
+(function () {
+    var list    = document.getElementById('subcontractorList');
+    var addBtn  = document.getElementById('addSubcontractorBtn');
+
+    // Prebuild options markup from the server-side $LoadsubcontractorsColumnForSelect
+    var SUB_OPTIONS_HTML = '<option value="">— Select subcontractor —</option>' +
+        <?php
+        $subOpts = '';
+        if (!empty($LoadsubcontractorsColumnForSelect) && is_array($LoadsubcontractorsColumnForSelect)) {
+            foreach ($LoadsubcontractorsColumnForSelect as $subOpt) {
+                $subName = isset($subOpt['name']) ? (string)$subOpt['name'] : '';
+                if ($subName === '') continue;
+                $subOpts .= '<option value="' . htmlspecialchars($subName, ENT_QUOTES, 'UTF-8') . '">'
+                          . htmlspecialchars($subName, ENT_QUOTES, 'UTF-8') . '</option>';
+            }
+        }
+        echo json_encode($subOpts, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+        ?>;
+
+    function addRow(name, count) {
+        var row = document.createElement('div');
+        row.className = 'subcontractor-row';
+
+        var selected = name ? String(name) : '';
+
+        var selectHtml = '<select name="subcontractor[]">' + SUB_OPTIONS_HTML + '</select>';
+
+        row.innerHTML =
+            selectHtml +
+            '<input type="number" name="noofsubcontractors[]" min="0" step="1" placeholder="No. of subs" value="' + (count !== undefined && count !== '' ? String(count).replace(/"/g,'&quot;') : '') + '">' +
+            '<button type="button" class="btn-remove-sub" title="Remove">×</button>';
+
+        // Preserve any pre-selected value
+        var sel = row.querySelector('select');
+        if (selected !== '') {
+            var found = false;
+            for (var i = 0; i < sel.options.length; i++) {
+                if (sel.options[i].value === selected) { sel.selectedIndex = i; found = true; break; }
+            }
+            if (!found) {
+                // Value not present in options (legacy data) — inject it so it is preserved on submit
+                var opt = document.createElement('option');
+                opt.value = selected;
+                opt.textContent = selected;
+                sel.appendChild(opt);
+                sel.value = selected;
+            }
+        }
+
+        row.querySelector('.btn-remove-sub').addEventListener('click', function () {
+            row.remove();
+        });
+        list.appendChild(row);
+    }
+
+    addBtn.addEventListener('click', function () { addRow('', ''); });
+
+    // Start with one blank row so it's obvious how to use it
+    addRow('', '');
+})();
 </script>

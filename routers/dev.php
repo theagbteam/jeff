@@ -31,6 +31,9 @@ switch ($action) {
         case 'create_corridor':
         $Devcontroller->page_corridorsAndItlikes();
         break;
+        case 'subcontractors':
+        $Devcontroller->page_corridorsAndItlikes();
+        break;
         case 'incidence_source':
         $Devcontroller->page_corridorsAndItlikes();
         break;

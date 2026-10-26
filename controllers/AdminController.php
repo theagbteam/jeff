@@ -124,6 +124,7 @@ $totalDeletedUsers  = (int) ($statusCounts['deleted'] ?? 0);
          $LoadAllUsersAndLoginTableForAdmin = $CallModelAdmin-> SelectAllCategoryOfUsersAndLoginTableForAdmin($userid);
    $tb_name = "request"; $LoadAllRequest =  $callUserModel->GeneralSelectAnyTable($tb_name);
    $tb_name = "corridor"; $LoadCorridorColumnForSelect =  $callUserModel->GeneralSelectAnyTable($tb_name);
+   $tb_name = "subcontractors"; $LoadsubcontractorsColumnForSelect =  $callUserModel->GeneralSelectAnyTable($tb_name);
    $tb_name = "audit_trail"; $LoadAuditTrail =  $callUserModel->GeneralSelectAnyTable($tb_name);
    $tb_name = "transfer_history"; $LoadTransferHistory =  $callUserModel->GeneralSelectAnyTable($tb_name);
    $tb_name = "priority"; $LoadPriorityColumnForSelect =  $callUserModel->GeneralSelectAnyTable($tb_name);
@@ -1035,10 +1036,47 @@ if (in_array('', $data, true)) {
 
 // create ticket
 
- if (isset($_POST['CreateNewTicket'])) {
-
-    $userid = $_SESSION['userid'];
+ if (isset($_POST['CreateNewTicket'])) {$userid = $_SESSION['userid'];
   $status_text="new";
+
+    /*
+    |--------------------------------------------------------------------------
+    | SUBCONTRACTORS (optional, multiple)
+    |--------------------------------------------------------------------------
+    | Names and counts are collected as parallel arrays from the form.
+    | Both are stored into the two text columns as comma-separated lists.
+    | Commas inside names are stripped so the two lists always stay parallel.
+    */
+
+    $subNamesRaw = $_POST['subcontractor'] ?? [];
+    $subCountsRaw = $_POST['noofsubcontractors'] ?? [];
+
+    if (!is_array($subNamesRaw))  { $subNamesRaw  = [$subNamesRaw]; }
+    if (!is_array($subCountsRaw)) { $subCountsRaw = [$subCountsRaw]; }
+
+    $subNames  = [];
+    $subCounts = [];
+
+    foreach ($subNamesRaw as $i => $nm) {
+        $nm = trim((string) $nm);
+
+        // Skip rows where the name is empty
+        if ($nm === '') {
+            continue;
+        }
+
+        $cnt = isset($subCountsRaw[$i]) ? trim((string) $subCountsRaw[$i]) : '';
+
+        // Strip commas so the comma-separated storage stays parallel
+        $nm = str_replace(',', ' ', $nm);
+
+        $subNames[]  = $nm;
+        $subCounts[] = ($cnt === '') ? '0' : $cnt;
+    }
+
+    $subcontractor      = implode(',', $subNames);
+    $noofsubcontractors = implode(',', $subCounts);
+
     $data = [
       'ticket_id' => 'TKT' . date('YmdHis') . substr(str_replace('.', '', (string) microtime(true)), -6),
         'date_created'                              => date('Y-m-d H:i:s'),
@@ -1076,6 +1114,8 @@ if (in_array('', $data, true)) {
         'notify'                                    => isset($_POST['notify']) ? 1 : 0,
         'show'                                      => isset($_POST['show']) ? 1 : 0,
         'due_date'                                  => trim($_POST['due_date'] ?? ''),
+        'subcontractor'                             => $subcontractor,
+        'noofsubcontractors'                        => $noofsubcontractors,
     ];
 
 
@@ -1102,7 +1142,9 @@ if ($raw === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $raw)) {
         'due_date',
         'date_updated',
         'due_date',
-        'description_of_reported_incidence'
+        'description_of_reported_incidence',
+        'subcontractor',
+        'noofsubcontractors'
     ];
 
     /*
@@ -1144,6 +1186,8 @@ if ($raw === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $raw)) {
         'illegal_storage_dump_sites'                => 'Illegal Storage/Dump Sites',
         'description_of_reported_incidence'         => 'Description of Reported Incidence',
         'due_date'                                  => 'Due Date',
+        'subcontractor'                             => 'Subcontractor',
+        'noofsubcontractors'                        => 'Number of Subcontractors',
     ];
 
     $missing_fields = [];

@@ -6,9 +6,10 @@ background-color: slategray;
 </style>
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-brand">  <img width="30px" height="30px"  src="views/uploads/img/<?= $company_logo ?>" alt="">
-               <?= $company_alias ?> </div>
+               <?= $company_alias ?> 
+            </div>
     <ul class="sidebar-nav">
-        <li><a href="index.php?action=tickets" class="<?php if ($page_link_title=='tickets' || $page_link_title=='cr_ticket') {echo 'active';} ?>"><span>Tickets</span></a></li>
+        <li><a href="index.php?action=tickets" class="<?php if ($page_link_title=='tickets' || $page_link_title=='viewticket' || $page_link_title=='cr_ticket') {echo 'active';} ?>"><span>Tickets</span></a></li>
           <li>
             <div   class="dropdown-toggle <?php if ($page_link_title=='run_reports' || $page_link_title=='export_tickets') {echo 'dropdown_active';} ?>"  id="reportsToggle" role="button" tabindex="0" aria-expanded="false">
                 <span >Reports</span>

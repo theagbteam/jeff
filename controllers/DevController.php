@@ -2180,6 +2180,8 @@ if ($tb_name == "corridors") {
     $tb_name = $page_name = "owner";
 } elseif ($tb_name == "incidence_source") {
     $page_name = "Incidence Source";
+} elseif ($tb_name == "subcontractors") {
+    $page_name = "Subcontractors";
 } elseif ($tb_name == "operator") {
     $page_name = "operator";
 } elseif ($tb_name == "report_types") {
@@ -2383,15 +2385,7 @@ $message = "Dear Team,<br><br>"
  . "The I.T Support Team";
 
 
- $SendEmail = $CallMailerModel->sendmail(
-
-                        $ticketer_email,
-
-                        $subject,
-
-                        $message
-
-                    );
+ $SendEmail = $CallMailerModel->sendmail($ticketer_email,$subject,$message);
 
 
 

@@ -16,34 +16,32 @@ $ticket_status = '';
 
 <section class="request-summary">
 
-    <div class="request-summary-counters">
+    <div class="request-summary-counters" id="requestSummaryCounters">
 
-        <?php if (!empty($wellhead_status_counts) && is_array($wellhead_status_counts)): ?>
+        <?php
+            $counter_statuses = [
+                'new'         => ['label' => 'New',         'color' => '#3b6fd4'],
+                'opened'      => ['label' => 'Opened',      'color' => '#3b6fd4'],
+                'in progress' => ['label' => 'In Progress', 'color' => '#3b6fd4'],
+                'replied'     => ['label' => 'Replied',     'color' => '#3b6fd4'],
+                'resolved'    => ['label' => 'Resolved',    'color' => '#3b6fd4'],
+                'deleted'     => ['label' => 'Deleted',     'color' => '#3b6fd4'],
+            ];
+        ?>
 
-            <?php foreach ($wellhead_status_counts as $status_count): ?>
+        <?php foreach ($counter_statuses as $key => $meta): ?>
 
-                <?php
-                    $status_name = (string)($status_count['name'] ?? '');
-                    $status_total = (int)($status_count['total'] ?? 0);
-                    $status_color = trim((string)($status_count['color'] ?? '#3b6fd4'));
+            <div class="request-counter"
+                 data-status-key="<?= htmlspecialchars($key, ENT_QUOTES, 'UTF-8') ?>"
+                 style="--counter-color: <?= htmlspecialchars($meta['color'], ENT_QUOTES, 'UTF-8') ?>">
 
-                    if (!preg_match('/^#[a-fA-F0-9]{3,8}$/', $status_color)) {
-                        $status_color = '#3b6fd4';
-                    }
-                ?>
+                <span><?= htmlspecialchars($meta['label'], ENT_QUOTES, 'UTF-8') ?></span>
 
-                <div class="request-counter"
-                     style="--counter-color: <?= htmlspecialchars($status_color, ENT_QUOTES, 'UTF-8') ?>">
+                <strong>0</strong>
 
-                    <span><?= htmlspecialchars($status_name, ENT_QUOTES, 'UTF-8') ?></span>
+            </div>
 
-                    <strong><?= $status_total ?></strong>
-
-                </div>
-
-            <?php endforeach; ?>
-
-        <?php endif; ?>
+        <?php endforeach; ?>
 
     </div>
 
@@ -1977,6 +1975,7 @@ textarea.request-form-control {
     const resultCount = document.getElementById('requestResultCount');
     const clearFiltersBtn = document.getElementById('clearRequestFilters');
     const autoReload = document.getElementById('autoReload');
+    const summaryCounters = document.getElementById('requestSummaryCounters');
 
     let deleteRequestSn = null;
     let deleteTableName = null;
@@ -1986,6 +1985,60 @@ textarea.request-form-control {
     function getRequestRows() {
         return Array.from(tbody.querySelectorAll('tr')).filter(function (row) {
             return row.querySelector('.request-checkbox') !== null;
+        });
+    }
+
+    function getDataRows() {
+        return Array.from(tbody.querySelectorAll('tr')).filter(function (row) {
+            return row.querySelector('.request-serial') !== null;
+        });
+    }
+
+    function getRowStatus(row) {
+        const statusCell = row.cells[7];
+        if (!statusCell) {
+            return '';
+        }
+        const badge = statusCell.querySelector('.dashboard-status');
+        const text = badge ? badge.textContent : statusCell.textContent;
+        return (text || '').replace(/\s+/g, ' ').trim().toLowerCase();
+    }
+
+    function updateSummaryCounters() {
+
+        if (!summaryCounters) {
+            return;
+        }
+
+        const counters = {};
+
+        summaryCounters
+            .querySelectorAll('.request-counter')
+            .forEach(function (counter) {
+                const key = (counter.getAttribute('data-status-key') || '')
+                    .toLowerCase()
+                    .trim();
+
+                if (key) {
+                    counters[key] = counter;
+                }
+            });
+
+        const totals = {};
+
+        getDataRows().forEach(function (row) {
+            const status = getRowStatus(row);
+            if (!status) {
+                return;
+            }
+            totals[status] = (totals[status] || 0) + 1;
+        });
+
+        Object.keys(counters).forEach(function (key) {
+            const strong = counters[key].querySelector('strong');
+            if (strong) {
+                strong.textContent = String(totals[key] || 0);
+            }
         });
     }
 
@@ -2018,16 +2071,12 @@ textarea.request-form-control {
         const status = (statusFilter.value || '').toLowerCase();
 
         let visibleCount = 0;
+        const dataRows = getDataRows();
 
-        getRequestRows().forEach(function (row) {
+        dataRows.forEach(function (row) {
 
-            const rowText = row.textContent.toLowerCase();
-
-            const statusElement = row.cells[7];
-
-            const rowStatus = statusElement
-                ? statusElement.textContent.trim().toLowerCase()
-                : '';
+            const rowText = (row.textContent || '').toLowerCase();
+            const rowStatus = getRowStatus(row);
 
             const matchesSearch = !query || rowText.includes(query);
             const matchesStatus = !status || rowStatus === status;
@@ -2044,7 +2093,9 @@ textarea.request-form-control {
 
         resultCount.textContent =
             'Showing ' + visibleCount + ' of ' +
-            getRequestRows().length + ' requests';
+            dataRows.length + ' requests';
+
+        updateSummaryCounters();
 
         updateSelection();
     }
@@ -2053,7 +2104,7 @@ textarea.request-form-control {
 
         selectAll.addEventListener('change', function () {
 
-            getRequestRows().forEach(function (row) {
+            getDataRows().forEach(function (row) {
 
                 if (!row.hidden) {
 

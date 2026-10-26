@@ -23,9 +23,20 @@ if (isset($_SESSION['error'])) {
 |   $tb_name = "ticket_reports";
 |   $LoadAllTickets = $callUserModel->GeneralSelectAnyTable($tb_name);
 |
-| Expected columns:
+| Expected columns (full ticket_reports schema):
 |   date_created, date_updated, ticket_id, name, priority,
-|   corridor, subject, category, status_text, incidence_date
+|   corridor, subject, category, status_text, incidence_date,
+|   note, userid, role, owner, subcontractor, noofsubcontractors,
+|   email, pipeline, pipeline_type, message, phone_no,
+|   incidence_source, state, community, operator, zone,
+|   number_of_arrested_suspects, vehicle_arrested_destroyed,
+|   wooden_boat_speed_boat_arrested_destroyed,
+|   vessel_arrested_destroyed, location_coordinate_latitude,
+|   location_coordinate_longitude, quantity_of_crude_recovered_destroyed_ltr,
+|   quantity_of_ago_recovered_destroyed_ltr,
+|   quantity_of_pms_recovered_destroyed_ltr,
+|   description_of_reported_incidence, illegal_storage_dump_sites,
+|   dpk_recovered_destroyed_ltr, due_date, attachments
 */
 $tickets = isset($LoadAllTickets) && is_array($LoadAllTickets)
     ? $LoadAllTickets
@@ -65,6 +76,93 @@ function exportTicketDateTime($value)
         ? date('d/m/Y H:i', $timestamp)
         : (string) $value;
 }
+
+/*
+|--------------------------------------------------------------------------
+| Merge subcontractor names + counts into a single display string.
+| e.g. "edwin(2), Jeff(3)"
+|--------------------------------------------------------------------------
+*/
+function exportTicketSubcontractors($ticket)
+{
+    $namesRaw = trim((string) exportTicketValue($ticket, ['subcontractor']));
+    $countsRaw = trim((string) exportTicketValue($ticket, ['noofsubcontractors']));
+
+    if ($namesRaw === '' && $countsRaw === '') {
+        return '';
+    }
+
+    $nameParts = array_values(array_filter(array_map('trim', preg_split('/[,;|\r\n]+/', $namesRaw))));
+    $countParts = array_values(array_filter(array_map('trim', preg_split('/[,;|\r\n]+/', $countsRaw))));
+
+    $combined = [];
+
+    foreach ($nameParts as $index => $name) {
+        if ($name === '') {
+            continue;
+        }
+
+        $count = isset($countParts[$index]) ? $countParts[$index] : '';
+
+        $combined[] = $count !== ''
+            ? $name . '(' . $count . ')'
+            : $name;
+    }
+
+    if (empty($combined)) {
+        return $countsRaw;
+    }
+
+    return implode(', ', $combined);
+}
+
+/*
+|--------------------------------------------------------------------------
+| Full export column map — every column in ticket_reports.
+| The on-screen summary table uses only a subset of these.
+|--------------------------------------------------------------------------
+*/
+$exportColumns = [
+    ['label' => 'S/N',                                            'keys' => null],
+    ['label' => 'Ticket ID',                                      'keys' => ['ticket_id', 'ticketid', 'id', 'refid', 'sn']],
+    ['label' => 'Subject',                                        'keys' => ['subject', 'complaint', 'title', 'ticket_subject']],
+    ['label' => 'Category',                                       'keys' => ['category', 'category_name', 'ticket_category']],
+    ['label' => 'Corridor',                                       'keys' => ['corridor']],
+    ['label' => 'Status',                                         'keys' => ['status_text', 'status', 'status_name']],
+    ['label' => 'Priority',                                       'keys' => ['priority', 'priority_name']],
+    ['label' => 'Name',                                           'keys' => ['name', 'full_name', 'reporter_name', 'created_by']],
+    ['label' => 'Incidence Date',                                 'keys' => ['incidence_date']],
+    ['label' => 'Created',                                        'keys' => ['date_created', 'created_at', 'date', 'created']],
+    ['label' => 'Updated',                                        'keys' => ['date_updated', 'updated_at', 'last_updated', 'updated']],
+    ['label' => 'Note',                                           'keys' => ['note']],
+    ['label' => 'User ID',                                        'keys' => ['userid']],
+    ['label' => 'Role',                                           'keys' => ['role']],
+    ['label' => 'Owner',                                          'keys' => ['owner']],
+    ['label' => 'Subcontractor',                                  'keys' => ['__subcontractor_combined__']],
+    ['label' => 'Email',                                          'keys' => ['email']],
+    ['label' => 'Pipeline',                                       'keys' => ['pipeline']],
+    ['label' => 'Pipeline Type',                                  'keys' => ['pipeline_type']],
+    ['label' => 'Message',                                        'keys' => ['message']],
+    ['label' => 'Phone No',                                       'keys' => ['phone_no']],
+    ['label' => 'Incidence Source',                               'keys' => ['incidence_source']],
+    ['label' => 'State',                                          'keys' => ['state']],
+    ['label' => 'Community',                                      'keys' => ['community']],
+    ['label' => 'Operator',                                       'keys' => ['operator']],
+    ['label' => 'Zone',                                           'keys' => ['zone']],
+    ['label' => 'No. of Arrested Suspects',                       'keys' => ['number_of_arrested_suspects']],
+    ['label' => 'Vehicle Arrested/Destroyed',                     'keys' => ['vehicle_arrested_destroyed']],
+    ['label' => 'Wooden Boat/Speed Boat Arrested/Destroyed',      'keys' => ['wooden_boat_speed_boat_arrested_destroyed']],
+    ['label' => 'Vessel Arrested/Destroyed',                      'keys' => ['vessel_arrested_destroyed']],
+    ['label' => 'Location Coordinate Latitude',                   'keys' => ['location_coordinate_latitude']],
+    ['label' => 'Location Coordinate Longitude',                  'keys' => ['location_coordinate_longitude']],
+    ['label' => 'Qty Crude Recovered/Destroyed (Ltr)',            'keys' => ['quantity_of_crude_recovered_destroyed_ltr']],
+    ['label' => 'Qty AGO Recovered/Destroyed (Ltr)',              'keys' => ['quantity_of_ago_recovered_destroyed_ltr']],
+    ['label' => 'Qty PMS Recovered/Destroyed (Ltr)',              'keys' => ['quantity_of_pms_recovered_destroyed_ltr']],
+    ['label' => 'Description of Reported Incidence',              'keys' => ['description_of_reported_incidence']],
+    ['label' => 'Illegal Storage Dump Sites',                     'keys' => ['illegal_storage_dump_sites']],
+    ['label' => 'DPK Recovered/Destroyed (Ltr)',                  'keys' => ['dpk_recovered_destroyed_ltr']],
+    ['label' => 'Due Date',                                       'keys' => ['due_date']],
+];
 ?>
 
 <style>
@@ -230,6 +328,11 @@ function exportTicketDateTime($value)
         width: 100%;
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
+    }
+
+    /* Hidden table used only as a data source for PDF/Excel export */
+    .export-source-table {
+        display: none;
     }
 
     #dashboardDataTable {
@@ -400,7 +503,7 @@ function exportTicketDateTime($value)
                 </div>
 
                 <div class="export-tickets-subtitle">
-                    Filter tickets and export the results to PDF or Excel.
+                    Filter tickets and export the results to PDF or Excel. Exports include all ticket fields.
                 </div>
 
                 <!-- Date range, From and To -->
@@ -517,14 +620,14 @@ function exportTicketDateTime($value)
                 <div class="export-action-row">
                     <span class="export-hint">
                         <i class="bi bi-info-circle"></i>
-                        Only filtered tickets will be exported.
+                        Only filtered tickets will be exported. Exports include all ticket fields.
                     </span>
 
                     <div class="export-action-buttons">
-                        <button type="button" id="exportTicketsPdf" class="export-tickets-btn">
+                        <!-- <button type="button" id="exportTicketsPdf" class="export-tickets-btn">
                             <i class="bi bi-file-earmark-pdf"></i>
                             Export PDF
-                        </button>
+                        </button> -->
 
                         <button type="button" id="exportTicketsExcel" class="export-tickets-btn primary">
                             <i class="bi bi-file-earmark-excel"></i>
@@ -537,6 +640,9 @@ function exportTicketDateTime($value)
         </div>
     </div>
 
+    <!-- ============================================================
+         ON-SCREEN SUMMARY TABLE (unchanged)
+         ============================================================ -->
     <div class="col-12 grid-margin stretch-card">
         <div class="card export-tickets-card">
             <div class="card-body">
@@ -642,6 +748,86 @@ function exportTicketDateTime($value)
             </div>
         </div>
     </div>
+
+    <!-- ============================================================
+         HIDDEN EXPORT SOURCE TABLE
+         Contains every ticket_reports column so the exported
+         PDF/Excel can include fields not shown in the summary.
+         One <tr> per ticket, with the same filter data-attributes
+         used by the summary table so filters apply identically.
+         ============================================================ -->
+    <table id="exportSourceTable" class="export-source-table" aria-hidden="true">
+        <thead>
+            <tr>
+                <?php foreach ($exportColumns as $col): ?>
+                    <th><?php echo htmlspecialchars($col['label'], ENT_QUOTES, 'UTF-8'); ?></th>
+                <?php endforeach; ?>
+            </tr>
+        </thead>
+        <tbody>
+            <?php
+            $exportSerial = 0;
+
+            foreach ($tickets as $ticket):
+                $exportSerial++;
+
+                $createdRaw = exportTicketValue($ticket, ['date_created', 'created_at', 'date', 'created']);
+                $incidenceRaw = exportTicketValue($ticket, ['incidence_date']);
+                $createdDate = exportTicketDate($createdRaw);
+                $incidenceDate = exportTicketDate($incidenceRaw);
+
+                $statusRaw = exportTicketValue($ticket, ['status_text', 'status', 'status_name']);
+                $priorityRaw = exportTicketValue($ticket, ['priority', 'priority_name']);
+                $statusLower = strtolower(trim((string) $statusRaw));
+                $priorityLower = strtolower(trim((string) $priorityRaw));
+            ?>
+                <tr
+                    data-created-date="<?php echo htmlspecialchars($createdDate, ENT_QUOTES, 'UTF-8'); ?>"
+                    data-incidence-date="<?php echo htmlspecialchars($incidenceDate, ENT_QUOTES, 'UTF-8'); ?>"
+                    data-status="<?php echo htmlspecialchars($statusLower, ENT_QUOTES, 'UTF-8'); ?>"
+                    data-priority="<?php echo htmlspecialchars($priorityLower, ENT_QUOTES, 'UTF-8'); ?>"
+                >
+                    <?php foreach ($exportColumns as $col): ?>
+                        <?php
+                        if ($col['keys'] === null) {
+                            // S/N column
+                            echo '<td>' . $exportSerial . '</td>';
+                            continue;
+                        }
+
+                        // Combined subcontractor column
+                        if (in_array('__subcontractor_combined__', $col['keys'], true)) {
+                            echo '<td>' . htmlspecialchars(exportTicketSubcontractors($ticket), ENT_QUOTES, 'UTF-8') . '</td>';
+                            continue;
+                        }
+
+                        $rawValue = exportTicketValue($ticket, $col['keys']);
+
+                        // Format date-like columns for readability
+                        if (in_array('incidence_date', $col['keys'], true)) {
+                            $display = exportTicketDate($rawValue);
+                        } elseif (
+                            in_array('date_created', $col['keys'], true) ||
+                            in_array('created_at', $col['keys'], true)
+                        ) {
+                            $display = exportTicketDateTime($rawValue);
+                        } elseif (
+                            in_array('date_updated', $col['keys'], true) ||
+                            in_array('updated_at', $col['keys'], true) ||
+                            in_array('last_updated', $col['keys'], true)
+                        ) {
+                            $display = exportTicketDateTime($rawValue);
+                        } else {
+                            $display = $rawValue;
+                        }
+
+                        echo '<td>' . htmlspecialchars((string) $display, ENT_QUOTES, 'UTF-8') . '</td>';
+                        ?>
+                    <?php endforeach; ?>
+                </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
 </div>
 
 <script>
@@ -649,16 +835,12 @@ function exportTicketDateTime($value)
     'use strict';
 
     /* ------------------------------------------------------------
-       Load DataTables Buttons + HTML5 export dependencies once.
-       These are required for the Excel/PDF export to actually fire.
+       Load PDF/Excel export dependencies once.
        ------------------------------------------------------------ */
     var EXPORT_ASSETS = [
         'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
         'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js',
-        'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js',
-        'https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js',
-        'https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js',
-        'https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js'
+        'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js'
     ];
 
     var assetsPromise = null;
@@ -713,12 +895,11 @@ function exportTicketDateTime($value)
 
         var $ = jQuery;
         var tableElement = document.getElementById('dashboardDataTable');
+        var exportSourceTable = document.getElementById('exportSourceTable');
 
-        if (!tableElement) {
+        if (!tableElement || !exportSourceTable) {
             return;
         }
-
-        var exportButtonsReady = false;
 
         if (!$.fn.DataTable.isDataTable(tableElement)) {
             $(tableElement).DataTable({
@@ -726,49 +907,7 @@ function exportTicketDateTime($value)
                 lengthMenu: [10, 25, 50, 100],
                 autoWidth: false,
                 order: [[0, 'asc']],
-                dom: 'Blfrtip',
-                buttons: [
-                    {
-                        extend: 'excelHtml5',
-                        title: 'Export Tickets',
-                        filename: 'export_tickets',
-                        exportOptions: {
-                            columns: ':visible',
-                            modifier: {
-                                search: 'applied',
-                                order: 'applied',
-                                page: 'all'
-                            }
-                        }
-                    },
-                    {
-                        extend: 'pdfHtml5',
-                        title: 'Export Tickets',
-                        filename: 'export_tickets',
-                        orientation: 'landscape',
-                        pageSize: 'A3',
-                        exportOptions: {
-                            columns: ':visible',
-                            modifier: {
-                                search: 'applied',
-                                order: 'applied',
-                                page: 'all'
-                            }
-                        },
-                        customize: function (doc) {
-                            doc.defaultStyle.fontSize = 8;
-                            doc.styles.tableHeader.fontSize = 8;
-                            doc.styles.title.fontSize = 14;
-                            doc.pageMargins = [20, 25, 20, 25];
-
-                            if (doc.content[1] && doc.content[1].table) {
-                                doc.content[1].table.widths = Array(
-                                    doc.content[1].table.body[0].length
-                                ).fill('*');
-                            }
-                        }
-                    }
-                ],
+                dom: 'lfrtip',           // no Buttons — export is custom
                 drawCallback: function () {
                     var api = this.api();
                     var info = api.page.info();
@@ -836,12 +975,18 @@ function exportTicketDateTime($value)
             toInput.value = formatDate(end);
         }
 
+        function currentFilters() {
+            return {
+                fromDate: document.getElementById('exportDateFrom').value,
+                toDate: document.getElementById('exportDateTo').value,
+                status: normalise(document.getElementById('exportStatus').value),
+                priority: normalise(document.getElementById('exportPriority').value),
+                order: document.getElementById('exportOrder').value
+            };
+        }
+
         function applyFilters() {
-            var fromDate = document.getElementById('exportDateFrom').value;
-            var toDate = document.getElementById('exportDateTo').value;
-            var selectedStatus = normalise(document.getElementById('exportStatus').value);
-            var selectedPriority = normalise(document.getElementById('exportPriority').value);
-            var selectedOrder = document.getElementById('exportOrder').value;
+            var filters = currentFilters();
 
             $.fn.dataTable.ext.search = $.fn.dataTable.ext.search.filter(function (fn) {
                 return !fn._exportTicketsFilter;
@@ -862,19 +1007,19 @@ function exportTicketDateTime($value)
                 var rowStatus = normalise(row.getAttribute('data-status'));
                 var rowPriority = normalise(row.getAttribute('data-priority'));
 
-                if (fromDate && (!rowDate || rowDate < fromDate)) {
+                if (filters.fromDate && (!rowDate || rowDate < filters.fromDate)) {
                     return false;
                 }
 
-                if (toDate && (!rowDate || rowDate > toDate)) {
+                if (filters.toDate && (!rowDate || rowDate > filters.toDate)) {
                     return false;
                 }
 
-                if (selectedStatus && rowStatus !== selectedStatus) {
+                if (filters.status && rowStatus !== filters.status) {
                     return false;
                 }
 
-                if (selectedPriority && rowPriority !== selectedPriority) {
+                if (filters.priority && rowPriority !== filters.priority) {
                     return false;
                 }
 
@@ -884,7 +1029,181 @@ function exportTicketDateTime($value)
             ticketFilter._exportTicketsFilter = true;
             $.fn.dataTable.ext.search.push(ticketFilter);
 
-            table.order([0, selectedOrder]).draw();
+            table.order([0, filters.order]).draw();
+        }
+
+        /* --------------------------------------------------------
+           Collect matching rows from the hidden export source
+           table, honouring the same filters as the summary.
+           -------------------------------------------------------- */
+        function collectExportRows() {
+            var filters = currentFilters();
+            var rows = exportSourceTable.querySelectorAll('tbody tr');
+            var result = [];
+
+            Array.prototype.forEach.call(rows, function (row) {
+                var rowDate = row.getAttribute('data-created-date') || '';
+                var rowStatus = normalise(row.getAttribute('data-status'));
+                var rowPriority = normalise(row.getAttribute('data-priority'));
+
+                if (filters.fromDate && (!rowDate || rowDate < filters.fromDate)) {
+                    return;
+                }
+
+                if (filters.toDate && (!rowDate || rowDate > filters.toDate)) {
+                    return;
+                }
+
+                if (filters.status && rowStatus !== filters.status) {
+                    return;
+                }
+
+                if (filters.priority && rowPriority !== filters.priority) {
+                    return;
+                }
+
+                result.push(row);
+            });
+
+            return result;
+        }
+
+        function getExportHeaders() {
+            return Array.prototype.map.call(
+                exportSourceTable.querySelectorAll('thead th'),
+                function (th) { return th.textContent.trim(); }
+            );
+        }
+
+        function getRowCells(row) {
+            return Array.prototype.map.call(
+                row.querySelectorAll('td'),
+                function (td) { return td.textContent.trim(); }
+            );
+        }
+
+        /* --------------------------------------------------------
+           Excel export (client-side, no DataTables Buttons needed)
+           -------------------------------------------------------- */
+        function exportToExcel() {
+            var rows = collectExportRows();
+
+            if (!rows.length) {
+                window.alert('No tickets match the current filters.');
+                return;
+            }
+
+            var headers = getExportHeaders();
+            var html = '<table border="1"><thead><tr>';
+
+            headers.forEach(function (h) {
+                html += '<th>' + escapeHtml(h) + '</th>';
+            });
+
+            html += '</tr></thead><tbody>';
+
+            rows.forEach(function (row) {
+                var cells = getRowCells(row);
+                html += '<tr>';
+                cells.forEach(function (c) {
+                    html += '<td>' + escapeHtml(c) + '</td>';
+                });
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+
+            var blob = new Blob(
+                ['\ufeff<html><head><meta charset="utf-8"></head><body>' + html + '</body></html>'],
+                {type: 'application/vnd.ms-excel;charset=utf-8'}
+            );
+
+            downloadBlob(blob, 'export_tickets_' + timestampSlug() + '.xls');
+        }
+
+        /* --------------------------------------------------------
+           PDF export (client-side via pdfmake)
+           -------------------------------------------------------- */
+        function exportToPdf() {
+            var rows = collectExportRows();
+
+            if (!rows.length) {
+                window.alert('No tickets match the current filters.');
+                return;
+            }
+
+            if (!window.pdfMake || !window.pdfMake.vfs) {
+                window.alert('PDF library is still loading. Please try again in a moment.');
+                return;
+            }
+
+            var headers = getExportHeaders();
+            var body = [headers.map(function (h) {
+                return {text: h, style: 'tableHeader', bold: true};
+            })];
+
+            rows.forEach(function (row) {
+                var cells = getRowCells(row).map(function (c) {
+                    return {text: c, style: 'tableCell'};
+                });
+                body.push(cells);
+            });
+
+            var docDefinition = {
+                pageOrientation: 'landscape',
+                pageSize: 'A3',
+                pageMargins: [20, 25, 20, 25],
+                content: [
+                    {text: 'Export Tickets', style: 'title'},
+                    {text: 'Generated: ' + new Date().toLocaleString(), style: 'subtitle'},
+                    {text: '\n'},
+                    {
+                        table: {
+                            headerRows: 1,
+                            body: body
+                        },
+                        layout: 'lightHorizontalLines'
+                    }
+                ],
+                styles: {
+                    title: {fontSize: 14, bold: true, margin: [0, 0, 0, 4]},
+                    subtitle: {fontSize: 9, color: '#666666'},
+                    tableHeader: {fontSize: 8, bold: true, fillColor: '#eef2f7'},
+                    tableCell: {fontSize: 8}
+                },
+                defaultStyle: {
+                    fontSize: 8
+                }
+            };
+
+            window.pdfMake.createPdf(docDefinition).download('export_tickets_' + timestampSlug() + '.pdf');
+        }
+
+        function escapeHtml(value) {
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function timestampSlug() {
+            var d = new Date();
+            function pad(n) { return String(n).padStart(2, '0'); }
+            return d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate())
+                + '_' + pad(d.getHours()) + pad(d.getMinutes()) + pad(d.getSeconds());
+        }
+
+        function downloadBlob(blob, filename) {
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(function () { URL.revokeObjectURL(url); }, 0);
         }
 
         $('#exportDatePreset')
@@ -898,134 +1217,26 @@ function exportTicketDateTime($value)
             .off('change.exportTickets')
             .on('change.exportTickets', applyFilters);
 
-        function triggerExport(selector) {
-            if (!$.fn.DataTable.Buttons) {
-                console.error('DataTables Buttons plugin is not loaded.');
-                return;
-            }
-
-            if (!exportButtonsReady) {
-                console.warn('Export libraries are still loading. Please try again in a moment.');
-                return;
-            }
-
-            var buttonApi = table.button(selector);
-
-            if (!buttonApi || !buttonApi.length) {
-                console.error('Export button not found: ' + selector);
-                return;
-            }
-
-            buttonApi.trigger();
-        }
-
         $('#exportTicketsExcel')
             .off('click.exportTickets')
             .on('click.exportTickets', function () {
-                triggerExport('.buttons-excel');
+                exportToExcel();
             });
 
+        /* PDF export button commented out
         $('#exportTicketsPdf')
             .off('click.exportTickets')
             .on('click.exportTickets', function () {
-                triggerExport('.buttons-pdf');
+                exportToPdf();
             });
+        */
 
         applyFilters();
 
-        /* --------------------------------------------------------
-           Load the export dependencies, then rebuild the DataTable
-           so its Buttons extension picks them up correctly.
-           -------------------------------------------------------- */
-        loadExportAssets()
-            .then(function () {
-                if (!$.fn.DataTable.Buttons) {
-                    console.error('DataTables Buttons plugin failed to load.');
-                    return;
-                }
-
-                // Re-initialise the table so the buttons extension is registered.
-                table.destroy();
-
-                $(tableElement).DataTable({
-                    pageLength: 10,
-                    lengthMenu: [10, 25, 50, 100],
-                    autoWidth: false,
-                    order: [[0, 'asc']],
-                    dom: 'Blfrtip',
-                    buttons: [
-                        {
-                            extend: 'excelHtml5',
-                            title: 'Export Tickets',
-                            filename: 'export_tickets',
-                            exportOptions: {
-                                columns: ':visible',
-                                modifier: {
-                                    search: 'applied',
-                                    order: 'applied',
-                                    page: 'all'
-                                }
-                            }
-                        },
-                        {
-                            extend: 'pdfHtml5',
-                            title: 'Export Tickets',
-                            filename: 'export_tickets',
-                            orientation: 'landscape',
-                            pageSize: 'A3',
-                            exportOptions: {
-                                columns: ':visible',
-                                modifier: {
-                                    search: 'applied',
-                                    order: 'applied',
-                                    page: 'all'
-                                }
-                            },
-                            customize: function (doc) {
-                                doc.defaultStyle.fontSize = 8;
-                                doc.styles.tableHeader.fontSize = 8;
-                                doc.styles.title.fontSize = 14;
-                                doc.pageMargins = [20, 25, 20, 25];
-
-                                if (doc.content[1] && doc.content[1].table) {
-                                    doc.content[1].table.widths = Array(
-                                        doc.content[1].table.body[0].length
-                                    ).fill('*');
-                                }
-                            }
-                        }
-                    ],
-                    drawCallback: function () {
-                        var api = this.api();
-                        var info = api.page.info();
-
-                        api.column(0, {page: 'current'}).nodes().each(function (cell, index) {
-                            cell.innerHTML = info.start + index + 1;
-                        });
-                    },
-                    language: {
-                        emptyTable: 'No tickets available',
-                        search: 'Search tickets:',
-                        lengthMenu: 'Show _MENU_ tickets',
-                        info: 'Showing _START_ to _END_ of _TOTAL_ tickets',
-                        infoEmpty: 'Showing 0 to 0 of 0 tickets',
-                        zeroRecords: 'No matching tickets found',
-                        paginate: {
-                            previous: 'Previous',
-                            next: 'Next'
-                        }
-                    }
-                });
-
-                table = $(tableElement).DataTable();
-                exportButtonsReady = true;
-
-                // Re-apply current filters after re-initialisation.
-                applyFilters();
-            })
-            .catch(function (error) {
-                console.error('Failed to load export libraries:', error);
-            });
+        /* Pre-load pdfmake so the PDF button is ready immediately. */
+        loadExportAssets().catch(function (error) {
+            console.error('Failed to load export libraries:', error);
+        });
     }
 
     if (document.readyState === 'loading') {

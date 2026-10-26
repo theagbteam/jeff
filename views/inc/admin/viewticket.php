@@ -56,6 +56,28 @@ $pms           = $val('quantity_of_pms_recovered_destroyed_ltr', '0');
 $dpk           = $val('dpk_recovered_destroyed_ltr', '0');
 $dumpSites     = $val('illegal_storage_dump_sites', '0');
 
+/* ------------------------------------------------------------------
+ * Subcontractors (two text columns, parallel comma-separated lists).
+ * Displayed as: Name (count), Name (count), ...
+ * ------------------------------------------------------------------ */
+$subcontractorRaw      = trim((string) $val('subcontractor', ''));
+$noofsubcontractorsRaw = trim((string) $val('noofsubcontractors', ''));
+
+$subNames  = ($subcontractorRaw === '')      ? [] : array_map('trim', explode(',', $subcontractorRaw));
+$subCounts = ($noofsubcontractorsRaw === '') ? [] : array_map('trim', explode(',', $noofsubcontractorsRaw));
+
+$subcontractorParts = [];
+foreach ($subNames as $i => $subName) {
+    if ($subName === '') {
+        continue;
+    }
+    $subCount = isset($subCounts[$i]) && $subCounts[$i] !== ''
+        ? (int) $subCounts[$i]
+        : 0;
+    $subcontractorParts[] = $subName . ' (' . number_format($subCount) . ')';
+}
+$subcontractorDisplay = !empty($subcontractorParts) ? implode(', ', $subcontractorParts) : 'None';
+
 $dateCreated   = $val('date_created', '');
 $dateUpdated   = $val('date_updated', '');
 $dueDate       = $val('due_date', '');
@@ -153,6 +175,39 @@ if ($incDate && $incDate !== '—') {
     $prettyDate = $ts ? date('j F Y', $ts) : $incDate;
 }
 
+/* ------------------------------------------------------------------
+ * Relative timestamp for the ticket headline (e.g. "3 years ago").
+ * ------------------------------------------------------------------ */
+$relativeCreated = '';
+if ($dateCreated !== '') {
+    $createdTs = strtotime($dateCreated);
+    if ($createdTs !== false) {
+        $now   = time();
+        $diff  = $now - $createdTs;
+        $abs   = abs($diff);
+        $suffix = $diff >= 0 ? 'ago' : 'from now';
+
+        if ($abs < 60) {
+            $relativeCreated = 'just now';
+        } elseif ($abs < 3600) {
+            $n = floor($abs / 60);
+            $relativeCreated = $n . ' minute' . ($n === 1 ? '' : 's') . ' ' . $suffix;
+        } elseif ($abs < 86400) {
+            $n = floor($abs / 3600);
+            $relativeCreated = $n . ' hour' . ($n === 1 ? '' : 's') . ' ' . $suffix;
+        } elseif ($abs < 2592000) { // < 30 days
+            $n = floor($abs / 86400);
+            $relativeCreated = $n . ' day' . ($n === 1 ? '' : 's') . ' ' . $suffix;
+        } elseif ($abs < 31536000) { // < 1 year
+            $n = floor($abs / 2592000);
+            $relativeCreated = $n . ' month' . ($n === 1 ? '' : 's') . ' ' . $suffix;
+        } else {
+            $n = floor($abs / 31536000);
+            $relativeCreated = $n . ' year' . ($n === 1 ? '' : 's') . ' ' . $suffix;
+        }
+    }
+}
+
 $subjectUsable = false;
 if ($rawSubject !== '') {
     $hasSpace = preg_match('/\s/', $rawSubject) === 1;
@@ -179,6 +234,7 @@ if ($subjectUsable) {
     }
 }
 $headline = trim(implode(' ', $headingParts));
+$headlineUpper = mb_strtoupper($headline, 'UTF-8');
 
 $hasRealOwner = $owner !== '' && strcasecmp($owner, 'unassigned') !== 0;
 $nonZero = function ($v) { return $v !== '' && $v !== null && (float) $v !== 0.0; };
@@ -319,33 +375,126 @@ function getReplyAttachments(array $row): array
 }
 
 /**
- * Build a browser-usable URL for a stored reply attachment.
+ * Convert ROOT_PATH into a web-facing base URL.
  *
- * Controller (Pasted text.txt) saves physically to:
- *   __DIR__ . '/../views/uploads/ticket_library/replies/'
- * and stores ONLY the bare filename in ticket_replies.attachments.
+ * ROOT_PATH is typically a filesystem path such as:
+ *   C:/xampp/htdocs/jeff
+ * but the browser needs a URL like:
+ *   http://localhost/jeff
  *
- * This view is rendered by index.php (app root), so URLs must resolve
- * from the app root — hence "views/..." with NO leading "../".
+ * We compute this from $_SERVER by:
+ *   1. Determining the scheme (http or https).
+ *   2. Determining the host (e.g. localhost).
+ *   3. Subtracting $_SERVER['DOCUMENT_ROOT'] from ROOT_PATH to get
+ *      the web-relative sub-path (e.g. "/jeff").
  */
-function attachmentHref(string $path): string
+function ticketAttachmentBaseUrl(): string
+{
+    static $cached = null;
+    if ($cached !== null) return $cached;
+
+    $root = defined('ROOT_PATH') ? (string) ROOT_PATH : '';
+    $root = str_replace('\\', '/', trim($root));
+
+    if ($root === '') {
+        $cached = '';
+        return $cached;
+    }
+
+    // If ROOT_PATH already looks like a URL (has a scheme), trust it.
+    if (preg_match('~^[a-z][a-z0-9+.-]*://~i', $root)) {
+        $cached = rtrim($root, '/');
+        return $cached;
+    }
+
+    // Determine scheme + host from the request.
+    $scheme = 'http';
+    if (!empty($_SERVER['HTTPS']) && strtolower((string) $_SERVER['HTTPS']) !== 'off') {
+        $scheme = 'https';
+    } elseif (!empty($_SERVER['HTTP_X_FORWARDED_PROTO'])
+        && strtolower((string) $_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https') {
+        $scheme = 'https';
+    }
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+
+    // Determine the web-relative sub-path by subtracting DOCUMENT_ROOT.
+    $webPath = '';
+    $docRoot = isset($_SERVER['DOCUMENT_ROOT']) ? str_replace('\\', '/', rtrim((string) $_SERVER['DOCUMENT_ROOT'], '/')) : '';
+
+    if ($docRoot !== '' && stripos($root, $docRoot) === 0) {
+        // e.g. root = C:/xampp/htdocs/jeff, docRoot = C:/xampp/htdocs
+        $webPath = substr($root, strlen($docRoot));
+    } else {
+        // Fallback: try to find the last folder component of ROOT_PATH and
+        // use that (e.g. "/jeff"). This usually works when the path is
+        // outside DOCUMENT_ROOT but the app is still under a subfolder.
+        $parts = array_values(array_filter(explode('/', $root), fn($p) => $p !== '' && $p !== '.' && $p !== '..'));
+        if (count($parts) > 0) {
+            // Skip drive letter (e.g. "C:") when present.
+            $last = end($parts);
+            if ($last !== '' && !preg_match('/^[a-z]:$/i', $last)) {
+                $webPath = '/' . $last;
+            }
+        }
+    }
+
+    $webPath = '/' . ltrim(str_replace('//', '/', $webPath), '/');
+
+    $cached = rtrim($scheme . '://' . $host . $webPath, '/');
+
+    return $cached;
+}
+
+/**
+ * Build a browser-usable URL for a stored attachment.
+ *
+ * Two storage locations exist:
+ *   - Ticket-level attachments: views/uploads/ticket_library/
+ *   - Reply attachments:        views/uploads/ticket_library/replies/
+ *
+ * The URL is built from the web base derived from ROOT_PATH so it is
+ * always an absolute http(s) URL the browser can open directly.
+ */
+function attachmentHref(string $path, string $subfolder = 'replies'): string
 {
     $p = trim($path);
     if ($p === '') return '';
 
     // Already absolute / protocol URLs — leave untouched.
     if (preg_match('~^(?:https?:)?//~i', $p)
-        || preg_match('~^[a-z][a-z0-9+.-]*:~i', $p)
-        || $p[0] === '/') {
+        || preg_match('~^[a-z][a-z0-9+.-]*:~i', $p)) {
         return $p;
+    }
+
+    $base = ticketAttachmentBaseUrl();
+
+    // Normalise the stored path.
+    $normalized = str_replace('\\', '/', ltrim($p, '/'));
+
+    // If the stored path already contains a folder segment, honour it.
+    if (strpos($normalized, '/') !== false) {
+        $normalized = preg_replace('~^(?:\.\./|\./)+~', '', $normalized);
+        if (stripos($normalized, 'views/') === 0) {
+            $segments = explode('/', $normalized);
+            $encoded  = array_map('rawurlencode', $segments);
+            return $base . '/' . implode('/', $encoded);
+        }
+        $segments = explode('/', $normalized);
+        $encoded  = array_map('rawurlencode', $segments);
+        return $base . '/views/uploads/' . implode('/', $encoded);
     }
 
     // Bare filename (what the controller stores). Guard against traversal
     // and encode so spaces/unicode survive the URL.
-    $file = basename($p);
+    $file = basename($normalized);
     if ($file === '' || $file === '.' || $file === '..') return '';
 
-    return 'views/uploads/ticket_library/replies/' . rawurlencode($file);
+    $url = $base . '/views/uploads/ticket_library/';
+    if ($subfolder !== '') {
+        $url .= trim($subfolder, '/') . '/';
+    }
+
+    return $url . rawurlencode($file);
 }
 
 function attachmentLabel(string $path): string
@@ -357,19 +506,45 @@ function attachmentLabel(string $path): string
     $decoded = rawurldecode($base);
     return $decoded !== '' ? $decoded : $p;
 }
+
+/* ------------------------------------------------------------------
+ * Ticket-level attachments (from the ticket row itself).
+ * Stored under views/uploads/ticket_library/  (NOT the replies/ subfolder).
+ * ------------------------------------------------------------------ */
+$ticketAttachments = [];
+foreach (['attachments', 'attachment', 'ticket_attachments', 'file_attachments'] as $attKey) {
+    if (!empty($t[$attKey])) {
+        $found = getReplyAttachments(['attachments' => $t[$attKey]]);
+        if ($found) {
+            $ticketAttachments = $found;
+            break;
+        }
+    }
+}
+$ticketAttachmentChips = [];
+foreach ($ticketAttachments as $att) {
+    // Ticket attachments live in ticket_library/ (no "replies" subfolder).
+    $href = attachmentHref($att, '');
+    if ($href === '') continue;
+    $ticketAttachmentChips[] = [
+        'path'  => $href,
+        'label' => attachmentLabel($att),
+    ];
+}
 ?>
 <style>
     .main__content.ticket { max-width: 1200px; margin: 0 auto; padding: 18px 24px 28px; display: flex; flex-wrap: wrap; gap: 22px; }
     .ticket__body { flex: 1 1 620px; min-width: 0; }
     .ticket__params { flex: 0 1 340px; min-width: 280px; }
-    .ticket__body_block { background: var(--surface-bg); border: 1px solid var(--surface-border); border-radius: 16px; box-shadow: 0 5px 20px rgba(15,23,42,.04); padding: 20px 22px; margin-bottom: 18px; }
-    .ticket__body_block h3 { font-size: 18px; font-weight: 800; letter-spacing: .2px; color: var(--body-text); margin: 0 0 12px; line-height: 1.35; }
+    /* No rounded corners on the ticket body blocks */
+    .ticket__body_block { background: var(--surface-bg); border: 1px solid var(--surface-border); border-radius: 0; box-shadow: 0 5px 20px rgba(15,23,42,.04); padding: 20px 22px; margin-bottom: 18px; }
+    .ticket__body_block h3 { font-size: 18px; font-weight: 800; letter-spacing: .2px; color: var(--body-text); margin: 0 0 12px; line-height: 1.35; text-transform: uppercase; }
     .ticket__body_block .block--head { display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: center; justify-content: space-between; padding-bottom: 12px; margin-bottom: 12px; border-bottom: 1px solid var(--surface-border); font-size: 12px; color: var(--secondary-text); }
     .ticket__body_block .block--head .contact { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
     .ticket__body_block .block--head time { font-size: 12px; color: var(--secondary-text); }
     .custom-field-title { font-weight: 700; color: var(--secondary-text); font-size: 12px; display: inline-block; min-width: 190px; }
     .ticket__body_block > div { padding: 4px 0; font-size: 13px; }
-    .block--description { margin-top: 14px; padding: 14px 16px; background: var(--surface-soft); border: 1px solid var(--surface-border); border-radius: 12px; font-size: 13px; line-height: 1.7; color: var(--body-text); white-space: pre-line; }
+    .block--description { margin-top: 14px; padding: 0; background: transparent; border: 0; border-radius: 0; box-shadow: none; font-size: 13px; line-height: 1.7; color: var(--body-text); white-space: pre-line; }
     .block--description p { margin: 0; }
     .block--description__label { display: block; font-size: 11px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: var(--secondary-text); margin-bottom: 8px; }
     .block--notes { margin-top: 16px; }
@@ -406,7 +581,7 @@ function attachmentLabel(string $path): string
     .ticket__params .params--bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; padding: 12px 16px; border: 1px solid var(--surface-border); border-radius: 12px; background: var(--surface-bg); margin-bottom: 14px; font-size: 12px; }
     .ticket__params .params--bar .btn-print { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px; padding: 0 20px; border: 1px solid var(--surface-border); border-radius: 8px; background: var(--surface-soft); color: var(--body-text); font-size: 12px; font-weight: 600; cursor: pointer; text-decoration: none; transition: background .2s ease, border-color .2s ease, color .2s ease; }
     .ticket__params .params--bar .btn-print:hover { background: var(--table-hover-bg); border-color: #3b6fd4; color: #3b6fd4; text-decoration: none; }
-    .params--block { border: 1px solid var(--surface-border); border-radius: 14px; background: var(--surface-bg); box-shadow: 0 5px 20px rgba(15,23,42,.04); margin-bottom: 16px; overflow: hidden; }
+    .params--block { border: 1px solid var(--surface-border); border-radius: 0; background: var(--surface-bg); box-shadow: 0 5px 20px rgba(15,23,42,.04); margin-bottom: 16px; overflow: hidden; }
     .params--block .accordion-title { display: flex; align-items: center; justify-content: space-between; margin: 0; padding: 14px 18px; font-size: 13px; font-weight: 700; color: var(--body-text); background: var(--table-head-bg); border-bottom: 1px solid var(--surface-border); cursor: pointer; user-select: none; }
     .params--block .accordion-title .icon { width: 14px; height: 14px; color: var(--secondary-text); transition: transform .2s ease; }
     .params--block .accordion-body { padding: 14px 18px; }
@@ -429,7 +604,7 @@ function attachmentLabel(string $path): string
         .back-to-top, .users-online, .ticket__params .params--bar, .block--notes, .replies-modal-overlay,
         .note-modal-overlay,
         .ticket__body_block:last-child, .block--attach, .block--checkboxs, .block--submit, input[type="file"],
-        .file-limits-overlay { display: none !important; }
+        .file-limits-overlay, .inline-replies-panel { display: none !important; }
         .main__content.ticket { display: block; max-width: 100%; padding: 0; }
         .ticket__body, .ticket__params { flex: 1 1 100% !important; max-width: 100% !important; }
         .ticket__body_block, .params--block { box-shadow: none; border: 1px solid #ccc; page-break-inside: avoid; }
@@ -465,24 +640,143 @@ function attachmentLabel(string $path): string
     .replies-modal__close { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 1px solid var(--surface-border); border-radius: 8px; background: var(--surface-soft); color: var(--body-text); font-size: 18px; line-height: 1; cursor: pointer; transition: background .2s ease, color .2s ease; }
     .replies-modal__close:hover { background: var(--table-hover-bg); color: #3b6fd4; }
     .replies-modal__body { padding: 16px 20px 20px; overflow: auto; }
-    .replies-table-wrap { width: 100%; overflow-x: auto; }
-    table.replies-datatable { width: 100%; border-collapse: collapse; font-size: 12px; color: var(--body-text); }
-    table.replies-datatable thead th { background: var(--table-head-bg); color: var(--secondary-text); font-weight: 700; text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--surface-border); white-space: nowrap; }
-    table.replies-datatable tbody td { padding: 10px 12px; border-bottom: 1px dashed var(--surface-border); vertical-align: top; }
-    table.replies-datatable tbody tr:hover { background: var(--table-hover-bg); }
-    table.replies-datatable tbody td.col-sn { width: 40px; text-align: center; color: var(--secondary-text); font-variant-numeric: tabular-nums; }
-    table.replies-datatable tbody td.col-comment { max-width: 280px; word-break: break-word; white-space: pre-line; }
-    table.replies-datatable tbody td.col-attachments { min-width: 140px; max-width: 220px; }
-    .replies-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin-bottom: 10px; font-size: 12px; }
+    .replies-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin-bottom: 14px; font-size: 12px; }
     .replies-toolbar input[type="search"] { border: 1px solid var(--surface-border); border-radius: 8px; padding: 7px 10px; font-size: 12px; color: var(--body-text); background: var(--surface-soft); min-width: 200px; }
     .replies-toolbar .dt-info { color: var(--secondary-text); }
-    .replies-empty { padding: 30px 10px; text-align: center; color: var(--secondary-text); font-size: 13px; }
-    .attachment-list { display: flex; flex-direction: column; gap: 4px; }
-    .attachment-item { display: inline-flex; align-items: center; gap: 5px; max-width: 100%; font-size: 11px; color: var(--link-color); text-decoration: none; padding: 2px 8px; border: 1px solid var(--surface-border); border-radius: 999px; background: var(--surface-soft); transition: background .2s ease, border-color .2s ease, color .2s ease; }
+
+    /* ============================================================
+       BLOG-STYLE REPLY THREAD
+       ============================================================ */
+    .reply-thread { display: flex; flex-direction: column; gap: 16px; }
+    .reply-item {
+        display: flex;
+        gap: 12px;
+        padding: 14px 16px;
+        border: 1px solid var(--surface-border);
+        border-radius: 12px;
+        background: var(--surface-soft);
+        transition: background .2s ease, border-color .2s ease;
+    }
+    .reply-item:hover { background: var(--table-hover-bg); }
+    .reply-item__avatar {
+        flex: 0 0 40px;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #3b6fd4 0%, #1e2b42 100%);
+        color: #fff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        user-select: none;
+    }
+    .reply-item__main { flex: 1 1 auto; min-width: 0; }
+    .reply-item__head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 6px 10px;
+        margin-bottom: 6px;
+        font-size: 12px;
+    }
+    .reply-item__name { font-weight: 700; color: var(--body-text); font-size: 13px; }
+    .reply-item__role {
+        display: inline-block;
+        padding: 1px 8px;
+        border-radius: 999px;
+        background: rgba(59,111,212,.12);
+        color: #3b6fd4;
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: .3px;
+        text-transform: uppercase;
+    }
+    :root[data-theme="dark"] .reply-item__role { background: rgba(139,184,255,.18); color: #8bb8ff; }
+    .reply-item__time { color: var(--secondary-text); font-size: 11.5px; font-variant-numeric: tabular-nums; margin-left: auto; }
+    .reply-item__body {
+        font-size: 13px;
+        line-height: 1.65;
+        color: var(--body-text);
+        white-space: pre-line;
+        word-break: break-word;
+        margin-bottom: 8px;
+    }
+    .reply-item__attachments {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        padding-top: 8px;
+        border-top: 1px dashed var(--surface-border);
+    }
+    .reply-item__attachments-label {
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: .4px;
+        text-transform: uppercase;
+        color: var(--secondary-text);
+        width: 100%;
+        margin-bottom: 2px;
+    }
+    .attachment-list { display: flex; flex-wrap: wrap; gap: 6px; }
+    .attachment-item { display: inline-flex; align-items: center; gap: 5px; max-width: 100%; font-size: 11px; color: var(--link-color); text-decoration: none; padding: 3px 10px; border: 1px solid var(--surface-border); border-radius: 999px; background: var(--surface-bg); transition: background .2s ease, border-color .2s ease, color .2s ease; }
     .attachment-item:hover { background: var(--table-hover-bg); border-color: #3b6fd4; color: #3b6fd4; text-decoration: none; }
     .attachment-item .icon { width: 12px; height: 12px; flex-shrink: 0; }
     .attachment-item span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .attachment-none { color: var(--secondary-text); font-size: 11px; }
+    .replies-empty { padding: 30px 10px; text-align: center; color: var(--secondary-text); font-size: 13px; }
+
+    /* Inline replies panel (was a modal, now shown inline under Internal Notes) */
+    .inline-replies-panel {
+        margin-top: 16px;
+        border: 1px solid var(--surface-border);
+        border-radius: 14px;
+        background: var(--surface-bg);
+        box-shadow: 0 5px 20px rgba(15,23,42,.04);
+        overflow: hidden;
+    }
+    .inline-replies-panel[hidden] { display: none !important; }
+    .inline-replies-panel__head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 14px 18px;
+        background: var(--table-head-bg);
+        border-bottom: 1px solid var(--surface-border);
+    }
+    .inline-replies-panel__head h4 {
+        margin: 0;
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: .3px;
+        text-transform: uppercase;
+        color: var(--body-text);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .inline-replies-panel__head h4 .icon { width: 16px; height: 16px; color: #3b6fd4; }
+    .inline-replies-panel__count {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 700;
+        background: #3b6fd4;
+        color: #fff;
+        letter-spacing: .2px;
+    }
+    .inline-replies-panel__body { padding: 14px 18px 18px; }
+
+    /* Ticket attachments (in main ticket block) — no box, just chips */
+    .ticket-attachments { margin-top: 14px; padding: 0; border: 0; border-radius: 0; background: transparent; }
+    .ticket-attachments__label { display: block; font-size: 11px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: var(--secondary-text); margin-bottom: 8px; }
+    .ticket-attachments .attachment-list { gap: 8px; }
+    .ticket-attachments .attachment-item { font-size: 12px; padding: 4px 12px; background: var(--surface-bg); }
 
     /* ============================================================
        NOTES PANEL (presentable)
@@ -850,15 +1144,42 @@ function attachmentLabel(string $path): string
         .note-modal__footer .btn-full,
         .note-modal__footer .btn-border { width: 100%; }
     }
+
+    /* Headline row with relative timestamp on the right */
+    .ticket-headline-row {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 12px;
+    }
+    .ticket-headline-row h3 {
+        margin: 0;
+        flex: 1 1 auto;
+    }
+    .ticket-relative-time {
+        flex: 0 0 auto;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--secondary-text);
+        white-space: nowrap;
+        padding-top: 3px;
+        letter-spacing: .2px;
+    }
 </style>
 
-<main class="main-content" style="margin-top:-7%">
+<main class="main-content" style="margin-top:-3%">
     <div class="main__content ticket">
         <div class="ticket__body" style="max-width:800px">
 
             <article class="ticket__body_block original-message">
-                <h3><?= htmlspecialchars($headline) ?></h3>
-                <div class="block--head">
+                <div class="ticket-headline-row">
+                    <h3><?= htmlspecialchars($headlineUpper) ?></h3>
+                    <?php if ($relativeCreated !== ''): ?>
+                        <span class="ticket-relative-time" title="<?= htmlspecialchars($dateCreated) ?>"><?= htmlspecialchars($relativeCreated) ?></span>
+                    <?php endif; ?>
+                </div>
+                <!-- <div class="block--head">
                     <div class="contact">
                         <div class="dropdown left out-close">
                             <label>
@@ -886,9 +1207,9 @@ function attachmentLabel(string $path): string
                     <?php if ($dateCreated): ?>
                         <time class="timeago tooltip" datetime="<?= htmlspecialchars($createdIso) ?>" title="<?= htmlspecialchars($dateCreated) ?>"><?= htmlspecialchars($dateCreated) ?></time>
                     <?php endif; ?>
-                </div>
+                </div> -->
 
-                <div class="group-title">Identification</div>
+                <!-- <div class="group-title">Identification</div> -->
                 <div><span class="custom-field-title">Ticket ID:</span><span><?= htmlspecialchars($ticketId) ?></span></div>
                 <div>
                     <span class="custom-field-title">Status:</span>
@@ -903,7 +1224,7 @@ function attachmentLabel(string $path): string
                 <div><span class="custom-field-title">Operator:</span><span><?= htmlspecialchars($operator) ?></span></div>
                 <?php endif; ?>
 
-                <div class="group-title">Reporter &amp; Source</div>
+                <!-- <div class="group-title">Reporter &amp; Source</div> -->
                 <div><span class="custom-field-title">Name:</span><span><?= htmlspecialchars($name) ?></span></div>
                 <div><span class="custom-field-title">Phone No:</span><span><?= htmlspecialchars($phone) ?></span></div>
                 <?php if ($email): ?>
@@ -913,7 +1234,7 @@ function attachmentLabel(string $path): string
                 <div><span class="custom-field-title">Incidence Source:</span><span><?= htmlspecialchars($incSource) ?></span></div>
 
                 <?php if ($state || $community || $lga || $zone || $corridor !== '—'): ?>
-                <div class="group-title">Location</div>
+                <!-- <div class="group-title">Location</div> -->
                 <?php if ($state): ?><div><span class="custom-field-title">State:</span><span><?= htmlspecialchars($state) ?></span></div><?php endif; ?>
                 <?php if ($community): ?><div><span class="custom-field-title">Community:</span><span><?= htmlspecialchars($community) ?></span></div><?php endif; ?>
                 <?php if ($lga): ?><div><span class="custom-field-title">Local Government:</span><span><?= htmlspecialchars($lga) ?></span></div><?php endif; ?>
@@ -924,10 +1245,12 @@ function attachmentLabel(string $path): string
                 <?php endif; ?>
 
                 <?php if ($pipeline || $pipelineType): ?>
-                <div class="group-title">Pipeline</div>
+                <!-- <div class="group-title">Pipeline</div> -->
                 <?php if ($pipeline): ?><div><span class="custom-field-title">Pipeline:</span><span><?= htmlspecialchars($pipeline) ?></span></div><?php endif; ?>
                 <?php if ($pipelineType): ?><div><span class="custom-field-title">Pipeline Type:</span><span><?= htmlspecialchars($pipelineType) ?></span></div><?php endif; ?>
                 <?php endif; ?>
+
+                <div><span class="custom-field-title">Subcontractors:</span><span><?= htmlspecialchars($subcontractorDisplay) ?></span></div>
 
                 <?php if ($nonZero($vessel) || $nonZero($vehicle) || $nonZero($boat) || $nonZero($suspects)): ?>
                 <div class="group-title">Arrests &amp; Destruction</div>
@@ -954,8 +1277,22 @@ function attachmentLabel(string $path): string
 
                 <?php if ($description || $message): ?>
                 <div class="block--description browser-default">
-                    <span class="block--description__label">Incident Description</span>
+                    <span class="block--description__label" ><b style="font-size: 13px !important;">Incident Description :</b></span>
                     <p><?= nl2br(htmlspecialchars($description ?: $message)) ?></p>
+                </div>
+                <?php endif; ?>
+
+                <?php if (!empty($ticketAttachmentChips)): ?>
+                <div class="ticket-attachments">
+                    <span class="ticket-attachments__label">Ticket Attachments (<?= count($ticketAttachmentChips) ?>)</span>
+                    <div class="attachment-list">
+                        <?php foreach ($ticketAttachmentChips as $att): ?>
+                            <a class="attachment-item" href="<?= htmlspecialchars($att['path']) ?>" target="_blank" rel="noopener noreferrer" title="<?= htmlspecialchars($att['label']) ?>">
+                                <svg class="icon icon-attach"><use xlink:href="../img/sprite.svg#icon-attach"></use></svg>
+                                <span><?= htmlspecialchars($att['label']) ?></span>
+                            </a>
+                        <?php endforeach; ?>
+                    </div>
                 </div>
                 <?php endif; ?>
 
@@ -966,7 +1303,7 @@ function attachmentLabel(string $path): string
                     </button>
                     <button class="btn--blue-border" type="button" id="view-replies-btn" style="margin-left:8px;" <?= $repliesCount === 0 ? 'disabled' : '' ?>>
                         <svg class="icon icon-note" style="width:14px;height:14px;"><use xlink:href="../img/sprite.svg#icon-team"></use></svg>
-                        &nbsp; View Replies (<span id="replies-count-badge"><?= (int) $repliesCount ?></span>)
+                        &nbsp; <span id="view-replies-btn-label">View Replies</span> (<span id="replies-count-badge"><?= (int) $repliesCount ?></span>)
                     </button>
                 </div>
 
@@ -1007,6 +1344,27 @@ function attachmentLabel(string $path): string
                             <?php endforeach; ?>
                         </div>
                     <?php endif; ?>
+                </div>
+
+                <!-- ============================================================
+                     INLINE REPLIES PANEL — shown under Internal Notes, hidden by default.
+                     Toggled by the "View Replies / Hide Replies" button above.
+                     ============================================================ -->
+                <div class="inline-replies-panel" id="inline-replies-panel" hidden>
+                    <div class="inline-replies-panel__head">
+                        <h4>
+                            <svg class="icon icon-note"><use xlink:href="../img/sprite.svg#icon-team"></use></svg>
+                            Replies
+                        </h4>
+                        <span class="inline-replies-panel__count" id="replies-count"><?= (int) $repliesCount ?> replies</span>
+                    </div>
+                    <div class="inline-replies-panel__body">
+                        <div class="replies-toolbar">
+                            <input type="search" id="replies-search" placeholder="Search replies…" aria-label="Search replies">
+                            <span class="dt-info" id="replies-count-inline"><?= (int) $repliesCount ?> replies</span>
+                        </div>
+                        <div class="reply-thread" id="replies-thread"></div>
+                    </div>
                 </div>
             </article>
 
@@ -1149,36 +1507,6 @@ function attachmentLabel(string $path): string
     <a href="#" class="back-to-top">Back to Top</a>
 </main>
 
-<div class="replies-modal-overlay" id="replies-modal-overlay" aria-hidden="true">
-    <div class="replies-modal" role="dialog" aria-modal="true" aria-labelledby="replies-modal-title">
-        <div class="replies-modal__head">
-            <h3 id="replies-modal-title">Replies</h3>
-            <button type="button" class="replies-modal__close" id="replies-modal-close" aria-label="Close">&times;</button>
-        </div>
-        <div class="replies-modal__body">
-            <div class="replies-toolbar">
-                <input type="search" id="replies-search" placeholder="Search replies…" aria-label="Search replies">
-                <span class="dt-info" id="replies-count"><?= (int) $repliesCount ?> replies</span>
-            </div>
-            <div class="replies-table-wrap">
-                <table class="replies-datatable" id="replies-datatable">
-                    <thead>
-                        <tr>
-                            <th>SN</th>
-                            <th>Date</th>
-                            <th>Name</th>
-                            <th>Role</th>
-                            <th>Comment</th>
-                            <th>Attachments</th>
-                        </tr>
-                    </thead>
-                    <tbody id="replies-tbody"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
-
 <!-- ============================================================
      ADD NOTE MODAL
      ============================================================ -->
@@ -1291,7 +1619,7 @@ function attachmentLabel(string $path): string
         $attOut = [];
         foreach ($attachments as $att) {
             $attOut[] = [
-                'path'  => attachmentHref($att),
+                'path'  => attachmentHref($att, 'replies'),
                 'label' => attachmentLabel($att),
             ];
         }
@@ -1304,12 +1632,13 @@ function attachmentLabel(string $path): string
         ];
     }, $replies)), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
 
-    var overlay    = document.getElementById('replies-modal-overlay');
+    var panel      = document.getElementById('inline-replies-panel');
     var openBtn    = document.getElementById('view-replies-btn');
-    var closeBtn   = document.getElementById('replies-modal-close');
-    var tbody      = document.getElementById('replies-tbody');
+    var btnLabel   = document.getElementById('view-replies-btn-label');
+    var threadEl   = document.getElementById('replies-thread');
     var searchEl   = document.getElementById('replies-search');
     var countEl    = document.getElementById('replies-count');
+    var countInline= document.getElementById('replies-count-inline');
     var countBadge = document.getElementById('replies-count-badge');
 
     function syncRepliesButton() {
@@ -1327,11 +1656,18 @@ function attachmentLabel(string $path): string
             .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
+    function initials(name) {
+        var n = String(name || '').trim();
+        if (!n) return '?';
+        var parts = n.split(/\s+/).slice(0, 2);
+        return parts.map(function (p) { return p.charAt(0); }).join('').toUpperCase();
+    }
+
     function renderAttachmentChips(attachments) {
-        if (!attachments || !attachments.length) {
-            return '<span class="attachment-none">—</span>';
-        }
-        var html = '<div class="attachment-list">';
+        if (!attachments || !attachments.length) return '';
+        var html = '<div class="reply-item__attachments">' +
+                   '<span class="reply-item__attachments-label">Attachments</span>' +
+                   '<div class="attachment-list">';
         for (var i = 0; i < attachments.length; i++) {
             var att = attachments[i];
             var label = att && att.label ? att.label : '';
@@ -1343,32 +1679,37 @@ function attachmentLabel(string $path): string
                     '<span>' + escapeHtml(label) + '</span>' +
                 '</a>';
         }
-        html += '</div>';
+        html += '</div></div>';
         return html;
     }
 
-    function renderRows(data) {
+    function renderThread(data) {
         if (!data.length) {
-            tbody.innerHTML = '<tr><td colspan="6" class="replies-empty">No replies found.</td></tr>';
+            threadEl.innerHTML = '<div class="replies-empty">No replies found.</div>';
         } else {
-            tbody.innerHTML = data.map(function (r, idx) {
-                return '<tr>' +
-                    '<td class="col-sn">' + (idx + 1) + '</td>' +
-                    '<td>' + escapeHtml(r.date) + '</td>' +
-                    '<td>' + escapeHtml(r.name) + '</td>' +
-                    '<td>' + escapeHtml(r.role) + '</td>' +
-                    '<td class="col-comment">' + escapeHtml(r.comment) + '</td>' +
-                    '<td class="col-attachments">' + renderAttachmentChips(r.attachments) + '</td>' +
-                '</tr>';
+            threadEl.innerHTML = data.map(function (r) {
+                return '<div class="reply-item">' +
+                    '<div class="reply-item__avatar">' + escapeHtml(initials(r.name)) + '</div>' +
+                    '<div class="reply-item__main">' +
+                        '<div class="reply-item__head">' +
+                            '<span class="reply-item__name">' + escapeHtml(r.name || 'Unknown') + '</span>' +
+                            (r.role ? '<span class="reply-item__role">' + escapeHtml(r.role) + '</span>' : '') +
+                            '<span class="reply-item__time">' + escapeHtml(r.date) + '</span>' +
+                        '</div>' +
+                        '<div class="reply-item__body">' + escapeHtml(r.comment) + '</div>' +
+                        renderAttachmentChips(r.attachments) +
+                    '</div>' +
+                '</div>';
             }).join('');
         }
         if (countEl) countEl.textContent = data.length + ' repl' + (data.length === 1 ? 'y' : 'ies');
+        if (countInline) countInline.textContent = data.length + ' repl' + (data.length === 1 ? 'y' : 'ies');
     }
 
     function filterRows() {
         var q = (searchEl.value || '').toLowerCase().trim();
-        if (!q) { renderRows(REPLIES); return; }
-        renderRows(REPLIES.filter(function (r) {
+        if (!q) { renderThread(REPLIES); return; }
+        renderThread(REPLIES.filter(function (r) {
             var hay = r.date + ' ' + r.name + ' ' + r.role + ' ' + r.comment;
             if (r.attachments && r.attachments.length) {
                 for (var i = 0; i < r.attachments.length; i++) hay += ' ' + (r.attachments[i].label || '');
@@ -1377,27 +1718,31 @@ function attachmentLabel(string $path): string
         }));
     }
 
-    function openModal() {
-        if (!REPLIES.length) return;
-        renderRows(REPLIES);
-        overlay.classList.add('is-open');
-        overlay.setAttribute('aria-hidden', 'false');
-        document.body.style.overflow = 'hidden';
-        searchEl.value = '';
-        searchEl.focus();
+    function isPanelOpen() {
+        return panel && !panel.hasAttribute('hidden');
     }
-    function closeModal() {
-        overlay.classList.remove('is-open');
-        overlay.setAttribute('aria-hidden', 'true');
-        document.body.style.overflow = '';
+
+    function openPanel() {
+        if (!panel || !REPLIES.length) return;
+        renderThread(REPLIES);
+        panel.removeAttribute('hidden');
+        if (btnLabel) btnLabel.textContent = 'Hide Replies';
+        if (searchEl) { searchEl.value = ''; searchEl.focus(); }
+    }
+
+    function closePanel() {
+        if (!panel) return;
+        panel.setAttribute('hidden', 'hidden');
+        if (btnLabel) btnLabel.textContent = 'View Replies';
+    }
+
+    function togglePanel() {
+        if (isPanelOpen()) closePanel(); else openPanel();
     }
 
     syncRepliesButton();
-    if (openBtn)  openBtn.addEventListener('click', openModal);
-    if (closeBtn) closeBtn.addEventListener('click', closeModal);
-    if (overlay)  overlay.addEventListener('click', function (e) { if (e.target === overlay) closeModal(); });
+    if (openBtn)  openBtn.addEventListener('click', function (e) { e.preventDefault(); togglePanel(); });
     if (searchEl) searchEl.addEventListener('input', filterRows);
-    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && overlay.classList.contains('is-open')) closeModal(); });
 })();
 </script>
 

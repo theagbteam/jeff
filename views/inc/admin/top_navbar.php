@@ -1,8 +1,12 @@
 <?php $token = rawurlencode(base64_encode((string)$_SESSION['userid'])); ?>
 <nav class="top-navbar">
-    <div class="navbar-left">
-        <i class="bi bi-list nav-icon" id="sidebarToggle" role="button" tabindex="0" aria-label="Open sidebar" aria-expanded="false"></i>
-        <b><?= ucfirst($page_name) ?> </b>
+<div class="navbar-left">
+    <i class="bi bi-list nav-icon" id="sidebarToggle" role="button" tabindex="0" aria-label="Open sidebar" aria-expanded="false"></i>
+    <b><?= strtoupper($page_name) ?>
+     <br> <span style="font-size:10px !important;"> <?= ucfirst($company_name) ?></span>
+</b> 
+</div>
+
     </div>
 
     <div class="navbar-right">
@@ -10,7 +14,7 @@
             <i class="bi bi-moon-stars-fill" id="themeIcon"></i>
         </button>
 
-        <?php if ($page_link_title=="tickets" || $page_link_title=="cr_ticket")  : ?>
+        <?php if ($page_link_title=="tickets" || $page_link_title=="cr_ticket" || $page_link_title=="viewticket")  : ?>
             <button class="btn create-ticket-btn" type="button">Create New Ticket</button>
 
         <?php elseif ($page_link_title=="user_requests")  : ?>
@@ -117,7 +121,7 @@
                 <div class="user-info">
                     <span class="user-org"><?= $AbrvName ?></span>
                     <?php if ($company_adminseniorman == $userid) : ?>
-                        <span class="user-role"><?= ucfirst($role_name) . "👑" ?></span>
+                        <span class="user-role"><?= ucfirst($role_name) . "ðŸ‘‘" ?></span>
                     <?php else : ?>
                         <span class="user-role"><?= ucfirst($role_name) ?></span>
                     <?php endif; ?>

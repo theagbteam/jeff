@@ -41,7 +41,7 @@ var_dump($wellhead_status_counts);
                     --status-border: <?= htmlspecialchars($status_border, ENT_QUOTES, 'UTF-8') ?>;
                  ">
                 <span>
-                    <?= htmlspecialchars($status_name, ENT_QUOTES, 'UTF-8') ?>
+                    <?= htmlspecialchars(ucfirst($status_name), ENT_QUOTES, 'UTF-8') ?>
                 </span>
                 <strong>
                     <?= number_format($status_total) ?>
@@ -74,6 +74,7 @@ var_dump($wellhead_status_counts);
                 <th class="date-cell">Submitted <i class="bi bi-arrow-down-up sort-icon"></i></th>
                 <th class="date-cell">Updated <i class="bi bi-arrow-down-up sort-icon"></i></th>
                 <th class="category-cell">Category <i class="bi bi-arrow-down-up sort-icon"></i></th>
+                <th class="subcontractor-cell">Subcontractors <i class="bi bi-arrow-down-up sort-icon"></i></th>
                 <th class="name-cell">Name <i class="bi bi-arrow-down-up sort-icon"></i></th>
                 <th class="owner-cell">Owner <i class="bi bi-arrow-down-up sort-icon"></i></th>
                 <th class="subject-cell">Subject <i class="bi bi-arrow-down-up sort-icon"></i></th>
@@ -110,7 +111,7 @@ var_dump($wellhead_status_counts);
                         >
                     </td>
 
-                    <td class="id-cell center-cell">
+                    <td class="id-cell center-cell" data-order="<?= $sn ?>">
                         <a href="#"><?= $sn++ ?></a>
                     </td>
 
@@ -139,6 +140,32 @@ var_dump($wellhead_status_counts);
                     </td>
 
                     <td><?= htmlspecialchars($ticket_history['category'] ?? '', ENT_QUOTES, 'UTF-8') ?></td>
+
+                    <td>
+                        <?php
+                        $subRaw   = trim((string)($ticket_history['subcontractor'] ?? ''));
+                        $countRaw = trim((string)($ticket_history['noofsubcontractors'] ?? ''));
+
+                        $subNames  = ($subRaw === '')   ? [] : array_map('trim', explode(',', $subRaw));
+                        $subCounts = ($countRaw === '') ? [] : array_map('trim', explode(',', $countRaw));
+
+                        $subParts = [];
+                        foreach ($subNames as $i => $subName) {
+                            if ($subName === '') {
+                                continue;
+                            }
+
+                            $subCount = isset($subCounts[$i]) && $subCounts[$i] !== ''
+                                ? (int)$subCounts[$i]
+                                : 0;
+
+                            $subParts[] = htmlspecialchars($subName, ENT_QUOTES, 'UTF-8')
+                                        . ' (' . number_format($subCount) . ')';
+                        }
+
+                        echo !empty($subParts) ? implode(', ', $subParts) : 'None';
+                        ?>
+                    </td>
 
                     <td><?= htmlspecialchars($ticket_history['operator'] ?? '', ENT_QUOTES, 'UTF-8') ?></td>
 
@@ -654,5 +681,34 @@ var_dump($wellhead_status_counts);
             closeOwnerModal();
         }
     });
+})();
+
+/* ---------- DataTables default sort: SN ascending (numeric) ---------- */
+(function () {
+    function applyDefaultOrder() {
+        if (typeof jQuery === 'undefined' || !jQuery.fn || !jQuery.fn.DataTable) return;
+
+        // Force SN column (index 1) to sort numerically, regardless of anchor content
+        jQuery.fn.dataTable.defaults.columnDefs = jQuery.fn.dataTable.defaults.columnDefs || [];
+        jQuery.fn.dataTable.defaults.columnDefs.push({
+            targets: 1,
+            type: 'num'
+        });
+        jQuery.fn.dataTable.defaults.order = [[1, 'asc']];
+
+        var $table = jQuery('#ticketsTable');
+        if (!$table.length) return;
+
+        if (jQuery.fn.DataTable.isDataTable($table)) {
+            var api = $table.DataTable();
+            api.order([1, 'asc']).draw();
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', applyDefaultOrder);
+    } else {
+        applyDefaultOrder();
+    }
 })();
 </script>

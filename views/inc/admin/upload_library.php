@@ -7,6 +7,150 @@ $uploadLibraryRecords = (
     isset($LoadAllTickets) && is_array($LoadAllTickets)
 ) ? $LoadAllTickets : [];
 
+/**
+ * Convert ROOT_PATH into a web-facing base URL.
+ *
+ * ROOT_PATH is typically a filesystem path such as:
+ *   C:/xampp/htdocs/jeff
+ * but the browser needs a URL like:
+ *   http://localhost/jeff
+ *
+ * We compute this from $_SERVER by:
+ *   1. Determining the scheme (http or https).
+ *   2. Determining the host (e.g. localhost).
+ *   3. Subtracting $_SERVER['DOCUMENT_ROOT'] from ROOT_PATH to get
+ *      the web-relative sub-path (e.g. "/jeff").
+ */
+function uploadLibraryBaseUrl(): string
+{
+    static $cached = null;
+    if ($cached !== null) return $cached;
+
+    $root = defined('ROOT_PATH') ? (string) ROOT_PATH : '';
+    $root = str_replace('\\', '/', trim($root));
+
+    if ($root === '') {
+        $cached = '';
+        return $cached;
+    }
+
+    // If ROOT_PATH already looks like a URL (has a scheme), trust it.
+    if (preg_match('~^[a-z][a-z0-9+.-]*://~i', $root)) {
+        $cached = rtrim($root, '/');
+        return $cached;
+    }
+
+    // Determine scheme + host from the request.
+    $scheme = 'http';
+    if (!empty($_SERVER['HTTPS']) && strtolower((string) $_SERVER['HTTPS']) !== 'off') {
+        $scheme = 'https';
+    } elseif (!empty($_SERVER['HTTP_X_FORWARDED_PROTO'])
+        && strtolower((string) $_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https') {
+        $scheme = 'https';
+    }
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+
+    // Determine the web-relative sub-path by subtracting DOCUMENT_ROOT.
+    $webPath = '';
+    $docRoot = isset($_SERVER['DOCUMENT_ROOT'])
+        ? str_replace('\\', '/', rtrim((string) $_SERVER['DOCUMENT_ROOT'], '/'))
+        : '';
+
+    if ($docRoot !== '' && stripos($root, $docRoot) === 0) {
+        // e.g. root = C:/xampp/htdocs/jeff, docRoot = C:/xampp/htdocs
+        $webPath = substr($root, strlen($docRoot));
+    } else {
+        // Fallback: try to find the last folder component of ROOT_PATH.
+        $parts = array_values(array_filter(
+            explode('/', $root),
+            fn($p) => $p !== '' && $p !== '.' && $p !== '..'
+        ));
+        if (count($parts) > 0) {
+            $last = end($parts);
+            if ($last !== '' && !preg_match('/^[a-z]:$/i', $last)) {
+                $webPath = '/' . $last;
+            }
+        }
+    }
+
+    $webPath = '/' . ltrim(str_replace('//', '/', $webPath), '/');
+
+    $cached = rtrim($scheme . '://' . $host . $webPath, '/');
+
+    return $cached;
+}
+
+/**
+ * Normalise the raw "attachments" value of an upload library record
+ * into a flat array of attachment paths.
+ */
+function uploadLibraryNormalizeAttachments(array $upload): array
+{
+    $rawAttachments = $upload['attachments']
+        ?? $upload['attachment']
+        ?? $upload['attachment_path']
+        ?? $upload['file_path']
+        ?? '';
+
+    $attachments = [];
+
+    if (is_array($rawAttachments)) {
+        $attachments = $rawAttachments;
+    } elseif (is_string($rawAttachments) && trim($rawAttachments) !== '') {
+        $decodedAttachments = json_decode($rawAttachments, true);
+
+        if (json_last_error() === JSON_ERROR_NONE && is_array($decodedAttachments)) {
+            $attachments = $decodedAttachments;
+        } else {
+            $attachments = array_map('trim', explode(',', $rawAttachments));
+        }
+    }
+
+    $normalized = [];
+
+    foreach ($attachments as $attachment) {
+        if (is_array($attachment)) {
+            $attachmentPath = $attachment['path']
+                ?? $attachment['file_path']
+                ?? $attachment['url']
+                ?? $attachment['name']
+                ?? $attachment['filename']
+                ?? '';
+        } else {
+            $attachmentPath = (string) $attachment;
+        }
+
+        $attachmentPath = trim((string) $attachmentPath);
+
+        if ($attachmentPath !== '') {
+            $normalized[] = $attachmentPath;
+        }
+    }
+
+    return $normalized;
+}
+
+/*
+|--------------------------------------------------------------------------
+| PRE-COUNT ROWS THAT WILL ACTUALLY BE RENDERED
+|--------------------------------------------------------------------------
+| Only records with at least one attachment make it into the table body,
+| so "Total Records" must reflect that same filter.
+|--------------------------------------------------------------------------
+*/
+
+$renderedUploadCount = 0;
+
+foreach ($uploadLibraryRecords as $uploadRecord) {
+    if (!is_array($uploadRecord)) {
+        continue;
+    }
+
+    if (!empty(uploadLibraryNormalizeAttachments($uploadRecord))) {
+        $renderedUploadCount++;
+    }
+}
+
 ?>
 
 <!-- =========================================================
@@ -32,7 +176,7 @@ $uploadLibraryRecords = (
                             <i class="mdi mdi-folder-multiple-outline"></i>
                             <span>
                                 Total Records:
-                                <strong><?= number_format(count($uploadLibraryRecords)) ?></strong>
+                                <strong><?= number_format($renderedUploadCount) ?></strong>
                             </span>
                         </div>
 
@@ -107,65 +251,11 @@ $uploadLibraryRecords = (
                                     <?php
                                     /*
                                     |--------------------------------------------------------------------------
-                                    | ATTACHMENTS
-                                    |--------------------------------------------------------------------------
-                                    | Supports a filename, relative path, JSON array,
-                                    | or comma-separated attachment list.
-                                    |--------------------------------------------------------------------------
-                                    */
-
-                                    $rawAttachments = $upload['attachments']
-                                        ?? $upload['attachment']
-                                        ?? $upload['attachment_path']
-                                        ?? $upload['file_path']
-                                        ?? '';
-
-                                    $attachments = [];
-
-                                    if (is_array($rawAttachments)) {
-                                        $attachments = $rawAttachments;
-                                    } elseif (is_string($rawAttachments) && trim($rawAttachments) !== '') {
-                                        $decodedAttachments = json_decode(
-                                            $rawAttachments,
-                                            true
-                                        );
-
-                                        if (json_last_error() === JSON_ERROR_NONE && is_array($decodedAttachments)) {
-                                            $attachments = $decodedAttachments;
-                                        } else {
-                                            $attachments = array_map(
-                                                'trim',
-                                                explode(',', $rawAttachments)
-                                            );
-                                        }
-                                    }
-
-                                    /*
-                                    |--------------------------------------------------------------------------
                                     | NORMALIZE ATTACHMENT LIST
                                     |--------------------------------------------------------------------------
                                     */
 
-                                    $normalizedAttachments = [];
-
-                                    foreach ($attachments as $attachment) {
-                                        if (is_array($attachment)) {
-                                            $attachmentPath = $attachment['path']
-                                                ?? $attachment['file_path']
-                                                ?? $attachment['url']
-                                                ?? $attachment['name']
-                                                ?? $attachment['filename']
-                                                ?? '';
-                                        } else {
-                                            $attachmentPath = (string)$attachment;
-                                        }
-
-                                        $attachmentPath = trim((string)$attachmentPath);
-
-                                        if ($attachmentPath !== '') {
-                                            $normalizedAttachments[] = $attachmentPath;
-                                        }
-                                    }
+                                    $normalizedAttachments = uploadLibraryNormalizeAttachments($upload);
 
                                     /*
                                     |--------------------------------------------------------------------------
@@ -186,8 +276,6 @@ $uploadLibraryRecords = (
                                     */
 
                                     $rawDate = $upload['date_created']
-                                        ?? $upload['date_created']
-                                        ?? $upload['date_created']
                                         ?? '';
 
                                     $dateWords = (string)$rawDate;
@@ -238,13 +326,13 @@ $uploadLibraryRecords = (
 
                                     /*
                                     |--------------------------------------------------------------------------
-                                    | ATTACHMENT BASE DIRECTORY
-                                    |--------------------------------------------------------------------------
-                                    | Update this path if your actual upload directory differs.
+                                    | ATTACHMENT BASE DIRECTORY (web-relative)
                                     |--------------------------------------------------------------------------
                                     */
 
-                                    $attachmentBaseDirectory = 'views/uploads/ticket_library/';
+                                    $attachmentBaseDirectory = '/views/uploads/ticket_library/';
+
+                                    $baseUrl = uploadLibraryBaseUrl();
 
                                     ?>
 
@@ -299,7 +387,6 @@ $uploadLibraryRecords = (
                                         <!-- NARRATION -->
                                         <td>
                                             <span class="audit-trail-action">
-                                                <!-- <i class="mdi mdi-text-box-outline"></i> -->
                                                 <?= htmlspecialchars(trim((string)$narration) !== '' ? (string)$narration : 'Nil', ENT_QUOTES, 'UTF-8') ?>
                                             </span>
                                         </td>
@@ -315,9 +402,6 @@ $uploadLibraryRecords = (
                                                     |--------------------------------------------------------------------------
                                                     | BUILD ATTACHMENT URL
                                                     |--------------------------------------------------------------------------
-                                                    | Existing HTTP/HTTPS URLs are retained.
-                                                    | Relative filenames are linked to the upload directory.
-                                                    |--------------------------------------------------------------------------
                                                     */
 
                                                     $isExternalUrl = (bool)preg_match(
@@ -330,22 +414,22 @@ $uploadLibraryRecords = (
                                                         '//'
                                                     );
 
-                                                    $isRootRelative = str_starts_with(
-                                                        $attachmentPath,
-                                                        '/'
+                                                    $isRootRelative = (
+                                                        str_starts_with($attachmentPath, '/')
                                                     );
 
-                                                    $attachmentUrl = (
-                                                        $isExternalUrl ||
-                                                        $isProtocolRelative ||
-                                                        $isRootRelative
-                                                    )
-                                                        ? $attachmentPath
-                                                        : (
-                                                            str_contains($attachmentPath, '/')
-                                                                ? $attachmentPath
-                                                                : $attachmentBaseDirectory . $attachmentPath
-                                                        );
+                                                    if ($isExternalUrl || $isProtocolRelative) {
+                                                        $attachmentUrl = $attachmentPath;
+
+                                                    } elseif ($isRootRelative) {
+                                                        $attachmentUrl = $baseUrl . $attachmentPath;
+
+                                                    } elseif (str_contains($attachmentPath, '/')) {
+                                                        $attachmentUrl = $baseUrl . '/' . ltrim($attachmentPath, '/');
+
+                                                    } else {
+                                                        $attachmentUrl = $baseUrl . $attachmentBaseDirectory . rawurlencode($attachmentPath);
+                                                    }
 
                                                     $attachmentName = basename(
                                                         parse_url($attachmentPath, PHP_URL_PATH)
@@ -1350,9 +1434,6 @@ $uploadLibraryRecords = (
                             page: 'all'
                         },
 
-                        /*
-                         * Export attachment names, not HTML link markup.
-                         */
                         format: {
                             body: function (data, row, column, node) {
                                 if (column === 6 && node) {
@@ -1482,7 +1563,6 @@ $uploadLibraryRecords = (
                 dataTable.search('').draw();
             });
 
-        /* Keep the PDF export button beside Total Records. */
         var buttonsContainer = dataTable.buttons().container();
 
         $('#auditTrailExportButton').empty().append(buttonsContainer);
