@@ -79,6 +79,45 @@ function exportTicketDateTime($value)
 
 /*
 |--------------------------------------------------------------------------
+| Resolve a numeric state ID to its actual state name.
+| Mirrors the tickets page logic:
+|   foreach ($LoadAllNigeriaStates as $state) {
+|       if ((int)$state['id'] === (int)$ticket_history['state']) { ... }
+|   }
+|
+| NOTE: the states array is passed in explicitly because $LoadAllNigeriaStates
+| is in scope of the required view but NOT in the global scope, so a
+| `global $LoadAllNigeriaStates;` lookup inside this function would return
+| NULL. Passing it in as a parameter makes the lookup reliable.
+|--------------------------------------------------------------------------
+*/
+function exportTicketStateName($ticket, $statesLookup = null)
+{
+    $stateRaw = exportTicketValue($ticket, ['state']);
+
+    if ($stateRaw === '' || $stateRaw === null) {
+        return '';
+    }
+
+    // Already a name (non-numeric) — return as-is.
+    if (!is_numeric($stateRaw)) {
+        return (string) $stateRaw;
+    }
+
+    if (is_array($statesLookup)) {
+        foreach ($statesLookup as $stateRow) {
+            if ((int)($stateRow['id'] ?? -1) === (int)$stateRaw) {
+                return (string) ($stateRow['name'] ?? $stateRaw);
+            }
+        }
+    }
+
+    // Fallback: couldn't resolve, return the raw value.
+    return (string) $stateRaw;
+}
+
+/*
+|--------------------------------------------------------------------------
 | Merge subcontractor names + counts into a single display string.
 | e.g. "edwin(2), Jeff(3)"
 |--------------------------------------------------------------------------
@@ -118,8 +157,63 @@ function exportTicketSubcontractors($ticket)
 
 /*
 |--------------------------------------------------------------------------
+| Parse subcontractor name/count pairs into an associative array.
+|   "jeff, james" + "2, 4"  =>  ["jeff" => "2", "james" => "4"]
+|--------------------------------------------------------------------------
+*/
+function exportTicketSubcontractorPairs($ticket)
+{
+    $namesRaw = trim((string) exportTicketValue($ticket, ['subcontractor']));
+    $countsRaw = trim((string) exportTicketValue($ticket, ['noofsubcontractors']));
+
+    if ($namesRaw === '' && $countsRaw === '') {
+        return [];
+    }
+
+    $nameParts = array_values(array_filter(array_map('trim', preg_split('/[,;|\r\n]+/', $namesRaw))));
+    $countParts = array_values(array_filter(array_map('trim', preg_split('/[,;|\r\n]+/', $countsRaw))));
+
+    $pairs = [];
+
+    foreach ($nameParts as $index => $name) {
+        if ($name === '') {
+            continue;
+        }
+
+        $count = isset($countParts[$index]) ? $countParts[$index] : '';
+        // Preserve first-seen casing for the column header.
+        $key = strtolower($name);
+
+        if (!isset($pairs[$key])) {
+            $pairs[$key] = [
+                'name'  => $name,
+                'count' => $count
+            ];
+        } else {
+            // Duplicate name within one ticket — sum the counts.
+            $existing = $pairs[$key]['count'];
+            if ($existing !== '' || $count !== '') {
+                $pairs[$key]['count'] = (string) ((float) $existing + (float) $count);
+            }
+        }
+    }
+
+    return $pairs;
+}
+
+/*
+|--------------------------------------------------------------------------
 | Full export column map — every column in ticket_reports.
 | The on-screen summary table uses only a subset of these.
+|
+| NOTE: the "Subcontractor" column is no longer exported as a single
+| combined string. Instead, the Excel exporter splits it into one
+| column per subcontractor name found in the filtered data, e.g.
+|   Subcontractor (jeff) | Subcontractor (james) | ...
+| Each ticket row shows that subcontractor's count (or blank if n/a).
+|
+| NOTE: "User ID" and "Message" columns have been removed.
+| NOTE: "State" now resolves to the actual state name.
 |--------------------------------------------------------------------------
 */
 $exportColumns = [
@@ -135,17 +229,15 @@ $exportColumns = [
     ['label' => 'Created',                                        'keys' => ['date_created', 'created_at', 'date', 'created']],
     ['label' => 'Updated',                                        'keys' => ['date_updated', 'updated_at', 'last_updated', 'updated']],
     ['label' => 'Note',                                           'keys' => ['note']],
-    ['label' => 'User ID',                                        'keys' => ['userid']],
     ['label' => 'Role',                                           'keys' => ['role']],
     ['label' => 'Owner',                                          'keys' => ['owner']],
     ['label' => 'Subcontractor',                                  'keys' => ['__subcontractor_combined__']],
     ['label' => 'Email',                                          'keys' => ['email']],
     ['label' => 'Pipeline',                                       'keys' => ['pipeline']],
     ['label' => 'Pipeline Type',                                  'keys' => ['pipeline_type']],
-    ['label' => 'Message',                                        'keys' => ['message']],
     ['label' => 'Phone No',                                       'keys' => ['phone_no']],
     ['label' => 'Incidence Source',                               'keys' => ['incidence_source']],
-    ['label' => 'State',                                          'keys' => ['state']],
+    ['label' => 'State',                                          'keys' => ['__state_name__']],
     ['label' => 'Community',                                      'keys' => ['community']],
     ['label' => 'Operator',                                       'keys' => ['operator']],
     ['label' => 'Zone',                                           'keys' => ['zone']],
@@ -755,6 +847,15 @@ $exportColumns = [
          PDF/Excel can include fields not shown in the summary.
          One <tr> per ticket, with the same filter data-attributes
          used by the summary table so filters apply identically.
+
+         The "Subcontractor" column carries the COMBINED display
+         string ("jeff(2), james(4)") as plain text. The Excel
+         exporter IGNORES that cell and instead rebuilds the
+         subcontractor breakdown from the data-sc-pairs attribute
+         (JSON of {name: count}).
+
+         User ID and Message columns have been removed.
+         The "State" column carries the resolved state NAME.
          ============================================================ -->
     <table id="exportSourceTable" class="export-source-table" aria-hidden="true">
         <thead>
@@ -780,12 +881,18 @@ $exportColumns = [
                 $priorityRaw = exportTicketValue($ticket, ['priority', 'priority_name']);
                 $statusLower = strtolower(trim((string) $statusRaw));
                 $priorityLower = strtolower(trim((string) $priorityRaw));
+
+                // Build the subcontractor pairs for this ticket and
+                // serialise them for the Excel exporter.
+                $subPairs = exportTicketSubcontractorPairs($ticket);
+                $subPairsJson = htmlspecialchars(json_encode($subPairs), ENT_QUOTES, 'UTF-8');
             ?>
                 <tr
                     data-created-date="<?php echo htmlspecialchars($createdDate, ENT_QUOTES, 'UTF-8'); ?>"
                     data-incidence-date="<?php echo htmlspecialchars($incidenceDate, ENT_QUOTES, 'UTF-8'); ?>"
                     data-status="<?php echo htmlspecialchars($statusLower, ENT_QUOTES, 'UTF-8'); ?>"
                     data-priority="<?php echo htmlspecialchars($priorityLower, ENT_QUOTES, 'UTF-8'); ?>"
+                    data-sc-pairs="<?php echo $subPairsJson; ?>"
                 >
                     <?php foreach ($exportColumns as $col): ?>
                         <?php
@@ -798,6 +905,12 @@ $exportColumns = [
                         // Combined subcontractor column
                         if (in_array('__subcontractor_combined__', $col['keys'], true)) {
                             echo '<td>' . htmlspecialchars(exportTicketSubcontractors($ticket), ENT_QUOTES, 'UTF-8') . '</td>';
+                            continue;
+                        }
+
+                        // State column — resolve numeric ID to state name
+                        if (in_array('__state_name__', $col['keys'], true)) {
+                            echo '<td>' . htmlspecialchars(exportTicketStateName($ticket, $LoadAllNigeriaStates ?? []), ENT_QUOTES, 'UTF-8') . '</td>';
                             continue;
                         }
 
@@ -1083,6 +1196,95 @@ $exportColumns = [
         }
 
         /* --------------------------------------------------------
+           Parse a row's data-sc-pairs JSON into
+           { lowercaseName: {name, count} }
+           -------------------------------------------------------- */
+        function getRowSubcontractorPairs(row) {
+            var raw = row.getAttribute('data-sc-pairs') || '';
+            var pairs = {};
+
+            if (!raw) {
+                return pairs;
+            }
+
+            try {
+                pairs = JSON.parse(raw) || {};
+            } catch (e) {
+                pairs = {};
+            }
+
+            return pairs;
+        }
+
+        /* --------------------------------------------------------
+           Build the Excel table. Subcontractor names are NOT a
+           single column; every distinct subcontractor found in the
+           filtered rows becomes its own column:
+               "Subcontractor (jeff)", "Subcontractor (james)", ...
+           and each row shows that subcontractor's count (or blank).
+
+           Column order:
+             1. All columns before "Subcontractor" (as defined)
+             2. One column per distinct subcontractor (sorted A-Z)
+             3. All columns after "Subcontractor"
+           -------------------------------------------------------- */
+        function buildExcelTable(rows) {
+            var rawHeaders = getExportHeaders();
+            var subIndex = rawHeaders.indexOf('Subcontractor');
+
+            if (subIndex === -1) {
+                // No subcontractor column found — export as-is.
+                return {headers: rawHeaders, data: rows.map(getRowCells)};
+            }
+
+            var beforeHeaders = rawHeaders.slice(0, subIndex);
+            var afterHeaders = rawHeaders.slice(subIndex + 1);
+
+            // Collect all distinct subcontractor names across the
+            // filtered rows, keeping first-seen casing for the label
+            // and sorting by lowercase name for a stable column order.
+            var subNameMap = {}; // lowerName -> displayName
+
+            rows.forEach(function (row) {
+                var pairs = getRowSubcontractorPairs(row);
+
+                Object.keys(pairs).forEach(function (lowerName) {
+                    if (!subNameMap[lowerName]) {
+                        subNameMap[lowerName] = pairs[lowerName].name || lowerName;
+                    }
+                });
+            });
+
+            var subKeys = Object.keys(subNameMap).sort(function (a, b) {
+                return a.localeCompare(b);
+            });
+
+            var subHeaders = subKeys.map(function (key) {
+                return 'Subcontractor (' + subNameMap[key] + ')';
+            });
+
+            var headers = beforeHeaders.concat(subHeaders, afterHeaders);
+
+            var data = rows.map(function (row) {
+                var cells = getRowCells(row);
+                var before = cells.slice(0, subIndex);
+                var after = cells.slice(subIndex + 1);
+                var pairs = getRowSubcontractorPairs(row);
+
+                var subCells = subKeys.map(function (key) {
+                    var entry = pairs[key];
+                    return entry && entry.count !== '' && entry.count !== undefined
+                        ? String(entry.count)
+                        : '';
+                });
+
+                return before.concat(subCells, after);
+            });
+
+            return {headers: headers, data: data};
+        }
+
+        /* --------------------------------------------------------
            Excel export (client-side, no DataTables Buttons needed)
            -------------------------------------------------------- */
         function exportToExcel() {
@@ -1093,7 +1295,10 @@ $exportColumns = [
                 return;
             }
 
-            var headers = getExportHeaders();
+            var built = buildExcelTable(rows);
+            var headers = built.headers;
+            var dataRows = built.data;
+
             var html = '<table border="1"><thead><tr>';
 
             headers.forEach(function (h) {
@@ -1102,8 +1307,7 @@ $exportColumns = [
 
             html += '</tr></thead><tbody>';
 
-            rows.forEach(function (row) {
-                var cells = getRowCells(row);
+            dataRows.forEach(function (cells) {
                 html += '<tr>';
                 cells.forEach(function (c) {
                     html += '<td>' + escapeHtml(c) + '</td>';

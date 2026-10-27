@@ -235,6 +235,7 @@ header("Location: index?action=compulsory_cp");
  $LoadUsersAndLoginTableForAdmin = $callUserModel->SelectUsersAndLoginTableforOnePersonAfterLogin($userid);
          if ($LoadUsersAndLoginTableForAdmin['success']) {
             $user = $LoadUsersAndLoginTableForAdmin['user'];
+       $sidebaropen = !empty($user['login_sidebaropen']) ? $user['login_sidebaropen'] : '1';
            $user_corridor = $user['user_corridor']; 
  $template_mode = ($user['login_TemplateMode'] ?? '') !== '' ? $user['login_TemplateMode'] : 'auto';
           $admin_e= $user_email  = $user['user_email']; 
@@ -1036,7 +1037,8 @@ if (in_array('', $data, true)) {
 
 // create ticket
 
- if (isset($_POST['CreateNewTicket'])) {$userid = $_SESSION['userid'];
+ if (isset($_POST['CreateNewTicket'])) {
+    $userid = $_SESSION['userid'];
   $status_text="new";
 
     /*
@@ -1077,6 +1079,46 @@ if (in_array('', $data, true)) {
     $subcontractor      = implode(',', $subNames);
     $noofsubcontractors = implode(',', $subCounts);
 
+    /*
+    |--------------------------------------------------------------------------
+    | CONVERT STATE ID -> STATE NAME
+    |--------------------------------------------------------------------------
+    | The form submits the numeric id from the `states` table.
+    | We look it up and replace it with the human-readable state name.
+    */
+
+    $submittedStateId = trim($_POST['state'] ?? '');
+    $stateName        = $submittedStateId;
+
+    if ($submittedStateId !== '') {
+        $stateRows = $callUserModel->GeneralSelectAnyTableWhereColumnValueEquals(
+            'states', 'id', $submittedStateId
+        );
+        if (!empty($stateRows[0]['name'])) {
+            $stateName = $stateRows[0]['name'];
+        }
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | CONVERT LGA ID -> LGA NAME
+    |--------------------------------------------------------------------------
+    | The form submits the numeric id from the `lgas` table.
+    | We look it up and replace it with the human-readable LGA name.
+    */
+
+    $submittedLgaId = trim($_POST['local_government'] ?? '');
+    $lgaName        = $submittedLgaId;
+
+    if ($submittedLgaId !== '') {
+        $lgaRows = $callUserModel->GeneralSelectAnyTableWhereColumnValueEquals(
+            'lgas', 'id', $submittedLgaId
+        );
+        if (!empty($lgaRows[0]['name'])) {
+            $lgaName = $lgaRows[0]['name'];
+        }
+    }
+
     $data = [
       'ticket_id' => 'TKT' . date('YmdHis') . substr(str_replace('.', '', (string) microtime(true)), -6),
         'date_created'                              => date('Y-m-d H:i:s'),
@@ -1087,15 +1129,15 @@ if (in_array('', $data, true)) {
         'pipeline'                                  => trim($_POST['pipeline'] ?? ''),
         'pipeline_type'                             => trim($_POST['pipeline_type'] ?? ''),
         'subject'                                   => trim($_POST['subject'] ?? ''),
-        'message'                                   => trim($_POST['message'] ?? ''),
+        'message'                                   => trim($_POST['message'] ?? 'Nothing was typed here'),
         'name'                                      => trim($_POST['name'] ?? ''),
         'email'                                     => trim($_POST['email'] ?? ''),
         'phone_no'                                  => trim($_POST['phone_no'] ?? ''),
         'incidence_date'                            => trim($_POST['incidence_date'] ?? ''),
         'incidence_source'                          => trim($_POST['incidence_source'] ?? ''),
-        'state'                                     => trim($_POST['state'] ?? ''),
+        'state'                                     => $stateName,
         'community'                                 => trim($_POST['community'] ?? ''),
-        'local_government'                          => trim($_POST['local_government'] ?? ''),
+        'local_government'                          => $lgaName,
         'operator'                                  => trim($_POST['operator'] ?? ''),
         'zone'                                      => trim($_POST['zone'] ?? ''),
         'corridor'                                  => trim($_POST['corridor'] ?? ''),

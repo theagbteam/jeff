@@ -85,6 +85,13 @@
 
 <script>
     /* ============================================================
+       SIDEBAR DEFAULT STATE (FROM PHP)
+       ============================================================ */
+    // $sidebaropen = 1  -> sidebar open by default
+    // $sidebaropen = 0  -> sidebar closed by default (default fallback)
+    const SIDEBAR_OPEN_BY_DEFAULT = <?= (isset($sidebaropen) && (int)$sidebaropen === 1) ? 'true' : 'false' ?>;
+
+    /* ============================================================
        THEME HANDLING
        ============================================================ */
     const templateMode = <?= json_encode($template_mode) ?>;
@@ -132,27 +139,48 @@
     const sidebar = document.getElementById('sidebar');
     const sidebarToggle = document.getElementById('sidebarToggle');
 
+    /**
+     * Apply the sidebar open/closed state.
+     * @param {boolean} open
+     */
+    function applySidebarState(open) {
+        if (!sidebar || !sidebarToggle) return;
+
+        if (open) {
+            document.body.classList.add('sidebar-open');
+            sidebar.classList.add('show');
+            sidebarToggle.className = 'bi bi-x-lg nav-icon';
+            sidebarToggle.setAttribute('aria-expanded', 'true');
+            sidebarToggle.setAttribute('aria-label', 'Close sidebar');
+        } else {
+            document.body.classList.remove('sidebar-open');
+            sidebar.classList.remove('show');
+            sidebarToggle.className = 'bi bi-list nav-icon';
+            sidebarToggle.setAttribute('aria-expanded', 'false');
+            sidebarToggle.setAttribute('aria-label', 'Open sidebar');
+        }
+    }
+
     function toggleSidebar() {
         if (!sidebar || !sidebarToggle) return;
 
-        const isOpen = document.body.classList.toggle('sidebar-open');
-
-        sidebar.classList.toggle('show', isOpen);
-
-        sidebarToggle.className = isOpen
-            ? 'bi bi-x-lg nav-icon'
-            : 'bi bi-list nav-icon';
-
-        sidebarToggle.setAttribute(
-            'aria-expanded',
-            isOpen ? 'true' : 'false'
-        );
-
-        sidebarToggle.setAttribute(
-            'aria-label',
-            isOpen ? 'Close sidebar' : 'Open sidebar'
-        );
+        const isOpen = sidebar.classList.contains('show');
+        applySidebarState(!isOpen);
     }
+
+    /* ------------------------------------------------------------
+       INITIAL STATE: driven by $sidebaropen from PHP.
+       On small screens we still keep it closed so it doesn't
+       cover the content until the user taps the toggle.
+       ------------------------------------------------------------ */
+    (function initSidebarState() {
+        if (!sidebar || !sidebarToggle) return;
+
+        const isMobile = window.innerWidth <= 767.98;
+        const shouldOpen = isMobile ? false : SIDEBAR_OPEN_BY_DEFAULT;
+
+        applySidebarState(shouldOpen);
+    })();
 
     if (sidebarToggle) {
         sidebarToggle.addEventListener('click', function () {
@@ -227,25 +255,17 @@
             !sidebar.contains(event.target) &&
             !sidebarToggle.contains(event.target)
         ) {
-            document.body.classList.remove('sidebar-open');
-            sidebar.classList.remove('show');
-            sidebarToggle.className = 'bi bi-list nav-icon';
-            sidebarToggle.setAttribute('aria-expanded', 'false');
-            sidebarToggle.setAttribute('aria-label', 'Open sidebar');
+            applySidebarState(false);
         }
     });
 
     /* ============================================================
-       CLOSE SIDEBAR WHEN CLICKING A MENU ITEM
+       CLOSE SIDEBAR WHEN CLICKING A MENU ITEM (MOBILE ONLY)
        ============================================================ */
     document.querySelectorAll('.sidebar-nav a').forEach(function (link) {
         link.addEventListener('click', function () {
             if (window.innerWidth <= 767.98 && sidebar && sidebarToggle) {
-                document.body.classList.remove('sidebar-open');
-                sidebar.classList.remove('show');
-                sidebarToggle.className = 'bi bi-list nav-icon';
-                sidebarToggle.setAttribute('aria-expanded', 'false');
-                sidebarToggle.setAttribute('aria-label', 'Open sidebar');
+                applySidebarState(false);
             }
         });
     });

@@ -1159,12 +1159,13 @@
                            title="Subject must be between 3 and 70 characters">
                 </div>
 
-                <div class="form-field">
-                    <label for="message">Message <span class="required">*</span></label>
+                <!-- Message textarea hidden and no longer required -->
+                <div class="form-field" style="display:none;">
+                    <label for="message">Message</label>
                     <textarea id="message" name="message" rows="6"
-                              placeholder="Describe the incident..." required
+                              placeholder="Describe the incident..."
                               minlength="10"
-                              title="Please provide at least 10 characters"></textarea>
+                              title="Please provide at least 10 characters" >nothing typed</textarea>
                 </div>
 
                 <div class="form-field">

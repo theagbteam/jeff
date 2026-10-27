@@ -3,6 +3,89 @@ echo '<strong>Wellhead Status Counts Debug:</strong>';
 echo "\n";
 var_dump($wellhead_status_counts);
 ?></pre> -->
+
+<?php
+// Count tickets with no assigned owner
+$unassigned_count = 0;
+foreach ($LoadAllTickets as $ticket_history) {
+    if ((int)($ticket_history['status'] ?? -1) < 0) {
+        continue;
+    }
+    if (trim((string)($ticket_history['narration'] ?? '')) !== '') {
+        continue;
+    }
+    if (trim((string)($ticket_history['owner'] ?? '')) === '') {
+        $unassigned_count++;
+    }
+}
+?>
+
+<style>
+/* Compact summary counters so all boxes fit on one row */
+.summary-section {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+.summary-counters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    flex: 1 1 auto;
+}
+.summary-counter {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    line-height: 1.2;
+    white-space: nowrap;
+    border: 1px solid var(--status-border, #d1d5db);
+    background: var(--status-bg, #f3f4f6);
+    color: var(--status-color, #374151);
+}
+.summary-counter span {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+.summary-counter strong {
+    font-size: 14px;
+    font-weight: 700;
+    margin-left: 2px;
+}
+.summary-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+}
+.summary-actions .btn-delete-selected,
+.summary-actions .btn-view-all {
+    padding: 6px 12px;
+    font-size: 12px;
+    border-radius: 7px;
+}
+.summary-actions .auto-reload {
+    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+@media (max-width: 640px) {
+    .summary-counter { padding: 4px 8px; font-size: 11px; }
+    .summary-counter strong { font-size: 13px; }
+}
+</style>
+
 <section class="summary-section">
     <div class="summary-counters">
         <?php foreach ($wellhead_status_counts as $status_count): ?>
@@ -48,6 +131,23 @@ var_dump($wellhead_status_counts);
                 </strong>
             </div>
         <?php endforeach; ?>
+
+        <!-- Unassigned tickets counter -->
+        <?php
+            $unassigned_r = 108; $unassigned_g = 117; $unassigned_b = 125; // grey
+            $unassigned_text   = "rgb($unassigned_r, $unassigned_g, $unassigned_b)";
+            $unassigned_bg     = "rgba($unassigned_r, $unassigned_g, $unassigned_b, 0.10)";
+            $unassigned_border = "rgba($unassigned_r, $unassigned_g, $unassigned_b, 0.35)";
+        ?>
+        <div class="summary-counter wellhead-status"
+             style="
+                --status-color:  <?= htmlspecialchars($unassigned_text, ENT_QUOTES, 'UTF-8') ?>;
+                --status-bg:     <?= htmlspecialchars($unassigned_bg, ENT_QUOTES, 'UTF-8') ?>;
+                --status-border: <?= htmlspecialchars($unassigned_border, ENT_QUOTES, 'UTF-8') ?>;
+             ">
+            <span>Unassigned</span>
+            <strong><?= number_format($unassigned_count) ?></strong>
+        </div>
     </div>
 
     <div class="summary-actions">
@@ -679,6 +779,65 @@ var_dump($wellhead_status_counts);
     document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape' && ownerOverlay && ownerOverlay.classList.contains('is-open')) {
             closeOwnerModal();
+        }
+    });
+})();
+
+/* ---------- Auto reload with persistence via localStorage ---------- */
+(function () {
+    const autoReloadCheckbox = document.getElementById('autoReload');
+    if (!autoReloadCheckbox) return;
+
+    const STORAGE_KEY = 'ticketsAutoReloadEnabled';
+    const RELOAD_INTERVAL_MS = 15000; // 15 seconds — adjust to your preference
+    let reloadTimer = null;
+
+    function getStoredState() {
+        try {
+            return localStorage.getItem(STORAGE_KEY) === '1';
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function setStoredState(enabled) {
+        try {
+            localStorage.setItem(STORAGE_KEY, enabled ? '1' : '0');
+        } catch (e) {
+            /* localStorage may be unavailable (private mode, etc.) — ignore */
+        }
+    }
+
+    function startAutoReload() {
+        stopAutoReload();
+        reloadTimer = setTimeout(function () {
+            window.location.reload();
+        }, RELOAD_INTERVAL_MS);
+    }
+
+    function stopAutoReload() {
+        if (reloadTimer) {
+            clearTimeout(reloadTimer);
+            reloadTimer = null;
+        }
+    }
+
+    // Restore checkbox state from localStorage on page load
+    const storedEnabled = getStoredState();
+    autoReloadCheckbox.checked = storedEnabled;
+    if (storedEnabled) {
+        startAutoReload();
+    }
+
+    // Handle user toggling the checkbox
+    autoReloadCheckbox.addEventListener('change', function () {
+        const enabled = autoReloadCheckbox.checked;
+        setStoredState(enabled);
+
+        if (enabled) {
+            startAutoReload();
+        } else {
+            stopAutoReload();
         }
     });
 })();

@@ -1275,10 +1275,28 @@ foreach ($ticketAttachments as $att) {
                 </div>
                 <?php endif; ?>
 
+                <!-- Message field commented out as requested -->
+                <?php /* ?>
                 <?php if ($description || $message): ?>
                 <div class="block--description browser-default">
                     <span class="block--description__label" ><b style="font-size: 13px !important;">Incident Description :</b></span>
                     <p><?= nl2br(htmlspecialchars($description ?: $message)) ?></p>
+                </div>
+                <?php endif; ?>
+
+                <?php if ($message): ?>
+                <div class="block--description browser-default" style="margin-top: 10px;">
+                    <span class="block--description__label"><b style="font-size: 13px !important;">Message :</b></span>
+                    <p><?= nl2br(htmlspecialchars($message)) ?></p>
+                </div>
+                <?php endif; ?>
+                <?php */ ?>
+
+                <!-- Keep the original incident description only (message commented out) -->
+                <?php if ($description): ?>
+                <div class="block--description browser-default">
+                    <span class="block--description__label" ><b style="font-size: 13px !important;">Incident Description :</b></span>
+                    <p><?= nl2br(htmlspecialchars($description)) ?></p>
                 </div>
                 <?php endif; ?>
 
@@ -1372,9 +1390,12 @@ foreach ($ticketAttachments as $att) {
                 <form method="post" class="form"
                       action="index.php?action=viewticket&viewtoken=<?= urlencode(base64_encode($ticketId)) ?>"
                       enctype="multipart/form-data">
+                    <!-- Message reply textarea commented out as requested -->
+                    
                     <div class="block--message" id="message-block">
                         <textarea name="message" id="message" placeholder="Type your message" required></textarea>
                     </div>
+                
 
                     <div class="block--attach">
                         <svg class="icon icon-attach" style="width:16px;height:16px;"><use xlink:href="../img/sprite.svg#icon-attach"></use></svg>

@@ -5,9 +5,15 @@ background-color: slategray;
     }
 </style>
 <aside class="sidebar" id="sidebar">
-    <div class="sidebar-brand">  <img width="30px" height="30px"  src="views/uploads/img/<?= $company_logo ?>" alt="">
+     <a href="index.php?action=tickets" style="text-decoration: none;">
+    <div class="sidebar-brand">  
+       
+        <img width="30px" height="30px"  src="views/uploads/img/<?= $company_logo ?>" alt="">
                <?= $company_alias ?> 
+              
             </div>
+              </a>
+
     <ul class="sidebar-nav">
         <li><a href="index.php?action=tickets" class="<?php if ($page_link_title=='tickets' || $page_link_title=='viewticket' || $page_link_title=='cr_ticket') {echo 'active';} ?>"><span>Tickets</span></a></li>
           <li>

@@ -867,6 +867,7 @@ public function SelectUsersAndLoginTableforOnePersonAfterLogin($user_id)
             users.msg_notification AS user_msg_notification,
 
             login.sn AS login_sn,
+            login.sidebaropen AS login_sidebaropen,
             login.template_mode AS login_TemplateMode,
             login.userid AS login_userid,
             login.password AS login_password,

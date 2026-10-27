@@ -121,7 +121,7 @@
                 <div class="user-info">
                     <span class="user-org"><?= $AbrvName ?></span>
                     <?php if ($company_adminseniorman == $userid) : ?>
-                        <span class="user-role"><?= ucfirst($role_name) . "ðŸ‘‘" ?></span>
+                        <span class="user-role"><?= ucfirst($role_name) . "👑" ?></span>
                     <?php else : ?>
                         <span class="user-role"><?= ucfirst($role_name) ?></span>
                     <?php endif; ?>

@@ -1,4 +1,5 @@
 <?php
+
 // if (!isset($template_mode)){
 
 // $template_mode = "auto";

@@ -362,7 +362,6 @@ public function updateMailerDetails(array $data): array
 //         }
         
 //     }
-
 public function WipeDevDatabaseWithExceptions()
 {
     try {
@@ -370,11 +369,18 @@ public function WipeDevDatabaseWithExceptions()
         $preserveEntirely = [
             'states',
             'lgas',
-            ];
+        ];
 
         // Tables to wipe, in child→parent order (so FKs, if added later, stay happy)
         $wipeTables = [
-           'ticket_category',
+            // Child / dependent tables first
+            'ticket_comment',
+            'ticket_replies',
+            'ticket_reports',
+            'transfer_history',
+            'upload_library',
+            'navy_incidence_offences',
+            'ticket_category',
             'request',
             'report_type',
             'priority',
@@ -385,6 +391,7 @@ public function WipeDevDatabaseWithExceptions()
             'audit_trail',
             'owner',
             'operator',
+            'subcontractors',
             'corridor',
             'zone',
             // 'login' and 'users' and 'company' handled specially below
