@@ -16,10 +16,11 @@ $val = function ($k, $d = '') use ($t) {
     return isset($t[$k]) && $t[$k] !== null && $t[$k] !== '' ? $t[$k] : $d;
 };
 
-$company_name = $company_name ?? 'NNPCL COMMAND AND CONTROL CENTER';
+$company_name = $company_name ?? 'IRIS';
 $token        = $val('token', $token ?? '');
 
 $ticketId      = $val('ticket_id', '—');
+$ticketSn      = $val('sn', '—');
 $statusText    = $val('status_text', 'New');
 $category      = $val('category', '—');
 $priority      = $val('priority', '—');
@@ -36,10 +37,39 @@ $name          = $val('name', '—');
 $email         = $val('email', '');
 $phone         = $val('phone_no', '—');
 $incDate       = $val('incidence_date', '—');
+
 $incSource     = $val('incidence_source', '—');
 $state         = $val('state', '');
+$lga = $val('local_government', '');
+
+
+if (!empty($GetAllLgas) && is_array($GetAllLgas)) {
+    foreach ($GetAllLgas as $LgaDetails) {
+        if ((string) $LgaDetails['id'] === (string) $lga) {
+            $lga = $LgaDetails['name'];
+            break;
+        }
+    }
+}
+
+
+
+if (!empty($LoadAllNigeriaStates) && is_array($LoadAllNigeriaStates)) {
+    foreach ($LoadAllNigeriaStates as $StateDetails) {
+        if ((string) $StateDetails['id'] === (string) $state) {
+            $state = $StateDetails['name'];
+            break;
+        }
+    }
+}
+
+
+
+
+
+
+
 $community     = $val('community', '');
-$lga           = $val('local_government', '');
 $operator      = $val('operator', '');
 $zone          = $val('zone', '');
 $corridor      = $val('corridor', '—');
@@ -1451,12 +1481,16 @@ foreach ($ticketAttachments as $att) {
         </div>
 
         <div class="ticket__params">
-            <section class="params--bar" style="padding-left: 0">
-                <a href="Javascript:void(0)" title="Print" class="btn-print" onclick="window.print();return false;">
-                    <svg class="icon icon-print" style="width:14px;height:14px;"><use xlink:href="../img/sprite.svg#icon-print"></use></svg>
-                    Print
-                </a>
-            </section>
+      <section class="params--bar" style="padding-left: 0; justify-content: center;">
+    <a href="javascript:void(0)" title="Print" class="btn-print"
+       style="display: inline-flex; align-items: center; justify-content: center; position: relative;"
+       onclick="window.print();return false;">
+        <svg class="icon icon-print" style="width:14px;height:14px; position: absolute; left: 10px;">
+            <use xlink:href="../img/sprite.svg#icon-print"></use>
+        </svg>
+        <span style="display: block; width: 100%; text-align: center; line-height: 1;">Print</span>
+    </a>
+</section>
 
             <section class="params--block params">
                 <div class="row ts" id="ticket-status-div">
@@ -1484,7 +1518,7 @@ foreach ($ticketAttachments as $att) {
                 </h4>
                 <div class="accordion-body" style="display:block">
                     <div class="row"><div class="title">Tracking ID:</div><div class="value"><?= htmlspecialchars($ticketId) ?></div></div>
-                    <div class="row"><div class="title">Ticket number:</div><div class="value"><?= htmlspecialchars($ticketId) ?></div></div>
+                    <div class="row"><div class="title">Ticket number:</div><div class="value"><?= htmlspecialchars($ticketSn) ?></div></div>
                     <div class="row"><div class="title">Subject:</div><div class="value"><?= htmlspecialchars($rawSubject !== '' ? $rawSubject : '—') ?></div></div>
                     <div class="row"><div class="title">Created on:</div><div class="value"><?= htmlspecialchars($dateCreated ?: '—') ?></div></div>
                     <div class="row"><div class="title">Updated:</div><div class="value"><?= htmlspecialchars($dateUpdated ?: '—') ?></div></div>
@@ -1522,7 +1556,17 @@ foreach ($ticketAttachments as $att) {
 
     <div class="users-online">
         <svg class="icon icon-team" style="width:14px;height:14px;"><use xlink:href="../img/sprite.svg#icon-team"></use></svg>
-        <span><?= htmlspecialchars($company_name) ?></span>
+        <span>   <?= $company_copyright ?>
+                       <?php if ($company_poweredby!="") { echo " - Powered by"; } ?>
+                     
+                        <a
+                            href="<?= htmlspecialchars($company_copyrightlink) ?>"
+                            target="_blank"
+                        >
+
+                           <?= htmlspecialchars($company_poweredby) ?>
+
+                        </a></span>
     </div>
 
     <a href="#" class="back-to-top">Back to Top</a>

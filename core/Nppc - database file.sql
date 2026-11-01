@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 26, 2026 at 03:10 PM
+-- Generation Time: Oct 27, 2026 at 06:37 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -58,7 +58,17 @@ INSERT INTO `audit_trail` (`sn`, `date`, `userid`, `full_name`, `role`, `role_na
 (480, '2026-10-26 13:12:41', '38299', 'Agbonile Eguavoen Edwin  38299', 'developer', 'Dev_op', 'Login successful', '::1', 1),
 (481, '2026-10-26 14:37:06', '38299', 'Agbonile E.E  38299', 'developer', 'Dev_op', 'Created a new create_corridor module', '::1', 1),
 (482, '2026-10-26 14:46:29', '38299', 'Agbonile E.E  38299', 'developer', 'Dev_op', 'Created a new create_corridor module', '::1', 1),
-(483, '2026-10-26 14:46:49', '38299', 'Agbonile E.E  38299', 'developer', 'Dev_op', 'Created a new create_corridor module', '::1', 1);
+(483, '2026-10-26 14:46:49', '38299', 'Agbonile E.E  38299', 'developer', 'Dev_op', 'Created a new create_corridor module', '::1', 1),
+(484, '2026-10-26 15:36:54', '38299', 'Agbonile Eguavoen Edwin  38299', 'developer', 'Dev_op', 'Login successful', '::1', 1),
+(485, '2026-10-26 18:08:54', '1063', 'selena  1063', 'administrator', 'administrator', 'Login successful', '::1', 1),
+(486, '2026-10-27 13:22:39', '1063', 'selena - 1063', 'administrator', 'administrator', 'Assigned ticket TKT20261026124758784308 to remand (Ref ID: 1057)', '127.0.0.1', 1),
+(487, '2026-10-27 14:35:25', '38299', 'Agbonile Eguavoen Edwin  38299', 'developer', 'Dev_op', 'Login successful', '::1', 1),
+(488, '2026-10-27 14:35:41', '38299', 'Agbonile E.E  38299', 'developer', 'developer', 'Assigned comonme as new chief administrator', '::1', 1),
+(489, '2026-10-27 14:35:46', '38299', 'Agbonile E.E  38299', 'developer', 'developer', 'Assigned comonme as new chief administrator', '::1', 1),
+(490, '2026-10-27 14:39:09', '1063', 'selena - 1063', 'administrator', 'administrator', 'Replied to ticket TKT20261024143107667925', '127.0.0.1', 1),
+(491, '2026-10-27 14:39:47', '38299', 'Agbonile E.E  38299', 'developer', 'developer', 'Assigned selena as new chief administrator', '::1', 1),
+(492, '2026-10-27 14:40:21', '1063', 'selena - 1063', 'administrator', 'administrator', 'Replied to ticket TKT20261024143107667925, status → in progress', '127.0.0.1', 1),
+(493, '2026-10-27 15:01:47', '1063', 'selena  1063', 'administrator', 'administrator', 'Login successful', '127.0.0.1', 1);
 
 -- --------------------------------------------------------
 
@@ -1009,6 +1019,7 @@ INSERT INTO `lgas` (`id`, `state_id`, `name`, `created_at`) VALUES
 CREATE TABLE `login` (
   `sn` int(255) NOT NULL,
   `template_mode` varchar(255) NOT NULL,
+  `sidebaropen` int(255) NOT NULL,
   `action_token` varchar(255) NOT NULL,
   `userid` varchar(255) NOT NULL,
   `password` varchar(255) NOT NULL,
@@ -1033,31 +1044,31 @@ CREATE TABLE `login` (
 -- Dumping data for table `login`
 --
 
-INSERT INTO `login` (`sn`, `template_mode`, `action_token`, `userid`, `password`, `last_login`, `otp_request`, `login_counts`, `role`, `role_name`, `Role_edit_user`, `Role_create_user`, `Role_delete_user`, `Role_approve_user`, `Role_create_report`, `Role_approve_report`, `Role_edit_report`, `Role_delete_report`, `Role_comment`, `status`) VALUES
-(1, '', '', '38299', '$2y$10$n7d0LlqjadH5pp5Rt1CTs.o1dL82Rk2qVBklLmh79S6kJUNVQsyNi', '2026-10-26 13:12:41', '', 56, 'developer', 'Dev_op', 0, 0, 0, 0, 0, 0, 0, 0, 0, 1),
-(36, '', '', '1003', '$2y$10$Ss2HEB/.gS0Kj7jdcCOFbOnl1leTPsgg.zQSJNMwIyNoCrWG5vCJC', '', '', 0, 'administrator', 'administrator', 0, 0, 0, 0, 1, 0, 0, 0, 1, -1),
-(37, '', '', '1038', '$2y$10$N4vOkXGcoly/ou6E/9lF0OygS7FJqBdwgd7/lo01bnB0ybjNYZr8.', '', '', 0, 'administrator', 'reporter', 0, 0, 0, 0, 1, 0, 0, 0, 1, 1),
-(38, '', '', '1039', '$2y$10$lFP/Z/433.AYO2NhHYJDjujWBTUBVgGfcfAJyNwVRwhsHK0xsm6gC', '', '', 0, 'administrator', 'developer', 0, 0, 0, 0, 1, 0, 0, 0, 1, 1),
-(39, '', '', '1040', '$2y$10$gwbZfRrkm8/I.FAaSt4ho.MblXf9jKRdIZfU6G9DFrtUDCaf/NSau', '', '', 0, 'administrator', 'reporter', 0, 0, 0, 0, 1, 0, 0, 0, 1, 0),
-(40, '', '', '1041', '$2y$10$vXlhB2hHarxjvBI2RmuaCO73B0jbRjDGjkxDlF1uNRkg15USsHbFO', '', '', 0, 'reporter', 'reporter', 0, 0, 0, 0, 1, 0, 0, 0, 1, -1),
-(41, '', '', '1042', '$2y$10$Kgaudj/fC/.UaS2.Z1/ZG.jPayaIDQY4QrWlilb.9M8oBNmd/TGj.', '', '', 0, 'reporter', 'reporter', 0, 0, 0, 0, 1, 0, 0, 0, 1, -1),
-(50, '', '19d9fc9ae41043', '1043', '$2y$10$kvt32q8fSf8JLw5eQJQgYubn2Net5M7cAp2X/CAvd/OBhDRCIDT8m', '', '', 0, 'reporter', 'reporter', 0, 0, 0, 0, 1, 0, 0, 0, 1, -1),
-(51, '', 'f9776f93511052', '1052', '$2y$10$n7d0LlqjadH5pp5Rt1CTs.o1dL82Rk2qVBklLmh79S6kJUNVQsyNi', '', '', 0, 'supervisor', 'administrator', 1, 1, 1, 1, 1, 1, 1, 1, 1, 0),
-(52, '', 'fdce26bf371053', '1053', '$2y$10$Um3Alm5cJFT1x6Uxv7P8h.zOFQcdUHlUD5iBeu5F4WCd9OoBSZ8BW', '', '', 0, 'administrator', 'administrator', 1, 1, 1, 1, 1, 1, 1, 1, 1, -1),
-(53, '', 'cc9abab9371054', '1054', '$2y$10$s/ECUXZVaeABexFcwgwfHOyjeWMDyS5x6CE1l4EGs6Ee9PFC5q6bu', '2026-10-11 14:49:00', '', 2, 'administrator', 'administrator', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
-(54, '', 'b0b2c7a3371055', '1055', '$2y$10$s27KitBBhqvhmL9CPr3ax./hlvabXQfgcjYQy6FOCSkFgULG5d1rG', '2026-10-13 21:14:30', '', 27, 'Administrator', 'administrator', 0, 0, 0, 0, 0, 0, 0, 0, 0, 1),
-(55, '', '658a53e7f61056', '1056', '$2y$10$Um3Alm5cJFT1x6Uxv7P8h.zOFQcdUHlUD5iBeu5F4WCd9OoBSZ8BW', '', '', 0, 'reporter', 'reporter', 0, 0, 0, 0, 1, 0, 0, 0, 1, 2),
-(56, '', 'abea6e9e221057', '1057', '$2y$10$LaYDfmHlv28CuASHG4Ez..846sp5ObDL5OUkdLcN13gGIJnmUdJRO', '', '', 0, 'supervisor', '', 0, 0, 0, 0, 1, 0, 0, 0, 1, 0),
-(57, '', 'f80fb268371058', '1058', '$2y$10$NNPsSYilrteiouQ4/bXY.u1fFdHqgd58yX.0eBB8Zq6ELIZn5iFAq', '', '', 0, '', '', 0, 0, 0, 0, 1, 0, 0, 0, 1, -1),
-(58, '', 'dc1c8cbbbd1059', '1059', '$2y$10$x1GFminvWVt95EizqTbXvuFU8i.E.qcx7O5ygOxO6sRnHkkuPTxjO', '', '', 0, 'reporter', 'reporter', 0, 0, 0, 0, 1, 0, 0, 0, 1, 1),
-(59, '', '7005b5561d1060', '1060', '$2y$10$NFIUvvGt1Qxw1vkC506V1.WDya/zyzd/T3/oXktAAzE2jmJTMKOOW', '', '', 0, 'administrator', 'administrator', 1, 1, 1, 1, 1, 1, 1, 1, 1, -1),
-(60, '', 'b101458d681061', '1061', '$2y$10$a3Hs0ydW.Q2hnduKLjCs7uFP8ILpK01IjX2AhhaUC0swK63TlgpjK', '', '', 0, 'administrator', 'administrator', 1, 1, 1, 1, 1, 1, 1, 1, 1, -1),
-(61, '', 'a4beca05231062', '1062', '$2y$10$UFYPXryDkCORYp0V/A0tjudUCzy8poHdk6PiQI.ARacV4d6rMyzNK', '', '', 0, 'reporter', 'reporter', 0, 0, 0, 0, 1, 0, 0, 0, 1, 1),
-(62, 'dark', 'ac79aeb7551063', '1063', '$2y$10$5pu4fXS1GpVMY9xv4kfSF.gIrLJeNk6o6yPyd4h37RCkCGHSDLGhO', '2026-10-24 13:59:19', '', 3, 'administrator', 'administrator', 1, 1, 0, 1, 1, 1, 1, 1, 1, 1),
-(63, '', '0b5488ccb31064', '1064', '$2y$10$IECXH/96vE5Keunl636nhetzvutIR52VGkugUmsgOlDs3yf/d/HIW', '', '', 0, 'developer', 'reporter', 0, 0, 0, 0, 1, 0, 0, 0, 1, 1),
-(64, '', '94b5969bf11065', '1065', '$2y$10$a2VibRbMPDiAVThHrF9ZHOOI8gKU7XXxKqBR.MgUW29p12ApwJT66', '', '', 0, 'administrator', 'administrator', 1, 1, 1, 1, 1, 1, 1, 1, 1, 0),
-(65, '', '1319cd3f741066', '1066', '$2y$10$vgDNEcoZqxBXmPXtlMjzGu6t1bV1cI/x/udAOSz/FrmKeNYPUmRiK', '', '', 0, 'reporter', 'reporter', 0, 0, 0, 0, 1, 0, 0, 0, 1, 1),
-(66, '', '46db59e9e01067', '1067', '$2y$10$nuPbq5V5swHGfU7xc.Pc8ufsfcadeQ2ZgN3VWEhC.zVB/UkerJrGy', '', '', 0, 'reporter', 'reporter', 0, 0, 0, 0, 1, 0, 0, 0, 1, 1);
+INSERT INTO `login` (`sn`, `template_mode`, `sidebaropen`, `action_token`, `userid`, `password`, `last_login`, `otp_request`, `login_counts`, `role`, `role_name`, `Role_edit_user`, `Role_create_user`, `Role_delete_user`, `Role_approve_user`, `Role_create_report`, `Role_approve_report`, `Role_edit_report`, `Role_delete_report`, `Role_comment`, `status`) VALUES
+(1, '', 1, '', '38299', '$2y$10$n7d0LlqjadH5pp5Rt1CTs.o1dL82Rk2qVBklLmh79S6kJUNVQsyNi', '2026-10-27 14:35:25', '', 58, 'developer', 'Dev_op', 0, 0, 0, 0, 0, 0, 0, 0, 0, 1),
+(36, '', 0, '', '1003', '$2y$10$Ss2HEB/.gS0Kj7jdcCOFbOnl1leTPsgg.zQSJNMwIyNoCrWG5vCJC', '', '', 0, 'administrator', 'administrator', 0, 0, 0, 0, 1, 0, 0, 0, 1, -1),
+(37, '', 0, '', '1038', '$2y$10$N4vOkXGcoly/ou6E/9lF0OygS7FJqBdwgd7/lo01bnB0ybjNYZr8.', '', '', 0, 'administrator', 'reporter', 0, 0, 0, 0, 1, 0, 0, 0, 1, 1),
+(38, '', 0, '', '1039', '$2y$10$lFP/Z/433.AYO2NhHYJDjujWBTUBVgGfcfAJyNwVRwhsHK0xsm6gC', '', '', 0, 'administrator', 'developer', 0, 0, 0, 0, 1, 0, 0, 0, 1, 1),
+(39, '', 0, '', '1040', '$2y$10$gwbZfRrkm8/I.FAaSt4ho.MblXf9jKRdIZfU6G9DFrtUDCaf/NSau', '', '', 0, 'administrator', 'reporter', 0, 0, 0, 0, 1, 0, 0, 0, 1, 0),
+(40, '', 0, '', '1041', '$2y$10$vXlhB2hHarxjvBI2RmuaCO73B0jbRjDGjkxDlF1uNRkg15USsHbFO', '', '', 0, 'reporter', 'reporter', 0, 0, 0, 0, 1, 0, 0, 0, 1, -1),
+(41, '', 0, '', '1042', '$2y$10$Kgaudj/fC/.UaS2.Z1/ZG.jPayaIDQY4QrWlilb.9M8oBNmd/TGj.', '', '', 0, 'reporter', 'reporter', 0, 0, 0, 0, 1, 0, 0, 0, 1, -1),
+(50, '', 0, '19d9fc9ae41043', '1043', '$2y$10$kvt32q8fSf8JLw5eQJQgYubn2Net5M7cAp2X/CAvd/OBhDRCIDT8m', '', '', 0, 'reporter', 'reporter', 0, 0, 0, 0, 1, 0, 0, 0, 1, -1),
+(51, '', 0, 'f9776f93511052', '1052', '$2y$10$n7d0LlqjadH5pp5Rt1CTs.o1dL82Rk2qVBklLmh79S6kJUNVQsyNi', '', '', 0, 'supervisor', 'administrator', 1, 1, 1, 1, 1, 1, 1, 1, 1, 0),
+(52, '', 0, 'fdce26bf371053', '1053', '$2y$10$Um3Alm5cJFT1x6Uxv7P8h.zOFQcdUHlUD5iBeu5F4WCd9OoBSZ8BW', '', '', 0, 'administrator', 'administrator', 1, 1, 1, 1, 1, 1, 1, 1, 1, -1),
+(53, '', 0, 'cc9abab9371054', '1054', '$2y$10$s/ECUXZVaeABexFcwgwfHOyjeWMDyS5x6CE1l4EGs6Ee9PFC5q6bu', '2026-10-11 14:49:00', '', 2, 'administrator', 'administrator', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+(54, '', 0, 'b0b2c7a3371055', '1055', '$2y$10$s27KitBBhqvhmL9CPr3ax./hlvabXQfgcjYQy6FOCSkFgULG5d1rG', '2026-10-13 21:14:30', '', 27, 'Administrator', 'administrator', 0, 0, 0, 0, 0, 0, 0, 0, 0, 1),
+(55, '', 0, '658a53e7f61056', '1056', '$2y$10$Um3Alm5cJFT1x6Uxv7P8h.zOFQcdUHlUD5iBeu5F4WCd9OoBSZ8BW', '', '', 0, 'reporter', 'reporter', 0, 0, 0, 0, 1, 0, 0, 0, 1, 2),
+(56, '', 0, 'abea6e9e221057', '1057', '$2y$10$LaYDfmHlv28CuASHG4Ez..846sp5ObDL5OUkdLcN13gGIJnmUdJRO', '', '', 0, 'supervisor', '', 0, 0, 0, 0, 1, 0, 0, 0, 1, 0),
+(57, '', 0, 'f80fb268371058', '1058', '$2y$10$NNPsSYilrteiouQ4/bXY.u1fFdHqgd58yX.0eBB8Zq6ELIZn5iFAq', '', '', 0, '', '', 0, 0, 0, 0, 1, 0, 0, 0, 1, -1),
+(58, '', 0, 'dc1c8cbbbd1059', '1059', '$2y$10$x1GFminvWVt95EizqTbXvuFU8i.E.qcx7O5ygOxO6sRnHkkuPTxjO', '', '', 0, 'reporter', 'reporter', 0, 0, 0, 0, 1, 0, 0, 0, 1, 1),
+(59, '', 0, '7005b5561d1060', '1060', '$2y$10$NFIUvvGt1Qxw1vkC506V1.WDya/zyzd/T3/oXktAAzE2jmJTMKOOW', '', '', 0, 'administrator', 'administrator', 1, 1, 1, 1, 1, 1, 1, 1, 1, -1),
+(60, '', 0, 'b101458d681061', '1061', '$2y$10$a3Hs0ydW.Q2hnduKLjCs7uFP8ILpK01IjX2AhhaUC0swK63TlgpjK', '', '', 0, 'administrator', 'administrator', 1, 1, 1, 1, 1, 1, 1, 1, 1, -1),
+(61, '', 0, 'a4beca05231062', '1062', '$2y$10$UFYPXryDkCORYp0V/A0tjudUCzy8poHdk6PiQI.ARacV4d6rMyzNK', '', '', 0, 'reporter', 'reporter', 0, 0, 0, 0, 1, 0, 0, 0, 1, 1),
+(62, 'dark', 0, 'ac79aeb7551063', '1063', '$2y$10$5pu4fXS1GpVMY9xv4kfSF.gIrLJeNk6o6yPyd4h37RCkCGHSDLGhO', '2026-10-27 15:01:47', '', 5, 'administrator', 'administrator', 1, 1, 0, 1, 1, 1, 1, 1, 1, 1),
+(63, '', 0, '0b5488ccb31064', '1064', '$2y$10$IECXH/96vE5Keunl636nhetzvutIR52VGkugUmsgOlDs3yf/d/HIW', '', '', 0, 'developer', 'reporter', 0, 0, 0, 0, 1, 0, 0, 0, 1, 1),
+(64, '', 0, '94b5969bf11065', '1065', '$2y$10$a2VibRbMPDiAVThHrF9ZHOOI8gKU7XXxKqBR.MgUW29p12ApwJT66', '', '', 0, 'administrator', 'administrator', 1, 1, 1, 1, 1, 1, 1, 1, 1, 0),
+(65, '', 0, '1319cd3f741066', '1066', '$2y$10$vgDNEcoZqxBXmPXtlMjzGu6t1bV1cI/x/udAOSz/FrmKeNYPUmRiK', '', '', 0, 'reporter', 'reporter', 0, 0, 0, 0, 1, 0, 0, 0, 1, 1),
+(66, '', 0, '46db59e9e01067', '1067', '$2y$10$nuPbq5V5swHGfU7xc.Pc8ufsfcadeQ2ZgN3VWEhC.zVB/UkerJrGy', '', '', 0, 'reporter', 'reporter', 0, 0, 0, 0, 1, 0, 0, 0, 1, 1);
 
 -- --------------------------------------------------------
 
@@ -1515,7 +1526,9 @@ INSERT INTO `ticket_replies` (`sn`, `ticket_id`, `role`, `replyer_userid`, `repl
 (16, 'TKT207910211620599.7202', 'administrator', '1063', 'selena', 0, 'ojojojo', '2026-10-23 18:34:19', '2026-10-21 16:20:59', 'TKT207910211620599.7202_1792776859_0_Capture.jpg', 0),
 (17, 'TKT207910211620599.7202', 'administrator', '1063', 'selena', 0, 'ihpjpojo', '2026-10-23 18:35:34', '2026-10-21 16:20:59', 'TKT207910211620599.7202_1792776934_3_skb.jpg', 0),
 (18, 'TKT207910211620599.7202', 'administrator', '1063', 'selena', 0, 'hello', '2026-10-23 18:39:09', '2026-10-21 16:20:59', 'TKT207910211620599.7202_1792777149_0_MAMI.jpeg,TKT207910211620599.7202_1792777149_1_Omobude_Osato_PC.jpg', 0),
-(19, 'TKT207910211620599.7202', 'administrator', '1063', 'selena', 0, 'test', '2026-10-23 18:42:39', '2026-10-21 16:20:59', 'TKT207910211620599.7202_1792777359_0_thelogo.png,TKT207910211620599.7202_1792777359_1_trustlink_speedtest.jpg', 0);
+(19, 'TKT207910211620599.7202', 'administrator', '1063', 'selena', 0, 'test', '2026-10-23 18:42:39', '2026-10-21 16:20:59', 'TKT207910211620599.7202_1792777359_0_thelogo.png,TKT207910211620599.7202_1792777359_1_trustlink_speedtest.jpg', 0),
+(20, 'TKT20261024143107667925', 'administrator', '1063', 'selena', 0, 'yes i see this , goof work', '2026-10-27 14:39:09', '2026-10-24 14:31:07', 'TKT20261024143107667925_1793108348_0_MAMI.jpeg', 0),
+(21, 'TKT20261024143107667925', 'administrator', '1063', 'selena', 0, 'no reply', '2026-10-27 14:40:21', '2026-10-24 14:31:07', '', 0);
 
 -- --------------------------------------------------------
 
@@ -1582,9 +1595,10 @@ CREATE TABLE `ticket_reports` (
 
 INSERT INTO `ticket_reports` (`sn`, `status_text`, `note`, `color`, `userid`, `role`, `owner`, `owner_userid`, `ticket_id`, `date_created`, `date_updated`, `subcontractor`, `noofsubcontractors`, `category`, `name`, `email`, `priority`, `priority_color`, `pipeline`, `pipeline_type`, `subject`, `message`, `phone_no`, `incidence_date`, `incidence_source`, `state`, `community`, `local_government`, `operator`, `zone`, `corridor`, `number_of_arrested_suspects`, `vehicle_arrested_destroyed`, `wooden_boat_speed_boat_arrested_destroyed`, `vessel_arrested_destroyed`, `location_coordinate_latitude`, `location_coordinate_longitude`, `quantity_of_crude_recovered_destroyed_ltr`, `quantity_of_ago_recovered_destroyed_ltr`, `quantity_of_pms_recovered_destroyed_ltr`, `description_of_reported_incidence`, `illegal_storage_dump_sites`, `dpk_recovered_destroyed_ltr`, `notify`, `show`, `due_date`, `token`, `attachments`, `narration`, `status`) VALUES
 (37, 'replied', '[2026-10-22 21:28:36] Note by selena (administrator) - 1063:\r\nqdoiqjodpjqwo\r\n\r\n---\r\n\r\n[2026-10-22 21:29:07] Note by selena (administrator) - 1063:\r\nyes bnote here', '', '1063', '', 'eddy test', '1052', 'TKT207910211620599.7202', '2026-10-21 16:20:59', '2026-10-23 18:42:39', '', '', 'EQUIPMENT VANDALISM', 'selena', 'gkklxajigi1948@calirona.com', 'High', '', 'Oben- Amukpe', 'Flow Line', 'jkgklkj', 'oihdsfoih;iodhfisdhfio', '3566563456', '2026-10-21', 'BELEMA', '15', 'tun', '285', 'NPSC', 'Renaissance Zone 12', 'General', '0', '0', '0', '0', '0', '0', '0', '0', '0', 'sihaisdh', 0, 0, 1, 1, '', NULL, '', '', 1),
-(38, 'new', '', '', '1063', '', '', '', 'TKT20261024143107667925', '2026-10-24 14:31:07', 'Nil', '', '', 'EQUIPMENT VANDALISM', 'selena', 'gkklxajigi1948@calirona.com', 'High', '', '2 x 12” Imo River I F/S – Ogale M/F', 'Unknown', 'catching eyes', 'sdfsfsfsfsdfsdf', '3566563456', '2026-10-20', 'ONSA SPT', '14', 'stomp community', '271', 'NLNG', 'AITEO Zone 11', 'General', '0', '0', '0', '0', '0', '0', '0', '0', '0', 'sdfsdf', 0, 0, 0, 0, '', NULL, 'att_21545ea2c9ab8fb9.xlsx,att_6e3865e178147f19.jpg', '', 1),
+(38, 'in progress', '', '', '1063', '', '', '', 'TKT20261024143107667925', '2026-10-24 14:31:07', '2026-10-27 14:40:21', '', '', 'EQUIPMENT VANDALISM', 'selena', 'gkklxajigi1948@calirona.com', 'High', '', '2 x 12” Imo River I F/S – Ogale M/F', 'Unknown', 'catching eyes', 'sdfsfsfsfsdfsdf', '3566563456', '2026-10-20', 'ONSA SPT', '14', 'stomp community', '271', 'NLNG', 'AITEO Zone 11', 'General', '0', '0', '0', '0', '0', '0', '0', '0', '0', 'sdfsdf', 0, 0, 0, 0, '', NULL, 'att_21545ea2c9ab8fb9.xlsx,att_6e3865e178147f19.jpg', '', 1),
 (39, 'new', '', '', '1063', '', '', '', 'TKT20261026114901413689', '2026-10-26 11:49:01', 'Nil', '', '', 'COMMUNITY ISSUES', 'selena', 'gkklxajigi1948@calirona.com', 'Critical', '', 'Oben- Amukpe', 'Flow Line', 'testing', 'kx;kvbkbkbklbkbk', '3566563456', '2026-10-26', 'MATON', '13', 'tela comunity', '253', 'Newcross', 'Renaissance Zone 8', 'General', '0', '0', '0', '0', '0', '0', '0', '0', '0', ';klj;kjkl', 0, 0, 1, 1, '', NULL, '', '', 1),
-(40, 'new', '', '', '1063', '', '', '', 'TKT20261026124758784308', '2026-10-26 12:47:58', 'Nil', 'subxontractor1,subxontractor2', '2,2', 'ILLEGAL CONNECTION', 'selena', 'gkklxajigi1948@calirona.com', 'High', '', 'OML 30 Delivery Lines', 'Flow Line', 'testung', 'ihiwe;hriowehor', '3566563456', '2026-10-26', 'FIRST E&P', '2', 'ewfgeuy', '20', 'Newcross', 'Renaissance Zone 13', 'General', '0', '0', '0', '0', '0', '0', '0', '0', '0', 'lsdhkldw', 0, 0, 1, 1, '', NULL, '', '', 1);
+(40, 'new', '', '', '1063', '', 'remand', '1057', 'TKT20261026124758784308', '2026-10-26 12:47:58', 'Nil', 'subxontractor1,subxontractor2', '2,2', 'ILLEGAL CONNECTION', 'selena', 'gkklxajigi1948@calirona.com', 'High', '', 'OML 30 Delivery Lines', 'Flow Line', 'testung', 'ihiwe;hriowehor', '3566563456', '2026-10-26', 'FIRST E&P', '2', 'ewfgeuy', '20', 'Newcross', 'Renaissance Zone 13', 'General', '0', '0', '0', '0', '0', '0', '0', '0', '0', 'lsdhkldw', 0, 0, 1, 1, '', NULL, '', '', 1),
+(41, 'new', '', '', '1063', '', '', '', 'TKT20261027135840203623', '2026-10-27 13:58:40', 'Nil', 'jeff,Seth,Edwin', '2,1,0', 'EQUIPMENT VANDALISM', 'selena', 'gkklxajigi1948@calirona.com', 'High', '', '6” Imo River II F/S -  Imo River I M/F', 'Flow Line', 'catching eyes', 'nothing typed', '3566563456', '2026-10-01', 'AIRFORCE', '14', 'letdoen', '269', 'NPSC', 'HEOSL Zone 14', 'General', '0', '0', '0', '0', '0', '0', '0', '0', '0', 'dsislhifhisdhli', 0, 0, 1, 1, '', NULL, '', '', 1);
 
 -- --------------------------------------------------------
 
@@ -1947,7 +1961,7 @@ ALTER TABLE `zone`
 -- AUTO_INCREMENT for table `audit_trail`
 --
 ALTER TABLE `audit_trail`
-  MODIFY `sn` int(255) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=484;
+  MODIFY `sn` int(255) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=494;
 
 --
 -- AUTO_INCREMENT for table `company`
@@ -2055,13 +2069,13 @@ ALTER TABLE `ticket_comment`
 -- AUTO_INCREMENT for table `ticket_replies`
 --
 ALTER TABLE `ticket_replies`
-  MODIFY `sn` int(255) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `sn` int(255) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT for table `ticket_reports`
 --
 ALTER TABLE `ticket_reports`
-  MODIFY `sn` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
+  MODIFY `sn` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
 
 --
 -- AUTO_INCREMENT for table `transfer_history`

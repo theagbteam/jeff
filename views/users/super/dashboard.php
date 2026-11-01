@@ -1,0 +1,549 @@
+<?php include 'views/inc/super/head.php' ?>
+<body>
+<?php include 'views/inc/super/sidebar_menu.php' ?>
+
+<?php include 'views/inc/super/top_navbar.php' ?>
+
+<!-- ============================================================
+     CREATE NEW TICKET CATEGORY MODAL
+     ============================================================ -->
+<div class="modal fade ticket-category-modal" id="ticketCategoryModal" tabindex="-1" aria-labelledby="ticketCategoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="ticketCategoryModalLabel">Select ticket category</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="ticket-category-grid">
+                    <?php
+                    $ticket_category_serial = 1;
+                    foreach ($LoadTicketcategories as $LoadTicketcategory):
+                    ?>
+                        <a
+                            class="ticket-category-item"
+                            href="index.php?action=cr_ticket&amp;sn=<?= urlencode((string)($LoadTicketcategory['sn'] ?? '')) ?>"
+                        >
+                            <span class="ticket-category-number"><?= $ticket_category_serial ?></span>
+                            <span><?= htmlspecialchars($LoadTicketcategory['name'] ?? '', ENT_QUOTES, 'UTF-8') ?></span>
+                        </a>
+                    <?php
+                        $ticket_category_serial++;
+                    endforeach;
+                    ?>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<main class="main-content">
+    <div class="content-header"></div>
+
+<?php if ($page_link_title == "tickets") : ?>
+    <?php include 'views/inc/super/ticket_categoryheader.php' ?>
+
+<?php elseif ($page_link_title == "cr_ticket") : ?>
+    <?php include 'views/inc/super/cr_ticket.php' ?>
+
+<?php elseif ($page_link_title == "user_requests") : ?>
+    <?php include 'views/inc/super/request_preview.php' ?>
+
+<?php elseif ($page_link_title == "audit_trail") : ?>
+    <?php include 'views/inc/super/audit_preview.php' ?>
+
+<?php elseif ($page_link_title == "run_reports") : ?>
+    <?php include 'views/inc/super/runreport_preview.php' ?>
+
+<?php elseif ($page_link_title == "export_tickets") : ?>
+    <?php include 'views/inc/super/exportreport_preview.php' ?>
+
+<?php elseif ($page_link_title == "transfers" || $page_link_title == "tr_employee") : ?>
+    <?php include 'views/inc/super/transfer_history.php' ?>
+
+<?php elseif ($page_link_title == "manage_users" || $page_link_title == "create_admin_user") : ?>
+    <?php include 'views/inc/super/userspreview.php' ?>
+
+<?php elseif ($page_link_title == "user_details") : ?>
+    <?php include 'views/inc/super/user_details.php' ?>
+
+<?php elseif ($page_link_title == "edit_user" || $page_link_title == "myprofile") : ?>
+    <?php include 'views/inc/super/edit_user_preview.php' ?>
+<?php elseif ($page_link_title == "user_library") : ?>
+    <?php include 'views/inc/super/upload_library.php' ?>
+<?php elseif ($page_link_title == "viewticket") : ?>
+    <?php include 'views/inc/super/viewticket.php' ?>
+
+<?php endif; ?>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+    /* ============================================================
+       SIDEBAR DEFAULT STATE (FROM PHP)
+       ============================================================ */
+    // $sidebaropen = 1  -> sidebar open by default
+    // $sidebaropen = 0  -> sidebar closed by default (default fallback)
+    const SIDEBAR_OPEN_BY_DEFAULT = <?= (isset($sidebaropen) && (int)$sidebaropen === 1) ? 'true' : 'false' ?>;
+
+    /* ============================================================
+       THEME HANDLING
+       ============================================================ */
+    const templateMode = <?= json_encode($template_mode) ?>;
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+
+    function setTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        const isDark = theme === 'dark';
+
+        if (themeIcon) {
+            themeIcon.className = isDark
+                ? 'bi bi-sun-fill'
+                : 'bi bi-moon-stars-fill';
+        }
+
+        if (themeToggle) {
+            themeToggle.setAttribute(
+                'aria-label',
+                isDark ? 'Switch to light mode' : 'Switch to dark mode'
+            );
+        }
+    }
+
+    const initialTheme =
+        document.documentElement.getAttribute('data-theme') || 'light';
+
+    setTheme(initialTheme);
+
+    if (themeToggle) {
+        themeToggle.addEventListener('click', function () {
+            const currentTheme =
+                document.documentElement.getAttribute('data-theme');
+
+            const newTheme =
+                currentTheme === 'dark' ? 'light' : 'dark';
+
+            setTheme(newTheme);
+        });
+    }
+
+    /* ============================================================
+       SIDEBAR MENU
+       ============================================================ */
+    const sidebar = document.getElementById('sidebar');
+    const sidebarToggle = document.getElementById('sidebarToggle');
+
+    /**
+     * Apply the sidebar open/closed state.
+     * @param {boolean} open
+     */
+    function applySidebarState(open) {
+        if (!sidebar || !sidebarToggle) return;
+
+        if (open) {
+            document.body.classList.add('sidebar-open');
+            sidebar.classList.add('show');
+            sidebarToggle.className = 'bi bi-x-lg nav-icon';
+            sidebarToggle.setAttribute('aria-expanded', 'true');
+            sidebarToggle.setAttribute('aria-label', 'Close sidebar');
+        } else {
+            document.body.classList.remove('sidebar-open');
+            sidebar.classList.remove('show');
+            sidebarToggle.className = 'bi bi-list nav-icon';
+            sidebarToggle.setAttribute('aria-expanded', 'false');
+            sidebarToggle.setAttribute('aria-label', 'Open sidebar');
+        }
+    }
+
+    function toggleSidebar() {
+        if (!sidebar || !sidebarToggle) return;
+
+        const isOpen = sidebar.classList.contains('show');
+        applySidebarState(!isOpen);
+    }
+
+    /* ------------------------------------------------------------
+       INITIAL STATE: driven by $sidebaropen from PHP.
+       On small screens we still keep it closed so it doesn't
+       cover the content until the user taps the toggle.
+       ------------------------------------------------------------ */
+    (function initSidebarState() {
+        if (!sidebar || !sidebarToggle) return;
+
+        const isMobile = window.innerWidth <= 767.98;
+        const shouldOpen = isMobile ? false : SIDEBAR_OPEN_BY_DEFAULT;
+
+        applySidebarState(shouldOpen);
+    })();
+
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', function () {
+            toggleSidebar();
+        });
+
+        sidebarToggle.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                toggleSidebar();
+            }
+        });
+    }
+
+    /* ============================================================
+       SIDEBAR DROPDOWNS (Reports, Users, Modules)
+       ============================================================ */
+    function setupSidebarDropdown(toggleId, menuId) {
+        const toggle = document.getElementById(toggleId);
+        const menu = document.getElementById(menuId);
+
+        if (!toggle || !menu) return;
+
+        toggle.addEventListener('click', function (event) {
+            event.stopPropagation();
+            const isOpen = toggle.classList.contains('open');
+
+            document.querySelectorAll('.sidebar-nav .dropdown-toggle').forEach(function (el) {
+                if (el !== toggle) {
+                    el.classList.remove('open');
+                    el.setAttribute('aria-expanded', 'false');
+                }
+            });
+
+            document.querySelectorAll('.sidebar-nav .dropdown-menu').forEach(function (el) {
+                if (el !== menu) {
+                    el.classList.remove('show');
+                }
+            });
+
+            if (isOpen) {
+                toggle.classList.remove('open');
+                toggle.setAttribute('aria-expanded', 'false');
+                menu.classList.remove('show');
+            } else {
+                toggle.classList.add('open');
+                toggle.setAttribute('aria-expanded', 'true');
+                menu.classList.add('show');
+            }
+        });
+
+        toggle.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                toggle.click();
+            }
+        });
+    }
+
+    setupSidebarDropdown('reportsToggle', 'reportsMenu');
+    setupSidebarDropdown('usersToggle', 'usersMenu');
+    setupSidebarDropdown('modulesToggle', 'modulesMenu');
+
+    /* ============================================================
+       CLOSE SIDEBAR WHEN CLICKING OUTSIDE
+       ============================================================ */
+    document.addEventListener('click', function (event) {
+        if (
+            sidebar &&
+            sidebarToggle &&
+            sidebar.classList.contains('show') &&
+            !sidebar.contains(event.target) &&
+            !sidebarToggle.contains(event.target)
+        ) {
+            applySidebarState(false);
+        }
+    });
+
+    /* ============================================================
+       CLOSE SIDEBAR WHEN CLICKING A MENU ITEM (MOBILE ONLY)
+       ============================================================ */
+    document.querySelectorAll('.sidebar-nav a').forEach(function (link) {
+        link.addEventListener('click', function () {
+            if (window.innerWidth <= 767.98 && sidebar && sidebarToggle) {
+                applySidebarState(false);
+            }
+        });
+    });
+
+    /* ============================================================
+       USER PROFILE DROPDOWN
+       ============================================================ */
+    const userProfileDropdown = document.getElementById('userProfileDropdown');
+    const userProfileTrigger = document.getElementById('userProfileTrigger');
+
+    function toggleProfileDropdown(forceState) {
+        if (!userProfileDropdown || !userProfileTrigger) return;
+
+        const isOpen = typeof forceState === 'boolean'
+            ? forceState
+            : !userProfileDropdown.classList.contains('open');
+
+        userProfileDropdown.classList.toggle('open', isOpen);
+        userProfileTrigger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    }
+
+    if (userProfileTrigger) {
+        userProfileTrigger.addEventListener('click', function (event) {
+            event.stopPropagation();
+            toggleProfileDropdown();
+        });
+
+        userProfileTrigger.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                toggleProfileDropdown();
+            } else if (event.key === 'Escape') {
+                toggleProfileDropdown(false);
+            }
+        });
+    }
+
+    document.addEventListener('click', function (event) {
+        if (
+            userProfileDropdown &&
+            userProfileDropdown.classList.contains('open') &&
+            !userProfileDropdown.contains(event.target)
+        ) {
+            toggleProfileDropdown(false);
+        }
+    });
+
+    document.addEventListener('keydown', function (event) {
+        if (
+            event.key === 'Escape' &&
+            userProfileDropdown &&
+            userProfileDropdown.classList.contains('open')
+        ) {
+            toggleProfileDropdown(false);
+        }
+    });
+
+    document.querySelectorAll('#profileDropdownMenu a').forEach(function (item) {
+        item.addEventListener('click', function () {
+            toggleProfileDropdown(false);
+        });
+    });
+
+    /* ============================================================
+       CREATE NEW TICKET
+       ============================================================ */
+    const createTicketButton = document.querySelector('.create-ticket-btn');
+    const ticketCategoryModalElement = document.getElementById('ticketCategoryModal');
+
+    if (createTicketButton && ticketCategoryModalElement) {
+        const ticketCategoryModal =
+            bootstrap.Modal.getOrCreateInstance(ticketCategoryModalElement);
+
+        createTicketButton.addEventListener('click', function () {
+            ticketCategoryModal.show();
+        });
+    }
+
+    /* ============================================================
+       DATATABLE
+       ============================================================ */
+    $(document).ready(function () {
+        if (!$('#ticketsTable').length) return;
+
+        const ticketsTable = $('#ticketsTable').DataTable({
+            searching: true,
+            paging: true,
+            info: true,
+            ordering: true,
+            pageLength: 10,
+            lengthMenu: [
+                [10, 25, 50, 100],
+                [10, 25, 50, 100]
+            ],
+            columnDefs: [
+                {
+                    orderable: false,
+                    targets: 0
+                }
+            ],
+            language: {
+                search: "Search:",
+                searchPlaceholder: "Search tickets...",
+                lengthMenu: "Show _MENU_ tickets",
+                info: "Showing _START_ to _END_ of _TOTAL_ tickets",
+                infoEmpty: "Showing 0 to 0 of 0 tickets",
+                zeroRecords: "No matching tickets found",
+                emptyTable: "No tickets available",
+                paginate: {
+                    previous: "Previous",
+                    next: "Next"
+                }
+            },
+            order: [
+                [1, 'desc']
+            ]
+        });
+
+        /* ========================================================
+           UPDATE DELETE BUTTON STATE
+           ======================================================== */
+        function updateDeleteButtonState() {
+            const visibleCheckboxes = ticketsTable.rows({
+                search: 'applied'
+            }).nodes().to$().find('.ticket-checkbox');
+
+            const checkedCheckboxes = visibleCheckboxes.filter(':checked');
+            const hasChecked = checkedCheckboxes.length > 0;
+
+            $('#deleteSelectedBtn').prop('disabled', !hasChecked);
+            $('#deleteSelectedBtn').toggleClass('disabled', !hasChecked);
+
+            $('#selectAll').prop(
+                'checked',
+                visibleCheckboxes.length > 0 &&
+                checkedCheckboxes.length === visibleCheckboxes.length
+            );
+
+            $('#selectAll').prop(
+                'indeterminate',
+                checkedCheckboxes.length > 0 &&
+                checkedCheckboxes.length < visibleCheckboxes.length
+            );
+        }
+
+        /* ========================================================
+           SELECT ALL TICKETS
+           ======================================================== */
+        $('#selectAll').on('change', function () {
+            const checked = this.checked;
+
+            ticketsTable.rows({
+                search: 'applied'
+            }).nodes().to$().find('.ticket-checkbox').prop('checked', checked);
+
+            updateDeleteButtonState();
+        });
+
+        /* ========================================================
+           INDIVIDUAL TICKET CHECKBOXES
+           ======================================================== */
+        $('#ticketsTable tbody').on('change', '.ticket-checkbox', function () {
+            updateDeleteButtonState();
+        });
+
+        /* ========================================================
+           RESET SELECT ALL WHEN DATATABLE SEARCH/PAGING CHANGES
+           ======================================================== */
+        ticketsTable.on('draw', function () {
+            updateDeleteButtonState();
+        });
+
+        /* ========================================================
+           DELETE SELECTED TICKETS
+           ======================================================== */
+        $('#deleteSelectedBtn').on('click', function () {
+            const checkedCheckboxes = ticketsTable.rows({
+                search: 'applied'
+            }).nodes().to$().find('.ticket-checkbox:checked');
+
+            if (checkedCheckboxes.length === 0) {
+                return;
+            }
+
+            const selectedIds = [];
+
+            checkedCheckboxes.each(function () {
+                const row = $(this).closest('tr');
+                const id = row.find('td').eq(1).text().trim();
+                selectedIds.push(id);
+            });
+
+            // if (confirm(`Are you sure you want to delete ${selectedIds.length} selected ticket(s)?`)) {
+            //     checkedCheckboxes.each(function () {
+            //         ticketsTable.row($(this).closest('tr')).remove();
+            //     });
+            //
+            //     ticketsTable.draw();
+            //     $('#selectAll').prop('checked', false).prop('indeterminate', false);
+            //     updateDeleteButtonState();
+            // }
+        });
+
+        /* ========================================================
+           VIEW ALL BUTTON
+           ======================================================== */
+        $('#viewAllBtn').on('click', function () {
+            ticketsTable.search('').draw();
+            ticketsTable.page.len(-1).draw();
+        });
+
+        updateDeleteButtonState();
+    });
+
+    /* ============================================================
+       AUTO RELOAD PAGE
+       ============================================================ */
+    const autoReload = document.getElementById('autoReload');
+    let autoReloadTimer = null;
+
+    function startAutoReload() {
+        if (autoReloadTimer !== null) {
+            clearInterval(autoReloadTimer);
+            autoReloadTimer = null;
+        }
+
+        if (autoReload && autoReload.checked) {
+            autoReloadTimer = setInterval(function () {
+                window.location.reload();
+            }, 49000);
+        }
+    }
+
+    if (autoReload) {
+        autoReload.addEventListener('change', function () {
+            startAutoReload();
+        });
+    }
+
+    window.addEventListener('beforeunload', function () {
+        if (autoReloadTimer !== null) {
+            clearInterval(autoReloadTimer);
+            autoReloadTimer = null;
+        }
+    });
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+<?php if (isset($showAlert) && $showAlert): ?>
+    Swal.fire({
+        title: 'Successful!',
+        text: <?= json_encode($msgtext, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>,
+        icon: 'info',
+        confirmButtonText: 'OK',
+        allowOutsideClick: true,
+        allowEscapeKey: true
+    }).then((result) => {
+        if (result.isConfirmed || result.dismiss) {
+            window.location.href = <?= json_encode($url, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+        }
+    });
+<?php elseif (isset($showAlert) && !$showAlert): ?>
+    Swal.fire({
+        title: 'Error',
+        text: <?= json_encode($msgtext, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>,
+        icon: 'error',
+        confirmButtonText: 'OK',
+        allowOutsideClick: true,
+        allowEscapeKey: true
+    }).then((result) => {
+        if (result.isConfirmed || result.dismiss) {
+            window.location.href = <?= json_encode($url, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+        }
+    });
+<?php endif; ?>
+});
+</script>
+
+</body>
+</html>

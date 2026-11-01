@@ -18,4 +18,4 @@ class State {
         $stmt->execute([$id]);
         return $stmt->fetch();
     }
-}
+ }

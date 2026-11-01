@@ -134,7 +134,7 @@ foreach ($LoadAllTickets as $ticket_history) {
 
         <!-- Unassigned tickets counter -->
         <?php
-            $unassigned_r = 108; $unassigned_g = 117; $unassigned_b = 125; // grey
+            $unassigned_r = 108; $unassigned_g = 117; $unassigned_b = 125;
             $unassigned_text   = "rgb($unassigned_r, $unassigned_g, $unassigned_b)";
             $unassigned_bg     = "rgba($unassigned_r, $unassigned_g, $unassigned_b, 0.10)";
             $unassigned_border = "rgba($unassigned_r, $unassigned_g, $unassigned_b, 0.35)";
@@ -171,6 +171,7 @@ foreach ($LoadAllTickets as $ticket_history) {
                 <th class="checkbox-cell"><input type="checkbox" id="selectAll" aria-label="Select all tickets"></th>
                 <th class="id-cell">SN <i class="bi bi-arrow-down-up sort-icon"></i></th>
                 <th class="tracking-cell">Tracking ID <i class="bi bi-arrow-down-up sort-icon"></i></th>
+                <th class="id-cell">TicketNo <i class="bi bi-arrow-down-up sort-icon"></i></th>
                 <th class="date-cell">Submitted <i class="bi bi-arrow-down-up sort-icon"></i></th>
                 <th class="date-cell">Updated <i class="bi bi-arrow-down-up sort-icon"></i></th>
                 <th class="category-cell">Category <i class="bi bi-arrow-down-up sort-icon"></i></th>
@@ -217,6 +218,10 @@ foreach ($LoadAllTickets as $ticket_history) {
 
                     <td>
                         <a href="index.php?action=viewticket&viewtoken=<?= urlencode(base64_encode($ticket_history['ticket_id'])); ?>"><?= htmlspecialchars($ticket_history['ticket_id'] ?? '', ENT_QUOTES, 'UTF-8') ?></a>
+                    </td>
+
+                    <td class="id-cell center-cell" data-order="<?= htmlspecialchars((string)($ticket_history['sn'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                        <?= htmlspecialchars((string)($ticket_history['sn'] ?? ''), ENT_QUOTES, 'UTF-8') ?>
                     </td>
 
                     <td>
@@ -297,34 +302,34 @@ foreach ($LoadAllTickets as $ticket_history) {
                         switch ($statusKey) {
                             case 'new':
                             case 'open':
-                                $statusColor = '#0d6efd'; // blue
+                                $statusColor = '#0d6efd';
                                 break;
                             case 'in progress':
                             case 'in-progress':
                             case 'inprogress':
                             case 'ongoing':
-                                $statusColor = '#fd7e14'; // orange
+                                $statusColor = '#fd7e14';
                                 break;
                             case 'pending':
                             case 'on hold':
                             case 'on-hold':
                             case 'onhold':
-                                $statusColor = '#ffc107'; // amber/yellow
+                                $statusColor = '#ffc107';
                                 break;
                             case 'resolved':
                             case 'closed':
                             case 'completed':
                             case 'done':
-                                $statusColor = '#198754'; // green
+                                $statusColor = '#198754';
                                 break;
                             case 'rejected':
                             case 'cancelled':
                             case 'canceled':
                             case 'declined':
-                                $statusColor = '#dc3545'; // red
+                                $statusColor = '#dc3545';
                                 break;
                             default:
-                                $statusColor = '#6c757d'; // grey for unknown/empty
+                                $statusColor = '#6c757d';
                                 break;
                         }
                         ?>
@@ -375,23 +380,23 @@ foreach ($LoadAllTickets as $ticket_history) {
                             case 'critical':
                             case 'urgent':
                             case 'p1':
-                                $priorityColor = '#dc3545'; // red
+                                $priorityColor = '#dc3545';
                                 break;
                             case 'high':
                             case 'p2':
-                                $priorityColor = '#fd7e14'; // orange
+                                $priorityColor = '#fd7e14';
                                 break;
                             case 'medium':
                             case 'normal':
                             case 'p3':
-                                $priorityColor = '#ffc107'; // amber/yellow
+                                $priorityColor = '#ffc107';
                                 break;
                             case 'low':
                             case 'p4':
-                                $priorityColor = '#198754'; // green
+                                $priorityColor = '#198754';
                                 break;
                             default:
-                                $priorityColor = '#6c757d'; // grey for unknown/empty
+                                $priorityColor = '#6c757d';
                                 break;
                         }
                         ?>
@@ -405,6 +410,19 @@ foreach ($LoadAllTickets as $ticket_history) {
         </tbody>
     </table>
 </div>
+
+<!-- Exact TicketNo search -->
+<!-- <div class="ticketno-search-container" style="display:flex; justify-content:flex-end; align-items:center; gap:8px; margin-top:12px; margin-bottom:16px;">
+    <label for="ticketNoExactSearch" style="font-size:13px; font-weight:600; margin:0;">Search TicketNo:</label>
+    <input
+        type="text"
+        id="ticketNoExactSearch"
+        class="form-control"
+        placeholder="Enter exact TicketNo"
+        autocomplete="off"
+        style="width:220px; max-width:100%;"
+    >
+</div> -->
 
 <!-- Delete confirmation modal -->
 <div class="aciss-modal-overlay" id="deleteConfirmOverlay" aria-hidden="true">
@@ -711,7 +729,7 @@ foreach ($LoadAllTickets as $ticket_history) {
 (function () {
     const ownerOverlay      = document.getElementById('assignOwnerOverlay');
     const ownerForm         = document.getElementById('assignOwnerForm');
-    const ownerTicketIdInput = document.getElementById('assignOwnerTicketIdInput'); // hidden ticket id input
+    const ownerTicketIdInput = document.getElementById('assignOwnerTicketIdInput');
     const ownerSelect       = document.getElementById('assignOwnerSelect');
     const ownerCancelBtn    = document.getElementById('assignOwnerCancelBtn');
     const ownerTitle        = document.getElementById('assignOwnerTitle');
@@ -719,21 +737,17 @@ foreach ($LoadAllTickets as $ticket_history) {
     function openOwnerModal(ticketId, currentOwner, corridor) {
         if (!ownerOverlay) return;
 
-        // Set hidden ticket id field
         if (ownerTicketIdInput) {
             ownerTicketIdInput.value = ticketId || '';
         }
 
-        // Update modal title to show ticket number and corridor name
         if (ownerTitle) {
             const corridorLabel = (corridor || '').trim() || 'No Corridor';
             ownerTitle.textContent = 'Ticket ' + (ticketId || '') + ' of ' + corridorLabel + ' corridor';
         }
 
-        // The form action remains the same, but the hidden field carries the ticket_id.
         ownerForm.action = 'index.php?action=assignowner';
 
-        // Pre-select current owner if it matches an option value or label
         if (ownerSelect) {
             ownerSelect.value = '';
             const current = (currentOwner || '').trim();
@@ -789,7 +803,7 @@ foreach ($LoadAllTickets as $ticket_history) {
     if (!autoReloadCheckbox) return;
 
     const STORAGE_KEY = 'ticketsAutoReloadEnabled';
-    const RELOAD_INTERVAL_MS = 15000; // 15 seconds — adjust to your preference
+    const RELOAD_INTERVAL_MS = 15000;
     let reloadTimer = null;
 
     function getStoredState() {
@@ -825,6 +839,7 @@ foreach ($LoadAllTickets as $ticket_history) {
     // Restore checkbox state from localStorage on page load
     const storedEnabled = getStoredState();
     autoReloadCheckbox.checked = storedEnabled;
+
     if (storedEnabled) {
         startAutoReload();
     }
@@ -847,7 +862,6 @@ foreach ($LoadAllTickets as $ticket_history) {
     function applyDefaultOrder() {
         if (typeof jQuery === 'undefined' || !jQuery.fn || !jQuery.fn.DataTable) return;
 
-        // Force SN column (index 1) to sort numerically, regardless of anchor content
         jQuery.fn.dataTable.defaults.columnDefs = jQuery.fn.dataTable.defaults.columnDefs || [];
         jQuery.fn.dataTable.defaults.columnDefs.push({
             targets: 1,
@@ -870,4 +884,170 @@ foreach ($LoadAllTickets as $ticket_history) {
         applyDefaultOrder();
     }
 })();
+
+/* ---------- Exact TicketNo search ---------- */
+(function () {
+    function attachTicketNoExactSearch() {
+        if (typeof jQuery === 'undefined' || !jQuery.fn || !jQuery.fn.DataTable) return;
+
+        var $table = jQuery('#ticketsTable');
+        var $search = jQuery('#ticketNoExactSearch');
+
+        if (!$table.length || !$search.length || !jQuery.fn.DataTable.isDataTable($table)) return;
+
+        var tableApi = $table.DataTable();
+        var ticketNoColumnIndex = 3;
+
+        $search.off('input.ticketNoExactSearch').on('input.ticketNoExactSearch', function () {
+            var ticketNo = jQuery.trim(this.value);
+
+            if (ticketNo === '') {
+                tableApi.column(ticketNoColumnIndex).search('').draw();
+                return;
+            }
+
+            var escapedTicketNo = ticketNo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            tableApi.column(ticketNoColumnIndex).search('^' + escapedTicketNo + '$', true, false).draw();
+        });
+    }
+
+    if (typeof jQuery !== 'undefined') {
+        jQuery(document).on('init.dt.ticketNoExactSearch', '#ticketsTable', attachTicketNoExactSearch);
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', attachTicketNoExactSearch);
+        } else {
+            attachTicketNoExactSearch();
+        }
+    }
+})();
+
+/* ---------- Search mode: Search All vs Search Ticket ---------- */
+(function () {
+    var TICKET_COLUMN_INDEX = 3;
+    var initialized = false;
+
+    function initSearchMode() {
+        if (initialized) return;
+
+        if (typeof jQuery === 'undefined' || !jQuery.fn || !jQuery.fn.DataTable) return;
+
+        var $table = jQuery('#ticketsTable');
+
+        if (!$table.length) return;
+
+        if (!jQuery.fn.DataTable.isDataTable($table)) {
+            return;
+        }
+
+        var tableApi = $table.DataTable();
+
+        var $searchInput = $table.closest('.dataTables_wrapper')
+            .find('.dataTables_filter input[type="search"], .dataTables_filter input[type="text"]')
+            .first();
+
+        if (!$searchInput.length) return;
+
+        if (jQuery('#dtSearchMode').length) {
+            initialized = true;
+            return;
+        }
+
+        // Create search mode dropdown
+        var $modeSelect = jQuery('<select>', {
+            id: 'dtSearchMode',
+            'class': 'dt-search-mode-select',
+            'aria-label': 'Search scope'
+        });
+
+        $modeSelect.append(
+            jQuery('<option>', {
+                value: 'all',
+                text: 'Search All'
+            })
+        );
+
+        $modeSelect.append(
+            jQuery('<option>', {
+                value: 'ticket',
+                text: 'Search Ticket'
+            })
+        );
+
+        // Default selection: Search All
+        $modeSelect.val('all');
+
+        // Place dropdown immediately before the DataTables search input
+        $searchInput.before($modeSelect);
+
+        function applySearch() {
+            var term = String($searchInput.val() || '').trim();
+            var mode = $modeSelect.val();
+
+            if (mode === 'ticket') {
+
+                // Clear the normal DataTables global search
+                tableApi.search('');
+
+                // Clear other column-specific searches
+                tableApi.columns().search('');
+
+                // Search ONLY the TicketNo column
+                tableApi.column(TICKET_COLUMN_INDEX).search(term);
+
+            } else {
+
+                // Clear all column-specific searches
+                tableApi.columns().search('');
+
+                // Perform normal DataTables global search across all columns
+                tableApi.search(term);
+            }
+
+            tableApi.draw();
+        }
+
+        // Search whenever the user types
+        $searchInput
+            .off('input.dtSearchMode keyup.dtSearchMode search.dtSearchMode')
+            .on('input.dtSearchMode keyup.dtSearchMode search.dtSearchMode', function () {
+                applySearch();
+            });
+
+        // Change search scope whenever the dropdown changes
+        $modeSelect
+            .off('change.dtSearchMode')
+            .on('change.dtSearchMode', function () {
+                applySearch();
+            });
+
+        initialized = true;
+    }
+
+    if (typeof jQuery !== 'undefined') {
+
+        // Initialize after DataTables has completed initialization
+        jQuery(document).on('init.dt.dtSearchMode', '#ticketsTable', initSearchMode);
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initSearchMode);
+        } else {
+            initSearchMode();
+        }
+
+        // Retry initialization in case DataTables loads slightly later
+        var pollAttempts = 0;
+
+        (function poll() {
+            if (initialized) return;
+
+            initSearchMode();
+
+            if (!initialized && pollAttempts++ < 50) {
+                setTimeout(poll, 100);
+            }
+        })();
+    }
+})();
+
 </script>

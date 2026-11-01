@@ -8,18 +8,19 @@
                         class="text-muted text-center text-sm-left d-block d-sm-inline-block"
                     >
 
-                        Copyright © <?= $company_copyright ?>
-
+                       <?= $company_copyright ?>
+                       <?php if ($company_poweredby!="") { echo " - Powered by"; } ?>
+                     
                         <a
                             href="<?= htmlspecialchars($company_copyrightlink) ?>"
                             target="_blank"
                         >
 
-                            <?= htmlspecialchars($company_poweredby) ?>
+                           <?= htmlspecialchars($company_poweredby) ?>
 
                         </a>
 
-                        All rights reserved.
+                        <!-- All rights reserved. -->
 
                     </span>
 

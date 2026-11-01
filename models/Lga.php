@@ -8,6 +8,11 @@ class Lga {
         $this->db = (new Database())->getConnection();
     }
 
+   public function getAll() {
+        $stmt = $this->db->query("SELECT id, name FROM lgas ORDER BY name ASC");
+        return $stmt->fetchAll();
+    }
+
 
     public function getByState($stateId) {
         $stmt = $this->db->prepare(

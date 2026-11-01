@@ -965,5 +965,7 @@ $current_action = $page_name;
         }
     }
 </style>
+
 </head>
+
 <?php include "views/inc/notification.php" ?>

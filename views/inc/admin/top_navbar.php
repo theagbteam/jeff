@@ -41,22 +41,22 @@
                     </div>
                     <div class="dropdown-divider"></div>
 
-                    <!-- ADMINISTRATOR -->
+                    <!-- SUPERVISOR -->
                     <a
                         href="#"
                         class="dropdown-item preview-item register-user-btn"
-                        data-role="administrator"
+                        data-role="supervisor"
                     >
                         <div class="preview-thumbnail">
                             <div class="preview-icon bg-gradient-danger rounded-circle">
-                                <i class="bi bi-person-badge-fill text-white"></i>
+                                <i class="bi bi-shield-fill-check text-white"></i>
                             </div>
                         </div>
                         <div class="preview-item-content">
                             <p class="preview-subject ellipsis mb-1 fw-semibold">
-                                Create Administrator
+                                Create Supervisor
                             </p>
-                            <p class="text-muted small mb-0">Full system access</p>
+                            <p class="text-muted small mb-0">Supervisory access</p>
                         </div>
                     </a>
 
@@ -147,7 +147,7 @@
 
 
 <!-- ========================================================= -->
-<!-- CREATE ADMINISTRATOR ACCOUNT MODAL                        -->
+<!-- CREATE SUPERVISOR ACCOUNT MODAL                           -->
 <!-- ========================================================= -->
 <div
     class="modal fade"
@@ -161,20 +161,20 @@
 
             <form method="post" action="index.php?action=manage_users"
                   enctype="multipart/form-data"
-                  onsubmit="return checkTurnstile(event) && disableSubmitButton(this);">
+                  onsubmit="disableSubmitButton(this);">
 
                 <input type="hidden" name="action_token" value="<?= htmlspecialchars($_SESSION['action_token'] ?? '') ?>">
-               <input type="hidden" name="role"  value="administrator">
+               <input type="hidden" name="role"  value="supervisor">
                 <div class="modal-header create-user-modal-header">
                     <div class="d-flex align-items-center">
                         <div class="modal-icon-circle me-3">
-                            <i class="bi bi-person-badge-fill"></i>
+                            <i class="bi bi-shield-fill-check"></i>
                         </div>
                         <div>
                             <h5 class="modal-title mb-0" id="createAdministratorModalLabel">
-                                Create Administrator Account
+                                Create Supervisor Account
                             </h5>
-                            <small class="text-muted">Full system access</small>
+                            <small class="text-muted">Supervisory access</small>
                         </div>
                     </div>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -232,7 +232,7 @@
                     </button>
                     <input type="hidden" name="create_user_account" value="1">
                     <button type="submit" name="create_admin_user" value="1" class="btn btn-success btn-lg px-4">
-                        <i class="bi bi-check-circle me-1"></i> Create Administrator
+                        <i class="bi bi-check-circle me-1"></i> Create Supervisor
                     </button>
                 </div>
 
@@ -379,11 +379,6 @@
                         </label>
                         <select class="form-select form-select-lg" id="chiefSupervisorSelect" name="supervisor_userid" required>
                             <option value="" selected disabled>Select a supervisor</option>
-                            <?php
-error_reporting(E_ALL);
-ini_set('display_errors', '1');
-ini_set('display_startup_errors', '1');
-?>
                             <?php if (!empty($LoadAllUsersAndLoginTableForAdmin['supervisor'])): ?>
                                 <?php foreach ($LoadAllUsersAndLoginTableForAdmin['supervisor'] as $sup): ?>
                                       <?php  
@@ -846,7 +841,7 @@ ini_set('display_startup_errors', '1');
 document.addEventListener('DOMContentLoaded', function () {
 
     /* =========================================================
-       ADMINISTRATOR BUTTON  ->  createAdministratorModal
+       SUPERVISOR BUTTON  ->  createAdministratorModal
        ========================================================= */
     const administratorButton = document.querySelector('.register-user-btn');
     const administratorModalElement = document.getElementById('createAdministratorModal');
@@ -893,8 +888,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (createUserModalLabel) {
                 createUserModalLabel.textContent =
-                    selectedRole === 'administrator'
-                        ? 'Create Administrator Account'
+                    selectedRole === 'supervisor'
+                        ? 'Create Supervisor Account'
                         : 'Create Reporter Account';
             }
         });

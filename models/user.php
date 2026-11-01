@@ -490,9 +490,9 @@ public function updateuserpwd($data){
 public function GeneralSelectAnyTable($tb_name){
     try {
         $allowed_tables = [
-            'audit_trail','transfer_history','company','corridor','incidence_source','lgas',
-            'local_government_areas','login','operator','owner','pipeline',
-            'pipeline_type','priority','report_type','request','states',
+            'audit_trail','transfer_history','company','corridor','incidence_source',
+            'login','operator','owner','pipeline',
+            'pipeline_type','priority','report_type','request','states','lgas',
             'tickets','ticket_category','users','ticket_reports','ticket_replies','subcontractors','wellhead_status','zone'
         ];
 
@@ -556,7 +556,7 @@ public function GeneralSelectAnyTableWhereColumnValueEquals($the_tablename, $col
             'audit_trail','company','corridor','incidence_source','lgas',
             'local_government_areas','login','operator','owner','pipeline',
             'pipeline_type','priority','report_type','request','states',
-            'tickets','ticket_category','ticket_reports','ticket_replies','users','wellhead_status','zone'
+            'tickets','ticket_category','ticket_reports','ticket_replies','users','lgas','wellhead_status','zone'
         ];
 
         if (!in_array($the_tablename, $allowed_tables, true)) {

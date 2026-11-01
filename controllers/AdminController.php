@@ -73,9 +73,13 @@ public function page_dashboard() {
    $template_mode = "auto";
     $userid =$_SESSION['userid']; 
    $role_name = $role = $_SESSION['role'] ;
-    $LoadAllNigeriaStates = $this->stateModel->getAll();
-   $callUserModel = new User();
+    $callUserModel = new User();
   $CallModelAdmin = new ModelAdmin;
+    $LoadAllNigeriaStates = $this->stateModel->getAll();
+    $GetAllLgas = $this->lgaModel->getAll();
+    // $GetAllLgas = $callUserModel->GeneralSelectAnyTable('lgas');
+
+  
   
   $wellhead_status_counts = $CallModelAdmin->GetWellheadStatusCounts();
  
@@ -107,7 +111,7 @@ $totalDeletedUsers  = (int) ($statusCounts['deleted'] ?? 0);
  $ViewTicketListing = $callUserModel->GeneralSelectAnyTableWhereColumnValueEquals($the_tablename, $column_name, $column_value);
   if ($ticket_token !== false && trim($ticket_token) !== '') {
         $LoadAllReplies = $callUserModel->GeneralSelectAnyTableWhereColumnValueEquals('ticket_replies','ticket_id',trim($ticket_token));
-       
+      
         }
   }
         
@@ -1351,8 +1355,7 @@ exit;
 // create user account
 
 if (isset($_POST['create_user_account'])) {
-  
- $action_token= trim($_POST['action_token'] ?? '');
+    $action_token= trim($_POST['action_token'] ?? '');
  if ($action_token!=$_SESSION['action_token']){
    $_SESSION['error']= "Bots are not allowed";
 
@@ -1361,8 +1364,8 @@ if (isset($_POST['create_user_account'])) {
 
  $title= trim($_POST['title'] ?? '');
 
-    $fullname = trim($_POST['name'] ?? '');
-    $parts = explode(' ', trim($AbrvName));$first = array_shift($parts);$AbrvName = !empty($first)? $first . (!empty($parts) ? ' ' . implode('.', array_map(fn($p) => strtoupper($p[0]), $parts)) : '') : 'User';
+    $fullname = trim($_POST['fullname'] ?? '');
+    $parts = explode(' ', trim($fullname));$first = array_shift($parts);$AbrvName = !empty($first)? $first . (!empty($parts) ? ' ' . implode('.', array_map(fn($p) => strtoupper($p[0]), $parts)) : '') : 'User';
     $phone    = trim($_POST['phone'] ?? '');
     $receiveraddress =  $email    = trim($_POST['email'] ?? '');
     $role =   trim($_POST['role'] ?? '');
@@ -1394,7 +1397,7 @@ $user_details = $admin_abr . " - " . $_SESSION['userid'];
 
 $message = "Hello $fullname,<br><br>"
 
-         . "Your administrator account has been created successfully.<br><br>"
+         . "Your supervisor account has been created successfully.<br><br>"
 
          . "Your registration has been completed, and your account is now ready for use.<br><br>"
 
@@ -1425,7 +1428,10 @@ $message = "Hello $fullname,<br><br>"
 
   header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php')); exit;
 
-}  }
+}
+
+
+}
 
 
 
