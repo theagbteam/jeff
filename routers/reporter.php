@@ -1,33 +1,56 @@
  <?php
+require_once ROOT_PATH ."/controllers/Reportercontroller.php";
 require_once ROOT_PATH ."/controllers/UserController.php";
-require_once ROOT_PATH ."/controllers/ReporterController.php";
 require_once   ROOT_PATH ."/middleware/AuthMiddleware.php";
-
-// $Controller = new UserController();
-$Reportercontroller = new ReporterController();
- $SearchForMiddleware = new AuthMiddleware();
+$Reportercontroller = new Reportercontroller();
+$Usercontroller = new UserController();
 $userid = $_SESSION['userid'] ?? null;
  $action = $_GET['action'] ?? 'login';
 
 
 switch ($action) {
+             
+        case 'get_lgas':
+        $Reportercontroller->getLgas();
+        break;
+        case 'delete_user':
+        $Reportercontroller->delete_user();
+        break;
+         case 'dashboard':
+         case 'assignowner':
+         case 'reset_user':
+         case 'viewticket':
+         case 'updateaccountsettings':
+         case 'create_ticket':
+         case 'create_request':
+         case 'myprofile':
+         case 'user_details':
+         case 'updateuserpwd':
+         case 'tr_employee':
+         case 'create_admin_user':
+         case 'edit_user':
+        case 'cr_ticket':
+        case 'tickets':
+        case 'run_reports':
+        case 'audit_trail':
+        case 'user_library':
+        case 'transfers':
+        case 'user_requests':
+        case 'manage_users':
+        case 'export_tickets':
+       $Reportercontroller->page_dashboard();
+        break;    
        case 'compulsory_cp':
         $Usercontroller->updatepassword();
         break;
       case 'login':
-       $UserController->page_login();
+         $Usercontroller->page_login();
         break;
-case 'dashboard':
-        $Reportercontroller->page_dashboard(); 
-        break;
-  case 'create_reporter':
-          $Usercontroller->create_reporter();
-        break;
-  
+           
     case 'logout':
-        $UserController->logout();
+        $Usercontroller->logout();
         break;
     
     default:
-         $UserController->pagenotfound();
+         $Usercontroller->pagenotfound();
 }

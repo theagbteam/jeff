@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 27, 2026 at 06:37 PM
+-- Generation Time: Nov 01, 2026 at 03:45 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -68,7 +68,20 @@ INSERT INTO `audit_trail` (`sn`, `date`, `userid`, `full_name`, `role`, `role_na
 (490, '2026-10-27 14:39:09', '1063', 'selena - 1063', 'administrator', 'administrator', 'Replied to ticket TKT20261024143107667925', '127.0.0.1', 1),
 (491, '2026-10-27 14:39:47', '38299', 'Agbonile E.E  38299', 'developer', 'developer', 'Assigned selena as new chief administrator', '::1', 1),
 (492, '2026-10-27 14:40:21', '1063', 'selena - 1063', 'administrator', 'administrator', 'Replied to ticket TKT20261024143107667925, status → in progress', '127.0.0.1', 1),
-(493, '2026-10-27 15:01:47', '1063', 'selena  1063', 'administrator', 'administrator', 'Login successful', '127.0.0.1', 1);
+(493, '2026-10-27 15:01:47', '1063', 'selena  1063', 'administrator', 'administrator', 'Login successful', '127.0.0.1', 1),
+(494, '2026-10-27 18:49:22', '1063', 'selena  1063', 'administrator', 'administrator', 'Login successful', '127.0.0.1', 1),
+(495, '2026-10-27 19:05:55', '1063', 'selena - 1063', 'administrator', 'administrator', 'Created a new reporter account for uili', '127.0.0.1', 1),
+(496, '2026-10-27 19:35:39', '1063', 'selena - 1063', 'administrator', 'administrator', 'Created a new supervisor account for Agb Eddy', '127.0.0.1', 1),
+(497, '2026-10-27 19:38:27', '1063', 'selena - 1063', 'administrator', 'administrator', 'Created a new reporter account for reee', '127.0.0.1', 1),
+(498, '2026-10-27 19:43:53', '1063', 'selena - 1063', 'administrator', 'administrator', 'Created a new supervisor account for Agb Eddy', '127.0.0.1', 1),
+(499, '2026-10-31 18:20:04', '38299', 'Agbonile Eguavoen Edwin  38299', 'developer', 'Dev_op', 'Login successful', '::1', 1),
+(500, '2026-11-01 06:35:26', '1063', 'selena  1063', 'administrator', 'administrator', 'Login successful', '127.0.0.1', 1),
+(501, '2026-11-01 06:42:48', '1039', 'hitman  1039', 'supervisor', 'Superman', 'Login successful', '127.0.0.1', 1),
+(502, '2026-11-01 06:43:15', '1039', 'hitman  1039', 'supervisor', 'supervisor', 'Your Password was updated', '127.0.0.1', 1),
+(503, '2026-11-01 06:49:50', '1039', 'hitman  1039', 'supervisor', 'Superman', 'Login successful', '127.0.0.1', 1),
+(504, '2026-11-01 06:52:53', '1039', 'hitman  1039', 'supervisor', 'Superman', 'Login successful', '127.0.0.1', 1),
+(505, '2026-11-01 14:37:00', '1039', 'hitman  1039', 'reporter', 'reporter', 'Login successful', '127.0.0.1', 1),
+(506, '2026-11-01 14:54:30', '1039', 'hitman  1039', 'reporter', 'reporter', 'Login successful', '127.0.0.1', 1);
 
 -- --------------------------------------------------------
 
@@ -122,7 +135,7 @@ CREATE TABLE `company` (
 --
 
 INSERT INTO `company` (`sn`, `companylog_resetcode`, `company_allownotification`, `company_adminseniorman`, `company_supervisorseniorman`, `company_url`, `company_logfile_url`, `company_banner`, `cloudfare_verifyurl`, `cloudfare_sitekey`, `cloudfare_secretkey`, `company_userid`, `company_signup`, `company_allowmail`, `company_appversion`, `company_acct_approval`, `company_auto_ticketing`, `company_map`, `company_name`, `company_alias`, `company_email`, `company_mailer_host`, `company_mailer_email`, `company_mailer_port`, `company_mailer_password`, `company_mailer_secure`, `company_phone`, `company_phone2`, `company_address`, `company_address2`, `company_care`, `company_care2`, `company_copyright`, `company_copyrightlink`, `company_poweredby`, `company_status`, `company_logo`, `company_favicon`) VALUES
-(1, '', 0, '1063', '1057', 'https://aisecurity.ltd', 'C:\\\\xampp\\\\htdocs\\\\jeff/log/log.log', 'banner.jpg', 'https://challenges.cloudflare.com/turnstile/v0/siteverify', '0x4AAAAAAE_lhXRw6nDkauM7', '0x4AAAAAAE_lhdnF4h2kDF21E5RVMxkjRag', 1002, 1, 0, 'AGB-IMRS-Verion 1.0', 0, 1, 'uyui', 'Incident reporting and information system', 'AICSS IRIS', 'info@aisecurity.ltd', 'server245.web-hosting.com', 'support@aisecurity.ltd', '465', 'Consult2026@@', 'ssl', '778857844', '7788578', 'sdfgsf', 'asfdas', 'asda', 'asdas', '2026', 'https://www.agbng.com', 'agb team', 0, 'company_logo_7233e007baa7ea92.png', 'favicon_5d40412a46299eac.PNG');
+(1, '', 0, '1063', '1057', 'https://aisecurity.ltd', 'C:\\\\xampp\\\\htdocs\\\\jeff/log/log.log', 'banner.jpg', 'https://challenges.cloudflare.com/turnstile/v0/siteverify', '0x4AAAAAAE_lhXRw6nDkauM7', '0x4AAAAAAE_lhdnF4h2kDF21E5RVMxkjRag', 1002, 1, 0, 'AGB-IMRS311026-Verion 1.0', 0, 1, 'uyui', 'Incident reporting and information system', 'AICSS IRIS', 'info@aisecurity.ltd', 'server245.web-hosting.com', 'support@aisecurity.ltd', '465', 'Consult2026@@', 'ssl', '778857844', '7788578', 'sdfgsf', 'asfdas', 'asda', 'asdas', '©Copyright 2026 AICSS All rights reserved  ', '#', 'NEW GUARD SECURITY AND CONSULTANCY SERVICES', 0, 'company_logo_7233e007baa7ea92.png', 'favicon_5d40412a46299eac.PNG');
 
 -- --------------------------------------------------------
 
@@ -1045,10 +1058,10 @@ CREATE TABLE `login` (
 --
 
 INSERT INTO `login` (`sn`, `template_mode`, `sidebaropen`, `action_token`, `userid`, `password`, `last_login`, `otp_request`, `login_counts`, `role`, `role_name`, `Role_edit_user`, `Role_create_user`, `Role_delete_user`, `Role_approve_user`, `Role_create_report`, `Role_approve_report`, `Role_edit_report`, `Role_delete_report`, `Role_comment`, `status`) VALUES
-(1, '', 1, '', '38299', '$2y$10$n7d0LlqjadH5pp5Rt1CTs.o1dL82Rk2qVBklLmh79S6kJUNVQsyNi', '2026-10-27 14:35:25', '', 58, 'developer', 'Dev_op', 0, 0, 0, 0, 0, 0, 0, 0, 0, 1),
+(1, '', 1, '', '38299', '$2y$10$n7d0LlqjadH5pp5Rt1CTs.o1dL82Rk2qVBklLmh79S6kJUNVQsyNi', '2026-10-31 18:20:04', '', 59, 'developer', 'Dev_op', 0, 0, 0, 0, 0, 0, 0, 0, 0, 1),
 (36, '', 0, '', '1003', '$2y$10$Ss2HEB/.gS0Kj7jdcCOFbOnl1leTPsgg.zQSJNMwIyNoCrWG5vCJC', '', '', 0, 'administrator', 'administrator', 0, 0, 0, 0, 1, 0, 0, 0, 1, -1),
 (37, '', 0, '', '1038', '$2y$10$N4vOkXGcoly/ou6E/9lF0OygS7FJqBdwgd7/lo01bnB0ybjNYZr8.', '', '', 0, 'administrator', 'reporter', 0, 0, 0, 0, 1, 0, 0, 0, 1, 1),
-(38, '', 0, '', '1039', '$2y$10$lFP/Z/433.AYO2NhHYJDjujWBTUBVgGfcfAJyNwVRwhsHK0xsm6gC', '', '', 0, 'administrator', 'developer', 0, 0, 0, 0, 1, 0, 0, 0, 1, 1),
+(38, '', 0, '', '1039', '$2y$10$IvV4zy1n1XQ5xc46.EGiFeBI2Rd7YP/Ag0AtdGJ89HO58HHnq8/8m', '2026-11-01 14:54:30', '', 5, 'reporter', 'reporter', 0, 0, 0, 0, 1, 0, 0, 0, 1, 1),
 (39, '', 0, '', '1040', '$2y$10$gwbZfRrkm8/I.FAaSt4ho.MblXf9jKRdIZfU6G9DFrtUDCaf/NSau', '', '', 0, 'administrator', 'reporter', 0, 0, 0, 0, 1, 0, 0, 0, 1, 0),
 (40, '', 0, '', '1041', '$2y$10$vXlhB2hHarxjvBI2RmuaCO73B0jbRjDGjkxDlF1uNRkg15USsHbFO', '', '', 0, 'reporter', 'reporter', 0, 0, 0, 0, 1, 0, 0, 0, 1, -1),
 (41, '', 0, '', '1042', '$2y$10$Kgaudj/fC/.UaS2.Z1/ZG.jPayaIDQY4QrWlilb.9M8oBNmd/TGj.', '', '', 0, 'reporter', 'reporter', 0, 0, 0, 0, 1, 0, 0, 0, 1, -1),
@@ -1064,11 +1077,15 @@ INSERT INTO `login` (`sn`, `template_mode`, `sidebaropen`, `action_token`, `user
 (59, '', 0, '7005b5561d1060', '1060', '$2y$10$NFIUvvGt1Qxw1vkC506V1.WDya/zyzd/T3/oXktAAzE2jmJTMKOOW', '', '', 0, 'administrator', 'administrator', 1, 1, 1, 1, 1, 1, 1, 1, 1, -1),
 (60, '', 0, 'b101458d681061', '1061', '$2y$10$a3Hs0ydW.Q2hnduKLjCs7uFP8ILpK01IjX2AhhaUC0swK63TlgpjK', '', '', 0, 'administrator', 'administrator', 1, 1, 1, 1, 1, 1, 1, 1, 1, -1),
 (61, '', 0, 'a4beca05231062', '1062', '$2y$10$UFYPXryDkCORYp0V/A0tjudUCzy8poHdk6PiQI.ARacV4d6rMyzNK', '', '', 0, 'reporter', 'reporter', 0, 0, 0, 0, 1, 0, 0, 0, 1, 1),
-(62, 'dark', 0, 'ac79aeb7551063', '1063', '$2y$10$5pu4fXS1GpVMY9xv4kfSF.gIrLJeNk6o6yPyd4h37RCkCGHSDLGhO', '2026-10-27 15:01:47', '', 5, 'administrator', 'administrator', 1, 1, 0, 1, 1, 1, 1, 1, 1, 1),
+(62, 'dark', 0, 'ac79aeb7551063', '1063', '$2y$10$5pu4fXS1GpVMY9xv4kfSF.gIrLJeNk6o6yPyd4h37RCkCGHSDLGhO', '2026-11-01 06:35:26', '', 7, 'administrator', 'administrator', 1, 1, 0, 1, 1, 1, 1, 1, 1, 1),
 (63, '', 0, '0b5488ccb31064', '1064', '$2y$10$IECXH/96vE5Keunl636nhetzvutIR52VGkugUmsgOlDs3yf/d/HIW', '', '', 0, 'developer', 'reporter', 0, 0, 0, 0, 1, 0, 0, 0, 1, 1),
 (64, '', 0, '94b5969bf11065', '1065', '$2y$10$a2VibRbMPDiAVThHrF9ZHOOI8gKU7XXxKqBR.MgUW29p12ApwJT66', '', '', 0, 'administrator', 'administrator', 1, 1, 1, 1, 1, 1, 1, 1, 1, 0),
 (65, '', 0, '1319cd3f741066', '1066', '$2y$10$vgDNEcoZqxBXmPXtlMjzGu6t1bV1cI/x/udAOSz/FrmKeNYPUmRiK', '', '', 0, 'reporter', 'reporter', 0, 0, 0, 0, 1, 0, 0, 0, 1, 1),
-(66, '', 0, '46db59e9e01067', '1067', '$2y$10$nuPbq5V5swHGfU7xc.Pc8ufsfcadeQ2ZgN3VWEhC.zVB/UkerJrGy', '', '', 0, 'reporter', 'reporter', 0, 0, 0, 0, 1, 0, 0, 0, 1, 1);
+(66, '', 0, '46db59e9e01067', '1067', '$2y$10$nuPbq5V5swHGfU7xc.Pc8ufsfcadeQ2ZgN3VWEhC.zVB/UkerJrGy', '', '', 0, 'reporter', 'reporter', 0, 0, 0, 0, 1, 0, 0, 0, 1, 1),
+(67, '', 0, '2375f4ce5a1068', '1068', '$2y$10$UvZTtPcoIkShID0heU9YqOX2D8RxF.PlvleIz0SdmBQZNcoCPUZ..', '', '', 0, 'reporter', 'reporter', 0, 0, 0, 0, 1, 0, 0, 0, 1, 1),
+(68, '', 0, '31614e88c31069', '1069', '$2y$10$5N8HSbo6Naudh1PjbRCeEubZK5RXg0uOvOP1YC8YDZ9zntE6cnxIK', '', '', 0, 'supervisor', 'supervisor', 0, 0, 0, 0, 1, 1, 0, 0, 1, 1),
+(69, '', 0, '61accf2bc71070', '1070', '$2y$10$fi1/YrjVVmsG0JJcL5SFKu8mSNYbIWb1slpRkHmOGDP4qMG08iWNu', '', '', 0, 'reporter', 'reporter', 0, 0, 0, 0, 1, 0, 0, 0, 1, 1),
+(70, '', 0, '4ec009fef81071', '1071', '$2y$10$UlRZzZBCaHNGCbRCiFbBZ.h/1s27HSFNR7bZAcJxVCU1jo4GWS.Ue', '', '', 0, 'supervisor', 'supervisor', 0, 0, 0, 0, 1, 1, 0, 0, 1, 1);
 
 -- --------------------------------------------------------
 
@@ -1317,6 +1334,7 @@ CREATE TABLE `request` (
   `ticket_no` varchar(255) NOT NULL,
   `category` varchar(255) NOT NULL,
   `ticket_userid` varchar(255) NOT NULL,
+  `ticketer_corridor` varchar(255) NOT NULL,
   `name` varchar(255) NOT NULL,
   `subject` varchar(255) NOT NULL,
   `complain` text NOT NULL,
@@ -1330,9 +1348,10 @@ CREATE TABLE `request` (
 -- Dumping data for table `request`
 --
 
-INSERT INTO `request` (`sn`, `ticket_no`, `category`, `ticket_userid`, `name`, `subject`, `complain`, `priority`, `date`, `ticketer_role`, `status`) VALUES
-(3, 'RQ202610171235166.3017', '', '1063', 'selena', 'Loosing itzc', 'dsfs', 1, '2026-10-17 12:35:16', 'administrator', 0),
-(4, 'RQ202610171314522.0718', '', '1063', 'selena', 'issues', 'e;lajklefjaeklfjeklajfklajflakjfklajfeklafjaeklfjaklefjaklefe;lajklefjaeklfjeklajfklajflakjfklajfeklafjaeklfjaklefjaklefe;lajklefjaeklfjeklajfklajflakjfklajfeklafjaeklfjaklefjaklefe;lajklefjaeklfjeklajfklajflakjfklajfeklafjaeklfjaklefjaklef', 2, '2026-10-17 13:14:52', 'administrator', 0);
+INSERT INTO `request` (`sn`, `ticket_no`, `category`, `ticket_userid`, `ticketer_corridor`, `name`, `subject`, `complain`, `priority`, `date`, `ticketer_role`, `status`) VALUES
+(3, 'RQ202610171235166.3017', '', '1063', '', 'selena', 'Loosing itzc', 'dsfs', 1, '2026-10-17 12:35:16', 'administrator', 0),
+(4, 'RQ202610171314522.0718', '', '1063', '', 'selena', 'issues', 'e;lajklefjaeklfjeklajfklajflakjfklajfeklafjaeklfjaklefjaklefe;lajklefjaeklfjeklajfklajflakjfklajfeklafjaeklfjaklefjaklefe;lajklefjaeklfjeklajfklajflakjfklajfeklafjaeklfjaklefjaklefe;lajklefjaeklfjeklajfklajflakjfklajfeklafjaeklfjaklefjaklef', 2, '2026-10-17 13:14:52', 'administrator', 0),
+(5, 'RQ202611010957433.3385', '', '1039', '', 'hitman', 'testing', 'asdsds', 1, '2026-11-01 09:57:43', 'supervisor', 0);
 
 -- --------------------------------------------------------
 
@@ -1598,7 +1617,8 @@ INSERT INTO `ticket_reports` (`sn`, `status_text`, `note`, `color`, `userid`, `r
 (38, 'in progress', '', '', '1063', '', '', '', 'TKT20261024143107667925', '2026-10-24 14:31:07', '2026-10-27 14:40:21', '', '', 'EQUIPMENT VANDALISM', 'selena', 'gkklxajigi1948@calirona.com', 'High', '', '2 x 12” Imo River I F/S – Ogale M/F', 'Unknown', 'catching eyes', 'sdfsfsfsfsdfsdf', '3566563456', '2026-10-20', 'ONSA SPT', '14', 'stomp community', '271', 'NLNG', 'AITEO Zone 11', 'General', '0', '0', '0', '0', '0', '0', '0', '0', '0', 'sdfsdf', 0, 0, 0, 0, '', NULL, 'att_21545ea2c9ab8fb9.xlsx,att_6e3865e178147f19.jpg', '', 1),
 (39, 'new', '', '', '1063', '', '', '', 'TKT20261026114901413689', '2026-10-26 11:49:01', 'Nil', '', '', 'COMMUNITY ISSUES', 'selena', 'gkklxajigi1948@calirona.com', 'Critical', '', 'Oben- Amukpe', 'Flow Line', 'testing', 'kx;kvbkbkbklbkbk', '3566563456', '2026-10-26', 'MATON', '13', 'tela comunity', '253', 'Newcross', 'Renaissance Zone 8', 'General', '0', '0', '0', '0', '0', '0', '0', '0', '0', ';klj;kjkl', 0, 0, 1, 1, '', NULL, '', '', 1),
 (40, 'new', '', '', '1063', '', 'remand', '1057', 'TKT20261026124758784308', '2026-10-26 12:47:58', 'Nil', 'subxontractor1,subxontractor2', '2,2', 'ILLEGAL CONNECTION', 'selena', 'gkklxajigi1948@calirona.com', 'High', '', 'OML 30 Delivery Lines', 'Flow Line', 'testung', 'ihiwe;hriowehor', '3566563456', '2026-10-26', 'FIRST E&P', '2', 'ewfgeuy', '20', 'Newcross', 'Renaissance Zone 13', 'General', '0', '0', '0', '0', '0', '0', '0', '0', '0', 'lsdhkldw', 0, 0, 1, 1, '', NULL, '', '', 1),
-(41, 'new', '', '', '1063', '', '', '', 'TKT20261027135840203623', '2026-10-27 13:58:40', 'Nil', 'jeff,Seth,Edwin', '2,1,0', 'EQUIPMENT VANDALISM', 'selena', 'gkklxajigi1948@calirona.com', 'High', '', '6” Imo River II F/S -  Imo River I M/F', 'Flow Line', 'catching eyes', 'nothing typed', '3566563456', '2026-10-01', 'AIRFORCE', '14', 'letdoen', '269', 'NPSC', 'HEOSL Zone 14', 'General', '0', '0', '0', '0', '0', '0', '0', '0', '0', 'dsislhifhisdhli', 0, 0, 1, 1, '', NULL, '', '', 1);
+(41, 'new', '', '', '1063', '', '', '', 'TKT20261027135840203623', '2026-10-27 13:58:40', 'Nil', 'jeff,Seth,Edwin', '2,1,0', 'EQUIPMENT VANDALISM', 'selena', 'gkklxajigi1948@calirona.com', 'High', '', '6” Imo River II F/S -  Imo River I M/F', 'Flow Line', 'catching eyes', 'nothing typed', '3566563456', '2026-10-01', 'AIRFORCE', '14', 'letdoen', '269', 'NPSC', 'HEOSL Zone 14', 'General', '0', '0', '0', '0', '0', '0', '0', '0', '0', 'dsislhifhisdhli', 0, 0, 1, 1, '', NULL, '', '', 1),
+(42, 'new', '', '', '1039', '', '', '', 'TKT20261101150618782961', '2026-11-01 15:06:18', 'Nil', 'jeff,Seth', '2,0', 'EQUIPMENT VANDALISM', 'hitman', '1viboy81575@caps7.com', 'Critical', '', '2 x 12” Imo River I F/S – Ogale M/F', 'Flow Line', 'conneciton', 'nothing typed', '676767', '2026-11-01', 'ONSA SPT', '10', 'stellar comminity', '196', 'NLNG', 'Renaissance Zone 13', 'General', '0', '0', '0', '0', '0', '0', '0', '0', '0', 'knxc;klvjxcjviojfvojvofdj', 0, 0, 0, 0, '', NULL, 'att_585ee24a6bc6a5db.jpg', '', 1);
 
 -- --------------------------------------------------------
 
@@ -1686,10 +1706,10 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`sn`, `corridor`, `date`, `title`, `user_image`, `userid`, `otp_request`, `email`, `phone`, `msg_notification`, `msg`, `fullname`, `status`) VALUES
-(1, '', '17/08/2026', 'mr', 'admin.png', 38299, '911572', 'agbonileedwin@gmail.com', '07060663776', 0, 'your request to edit artcle has been approved ', 'Agbonile Eguavoen Edwin', 3),
+(1, '', '17/08/2026', 'mr', 'admin.png', 38299, '911572', 'agbonileedwin+2@gmail.com', '07060663776', 0, 'your request to edit artcle has been approved ', 'Agbonile Eguavoen Edwin', 3),
 (35, '', '2026-09-24 11:24:42', 'Mrs', '', 1003, '', 'sosowo1354@ncleap.com', '324523423423', 0, '', 'Sammy Eddy', -1),
 (36, '', '2026-09-25 11:14:44', 'Mr', '', 1038, '', 'giyere9169@kingdais.com', '3234324234', 0, '', 'stella Hello', 1),
-(37, '', '2026-09-25 14:49:43', 'Mr', '', 1039, '', '1viboy81575@caps7.com', '676767', 0, '', 'hitman', 1),
+(37, 'General', '2026-09-25 14:49:43', 'Mr', '1039_1793522916.jpg', 1039, '', '1viboy81575@caps7.com', '676767', 0, '', 'hitman', 1),
 (38, 'Customs Operations WhirlWind', '2026-09-26 17:37:45', 'Mrs', '', 1040, '', 'stella@gmail.com', '7575875', 0, '', 'huyguougu', 0),
 (39, '', '2026-09-26 17:39:52', 'Mr', '', 1041, '', 'tilawej735@kingdais.com', '435345', 0, '', 'Eddy', -1),
 (40, '', '2026-09-26 18:19:59', 'Mr', '', 1042, '', 'yarec82580@hiredify.com', '534534', 0, '', 'rtertert', -1),
@@ -1709,7 +1729,11 @@ INSERT INTO `users` (`sn`, `corridor`, `date`, `title`, `user_image`, `userid`, 
 (55, 'Western', '2026-10-13 12:03:47', 'Mrs', '', 1064, '', 'ttxojoda5747@comzx.com', '8989789789', 0, '', 'gomez', 1),
 (56, 'Deep Blue Water', '2026-10-13 20:47:58', 'Mr', '1065_1791995997.jpg', 1065, '', 'bvxojoda5747@comzx.com', '8989', 0, '', 'comonme', 0),
 (57, 'Eastern', '2026-10-18 21:14:41', 'Mrs', '', 1066, '', 'testrynner@gmail.com', '356656345644', 0, '', 'leaner', 1),
-(58, 'Eastern', '2026-10-18 21:23:02', 'Mrs', '', 1067, '', 'coyoy20323@goldlicai.com', '3566563456664', 0, '', 'leonard torez', 1);
+(58, 'Eastern', '2026-10-18 21:23:02', 'Mrs', '', 1067, '', 'coyoy20323@goldlicai.com', '3566563456664', 0, '', 'leonard torez', 1),
+(59, 'Central', '2026-10-27 19:05:55', 'Mr', '', 1068, '', 'tt@t.com', '32423', 0, '', 'uili', 1),
+(60, 'General', '2026-10-27 19:35:39', 'Mr', '', 1069, '', 'agbonileedwin@gmail.com', '34435345345', 0, '', 'Agb Eddy', 1),
+(61, 'Eastern', '2026-10-27 19:38:27', 'Mrs', '', 1070, '', 'agbonileedwin+5@gmail.com', '65656', 0, '', 'reee', 1),
+(62, 'General', '2026-10-27 19:43:53', 'Mr', '', 1071, '', 'hebobe5130@hiringview.com', '3242388', 0, '', 'Agb Eddy', 1);
 
 -- --------------------------------------------------------
 
@@ -1961,7 +1985,7 @@ ALTER TABLE `zone`
 -- AUTO_INCREMENT for table `audit_trail`
 --
 ALTER TABLE `audit_trail`
-  MODIFY `sn` int(255) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=494;
+  MODIFY `sn` int(255) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=507;
 
 --
 -- AUTO_INCREMENT for table `company`
@@ -1991,7 +2015,7 @@ ALTER TABLE `lgas`
 -- AUTO_INCREMENT for table `login`
 --
 ALTER TABLE `login`
-  MODIFY `sn` int(255) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=67;
+  MODIFY `sn` int(255) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=71;
 
 --
 -- AUTO_INCREMENT for table `navy_incidence_offences`
@@ -2039,7 +2063,7 @@ ALTER TABLE `report_type`
 -- AUTO_INCREMENT for table `request`
 --
 ALTER TABLE `request`
-  MODIFY `sn` int(255) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `sn` int(255) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `states`
@@ -2075,7 +2099,7 @@ ALTER TABLE `ticket_replies`
 -- AUTO_INCREMENT for table `ticket_reports`
 --
 ALTER TABLE `ticket_reports`
-  MODIFY `sn` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
+  MODIFY `sn` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
 
 --
 -- AUTO_INCREMENT for table `transfer_history`
@@ -2087,7 +2111,7 @@ ALTER TABLE `transfer_history`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `sn` int(255) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=59;
+  MODIFY `sn` int(255) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=63;
 
 --
 -- AUTO_INCREMENT for table `wellhead_status`

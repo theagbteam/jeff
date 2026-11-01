@@ -9,8 +9,7 @@ exit;
 
 
 
-newguard
-newguard7584
+sample site
 https://incidence.operationplugaction.com/admin/admin_ticket.php?track=7P5-R7H-D92U&Refresh=20654
 
 File upload limits
